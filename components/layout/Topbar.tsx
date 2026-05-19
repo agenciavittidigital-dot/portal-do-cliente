@@ -14,9 +14,17 @@ const pageTitles: Record<string, string> = {
   "/admin": "Admin",
 };
 
-export function Topbar() {
+interface TopbarProps {
+  userEmail?: string | null;
+}
+
+export function Topbar({ userEmail }: TopbarProps) {
   const pathname = usePathname();
   const title = pageTitles[pathname] ?? "Portal";
+
+  const displayName = userEmail
+    ? userEmail.split("@")[0]
+    : null;
 
   return (
     <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-vitti-dark/30 backdrop-blur-sm shrink-0">
@@ -34,13 +42,20 @@ export function Topbar() {
         </button>
 
         <div className="flex items-center gap-2.5 pl-3 ml-1 border-l border-white/8">
-          <div className="hidden sm:block text-right">
-            <p className="text-xs font-light text-white/60 leading-none">Cliente</p>
-            <p className="text-[10px] text-white/25 font-light mt-0.5">
-              vitti.digital
-            </p>
-          </div>
-          <div className="w-8 h-8 rounded-full bg-vitti-blue/20 border border-vitti-blue/30 flex items-center justify-center">
+          {userEmail && (
+            <div className="hidden sm:block text-right max-w-[160px]">
+              <p
+                className="text-xs font-light text-white/60 leading-none truncate"
+                title={userEmail}
+              >
+                {displayName}
+              </p>
+              <p className="text-[10px] text-white/25 font-light mt-0.5 truncate">
+                {userEmail}
+              </p>
+            </div>
+          )}
+          <div className="w-8 h-8 rounded-full bg-vitti-blue/20 border border-vitti-blue/30 flex items-center justify-center shrink-0">
             <User size={14} className="text-vitti-light/70" />
           </div>
         </div>

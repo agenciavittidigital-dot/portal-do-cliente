@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { signOut } from "@/app/actions";
 import {
   LayoutDashboard,
   BarChart3,
@@ -115,15 +116,18 @@ export function Sidebar() {
           {!collapsed && <span>Admin</span>}
         </Link>
 
-        <button
-          className={cn(
-            "w-full flex items-center gap-3 rounded-lg text-sm font-light text-white/30 hover:text-red-400/70 hover:bg-red-500/5 transition-all border border-transparent",
-            collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"
-          )}
-        >
-          <LogOut size={15} className="shrink-0" />
-          {!collapsed && <span>Sair</span>}
-        </button>
+        <form action={signOut}>
+          <button
+            type="submit"
+            className={cn(
+              "w-full flex items-center gap-3 rounded-lg text-sm font-light text-white/30 hover:text-red-400/70 hover:bg-red-500/5 transition-all border border-transparent",
+              collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"
+            )}
+          >
+            <LogOut size={15} className="shrink-0" />
+            {!collapsed && <span>Sair</span>}
+          </button>
+        </form>
       </div>
     </aside>
   );
