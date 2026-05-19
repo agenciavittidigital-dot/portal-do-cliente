@@ -16,15 +16,21 @@ const pageTitles: Record<string, string> = {
 
 interface TopbarProps {
   userEmail?: string | null;
+  userName?: string | null;
+  clientName?: string | null;
 }
 
-export function Topbar({ userEmail }: TopbarProps) {
+export function Topbar({ userEmail, userName, clientName }: TopbarProps) {
   const pathname = usePathname();
   const title = pageTitles[pathname] ?? "Portal";
 
-  const displayName = userEmail
-    ? userEmail.split("@")[0]
-    : null;
+  // Line 1: prefer full_name, fallback to email local-part
+  const displayName =
+    userName ??
+    (userEmail ? userEmail.split("@")[0] : null);
+
+  // Line 2: prefer client name, fallback to email
+  const displaySub = clientName ?? userEmail;
 
   return (
     <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-vitti-dark/30 backdrop-blur-sm shrink-0">
@@ -42,17 +48,19 @@ export function Topbar({ userEmail }: TopbarProps) {
         </button>
 
         <div className="flex items-center gap-2.5 pl-3 ml-1 border-l border-white/8">
-          {userEmail && (
-            <div className="hidden sm:block text-right max-w-[160px]">
+          {displayName && (
+            <div className="hidden sm:block text-right max-w-[180px]">
               <p
                 className="text-xs font-light text-white/60 leading-none truncate"
-                title={userEmail}
+                title={userEmail ?? undefined}
               >
                 {displayName}
               </p>
-              <p className="text-[10px] text-white/25 font-light mt-0.5 truncate">
-                {userEmail}
-              </p>
+              {displaySub && (
+                <p className="text-[10px] text-white/25 font-light mt-0.5 truncate">
+                  {displaySub}
+                </p>
+              )}
             </div>
           )}
           <div className="w-8 h-8 rounded-full bg-vitti-blue/20 border border-vitti-blue/30 flex items-center justify-center shrink-0">

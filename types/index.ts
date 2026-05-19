@@ -1,10 +1,12 @@
-export type UserRole = "admin" | "client";
+export type GlobalRole = "vitti_admin" | "client_user";
 
 export interface Profile {
-  id: string;
-  full_name: string | null;
-  avatar_url: string | null;
-  role: UserRole;
+  id: string;           // PK do profiles — usado como FK em client_users e user_permissions
+  auth_user_id: string; // referencia auth.users.id
+  name: string | null;
+  email: string | null;
+  global_role: GlobalRole;
+  status: string;       // "active" | "inactive" | outros
 }
 
 export interface Client {
@@ -14,6 +16,23 @@ export interface Client {
   logo_url: string | null;
   active: boolean;
 }
+
+export interface Permission {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
+export type PermissionKey =
+  | "home.view"
+  | "dashboard.view"
+  | "reports.view"
+  | "finance.view"
+  | "invoices.view"
+  | "calls.view"
+  | "education.view"
+  | "admin.view"
+  | (string & {});
 
 export interface NavItem {
   label: string;

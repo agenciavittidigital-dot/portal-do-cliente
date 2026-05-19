@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { signOut } from "@/app/actions";
+import { createClient } from "@/lib/supabase/client";
 import {
   LayoutDashboard,
   BarChart3,
@@ -14,21 +14,84 @@ import {
   Settings,
   LogOut,
   ChevronLeft,
+  LockKeyhole,
 } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-const navItems = [
-  { label: "Home", href: "/dashboard", icon: LayoutDashboard, alsoActiveOn: [] },
-  { label: "Dados e Métricas", href: "/metricas", icon: BarChart3, alsoActiveOn: [] },
-  { label: "Relatórios", href: "/relatorios", icon: FileText, alsoActiveOn: [] },
-  { label: "Financeiro", href: "/financeiro", icon: CreditCard, alsoActiveOn: ["/notas-fiscais"] },
-  { label: "Calls", href: "/calls", icon: Video, alsoActiveOn: [] },
-  { label: "Educação", href: "/educacao", icon: GraduationCap, alsoActiveOn: [] },
+interface NavItemDef {
+  label: string;
+  href: string;
+  icon: React.ElementType;
+  permission: string;
+  alsoActiveOn: string[];
+}
+
+const ALL_NAV_ITEMS: NavItemDef[] = [
+  {
+    label: "Home",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    permission: "home.view",
+    alsoActiveOn: [],
+  },
+  {
+    label: "Dados e Métricas",
+    href: "/metricas",
+    icon: BarChart3,
+    permission: "dashboard.view",
+    alsoActiveOn: [],
+  },
+  {
+    label: "Relatórios",
+    href: "/relatorios",
+    icon: FileText,
+    permission: "reports.view",
+    alsoActiveOn: [],
+  },
+  {
+    label: "Financeiro",
+    href: "/financeiro",
+    icon: CreditCard,
+    permission: "finance.view",
+    alsoActiveOn: ["/notas-fiscais"],
+  },
+  {
+    label: "Calls",
+    href: "/calls",
+    icon: Video,
+    permission: "calls.view",
+    alsoActiveOn: [],
+  },
+  {
+    label: "Educação",
+    href: "/educacao",
+    icon: GraduationCap,
+    permission: "education.view",
+    alsoActiveOn: [],
+  },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  permissions: string[];
+  isAdmin: boolean;
+}
+
+export function Sidebar({ permissions, isAdmin }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
+
+  const navItems = isAdmin
+    ? ALL_NAV_ITEMS
+    : ALL_NAV_ITEMS.filter((item) => permissions.includes(item.permission));
 
   return (
     <aside
@@ -64,70 +127,92 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto overflow-x-hidden">
-        {navItems.map((item) => {
-          const isActive =
-            pathname === item.href ||
-            pathname.startsWith(item.href + "/") ||
-            item.alsoActiveOn.some(
-              (p) => pathname === p || pathname.startsWith(p + "/")
-            );
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              title={collapsed ? item.label : undefined}
-              className={cn(
-                "flex items-center gap-3 rounded-lg text-sm font-light transition-all duration-150 group",
-                collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5",
-                isActive
-                  ? "bg-vitti-blue/15 text-vitti-light border border-vitti-blue/20"
-                  : "text-white/40 hover:text-white/80 hover:bg-white/5 border border-transparent"
-              )}
-            >
-              <Icon
-                size={16}
+        {navItems.length > 0 ? (
+          navItems.map((item) => {
+            const isActive =
+              pathname === item.href ||
+              pathname.startsWith(item.href + "/") ||
+              item.alsoActiveOn.some(
+                (p) => pathname === p || pathname.startsWith(p + "/")
+              );
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                title={collapsed ? item.label : undefined}
                 className={cn(
-                  "shrink-0 transition-colors",
+                  "flex items-center gap-3 rounded-lg text-sm font-light transition-all duration-150 group",
+                  collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5",
                   isActive
-                    ? "text-vitti-light"
-                    : "text-white/30 group-hover:text-white/60"
+                    ? "bg-vitti-blue/15 text-vitti-light border border-vitti-blue/20"
+                    : "text-white/40 hover:text-white/80 hover:bg-white/5 border border-transparent"
                 )}
-              />
-              {!collapsed && (
-                <span className="truncate leading-none">{item.label}</span>
-              )}
-            </Link>
-          );
-        })}
+              >
+                <Icon
+                  size={16}
+                  className={cn(
+                    "shrink-0 transition-colors",
+                    isActive
+                      ? "text-vitti-light"
+                      : "text-white/30 group-hover:text-white/60"
+                  )}
+                />
+                {!collapsed && (
+                  <span className="truncate leading-none">{item.label}</span>
+                )}
+              </Link>
+            );
+          })
+        ) : (
+          <div
+            className={cn(
+              "flex flex-col items-center gap-2 py-6",
+              collapsed ? "px-1" : "px-3"
+            )}
+          >
+            <LockKeyhole size={16} className="text-white/10" />
+            {!collapsed && (
+              <p className="text-[11px] text-white/15 font-light leading-relaxed text-center">
+                Nenhum módulo disponível.
+                <br />
+                Contate a equipe Vitti.
+              </p>
+            )}
+          </div>
+        )}
       </nav>
 
       {/* Bottom actions */}
       <div className="px-2 py-3 border-t border-white/5 space-y-0.5 shrink-0">
-        <Link
-          href="/admin"
-          title={collapsed ? "Admin" : undefined}
-          className={cn(
-            "flex items-center gap-3 rounded-lg text-sm font-light text-white/30 hover:text-white/60 hover:bg-white/5 transition-all border border-transparent",
-            collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"
-          )}
-        >
-          <Settings size={15} className="shrink-0" />
-          {!collapsed && <span>Admin</span>}
-        </Link>
-
-        <form action={signOut}>
-          <button
-            type="submit"
+        {isAdmin && (
+          <Link
+            href="/admin"
+            title={collapsed ? "Admin" : undefined}
             className={cn(
-              "w-full flex items-center gap-3 rounded-lg text-sm font-light text-white/30 hover:text-red-400/70 hover:bg-red-500/5 transition-all border border-transparent",
+              "flex items-center gap-3 rounded-lg text-sm font-light transition-all border",
+              pathname === "/admin" || pathname.startsWith("/admin/")
+                ? "bg-vitti-blue/15 text-vitti-light border-vitti-blue/20"
+                : "text-white/30 hover:text-white/60 hover:bg-white/5 border-transparent",
               collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"
             )}
           >
-            <LogOut size={15} className="shrink-0" />
-            {!collapsed && <span>Sair</span>}
-          </button>
-        </form>
+            <Settings size={15} className="shrink-0" />
+            {!collapsed && <span>Admin</span>}
+          </Link>
+        )}
+
+        <button
+          onClick={handleSignOut}
+          title={collapsed ? "Sair" : undefined}
+          className={cn(
+            "w-full flex items-center gap-3 rounded-lg text-sm font-light text-white/30 hover:text-red-400/70 hover:bg-red-500/5 transition-all border border-transparent",
+            collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"
+          )}
+        >
+          <LogOut size={15} className="shrink-0" />
+          {!collapsed && <span>Sair</span>}
+        </button>
       </div>
     </aside>
   );
