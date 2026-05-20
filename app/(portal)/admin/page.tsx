@@ -1,7 +1,9 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { WindsorPreviewPanel } from "@/components/admin/WindsorPreviewPanel";
+import { WindsorAccountMapping } from "@/components/admin/WindsorAccountMapping";
 import { getWindsorStatus } from "@/lib/integrations/windsor/client";
+import { loadActiveClients } from "@/lib/data/dashboards";
 import {
   Users,
   BarChart3,
@@ -25,6 +27,7 @@ const OTHER_MODULES = [
 
 export default async function AdminPage() {
   const windsorStatus = getWindsorStatus();
+  const { clients } = await loadActiveClients();
 
   return (
     <div className="space-y-8 max-w-5xl">
@@ -49,6 +52,9 @@ export default async function AdminPage() {
             windsorConfigured={windsorStatus.configured}
             maskedKey={windsorStatus.configured ? windsorStatus.maskedKey : undefined}
           />
+
+          {/* Windsor — mapeamento de contas por cliente */}
+          <WindsorAccountMapping clients={clients} />
 
           {/* Meta Ads */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.01]">
