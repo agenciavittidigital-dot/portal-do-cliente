@@ -1,37 +1,18 @@
 import "server-only";
 import type { WindsorApiResponse, WindsorStatus } from "./types";
 
-// TODO Sprint 6B: confirmar endpoint exato e parâmetros de paginação/filtro da Windsor
-// antes de ativar chamadas reais em produção.
-const WINDSOR_META_ENDPOINT = "https://connectors.windsor.ai/meta";
+// Conector unificado da Windsor AI
+const WINDSOR_ALL_ENDPOINT = "https://connectors.windsor.ai/all";
 
-// Campos solicitados à Windsor — espelho das colunas de performance_daily
-const WINDSOR_FIELDS = [
+// Campos mínimos confirmados pelo painel Windsor — Sprint 6C expandirá para o conjunto completo
+const WINDSOR_PREVIEW_FIELDS = [
   "date",
-  "account_id",
+  "datasource",
   "account_name",
-  "campaign_id",
-  "campaign_name",
-  "adset_id",
-  "adset_name",
-  "ad_id",
-  "ad_name",
-  "spend",
-  "impressions",
-  "reach",
+  "source",
+  "campaign",
   "clicks",
-  "ctr",
-  "cpc",
-  "cpm",
-  "messages_started",
-  "leads",
-  "purchases",
-  "purchase_value",
-  "roas",
-  "engagements",
-  "video_views_25",
-  "video_views_75",
-  "frequency",
+  "spend",
 ].join(",");
 
 // Verifica se WINDSOR_API_KEY está presente no servidor
@@ -49,23 +30,20 @@ export function getWindsorStatus(): WindsorStatus {
   return { configured: true, maskedKey: masked };
 }
 
-// Busca dados brutos da Windsor AI para o intervalo de datas fornecido.
-// ATENÇÃO: Esta função faz chamada HTTP real à Windsor.
-// Chamar apenas de forma manual/controlada em Sprint 6B após confirmação do endpoint.
-export async function fetchWindsorRawData(
-  dateStart: string,
-  dateEnd: string
-): Promise<WindsorApiResponse> {
+// Busca dados brutos da Windsor AI.
+// TODO Sprint 6C: adicionar params dateStart e dateEnd e substituir date_preset
+// por date_from/date_to para respeitar o período selecionado pelo usuário.
+export async function fetchWindsorRawData(): Promise<WindsorApiResponse> {
   const status = getWindsorStatus();
   if (!status.configured) {
     return { error: status.reason };
   }
 
-  const url = new URL(WINDSOR_META_ENDPOINT);
+  const url = new URL(WINDSOR_ALL_ENDPOINT);
   url.searchParams.set("api_key", process.env.WINDSOR_API_KEY!);
-  url.searchParams.set("fields", WINDSOR_FIELDS);
-  url.searchParams.set("date_from", dateStart);
-  url.searchParams.set("date_to", dateEnd);
+  url.searchParams.set("fields", WINDSOR_PREVIEW_FIELDS);
+  // TODO Sprint 6C: usar date_from=_dateStart&date_to=_dateEnd
+  url.searchParams.set("date_preset", "last_7d");
 
   try {
     const res = await fetch(url.toString(), {
@@ -75,7 +53,15 @@ export async function fetchWindsorRawData(
     });
 
     if (!res.ok) {
-      return { error: `Windsor respondeu com HTTP ${res.status}` };
+      // Lê o body para diagnóstico — sanitiza possível vazamento de chave
+      const rawBody = await res.text().catch(() => "");
+      const safeBody = rawBody
+        .replace(/api_key=[^\s&"']*/gi, "api_key=***")
+        .slice(0, 300);
+      return {
+        error: `Windsor respondeu com HTTP ${res.status}`,
+        errorDetail: safeBody || undefined,
+      };
     }
 
     return res.json() as Promise<WindsorApiResponse>;

@@ -1,14 +1,13 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { WindsorPreviewPanel } from "@/components/admin/WindsorPreviewPanel";
 import { getWindsorStatus } from "@/lib/integrations/windsor/client";
-import { cn } from "@/lib/utils";
 import {
   Users,
   BarChart3,
   FileText,
   CreditCard,
   Megaphone,
-  Plug,
   ScrollText,
   ShieldCheck,
   Target,
@@ -44,62 +43,40 @@ export default async function AdminPage() {
         <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase font-light mb-3">
           Integrações
         </p>
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.01] divide-y divide-white/[0.04]">
-
-          {/* Windsor AI */}
-          <div className="flex items-center justify-between px-5 py-4 gap-4 flex-wrap">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0">
-                <Plug size={14} className="text-vitti-light/30" />
-              </div>
-              <div>
-                <p className="text-xs font-light text-white/65">Windsor AI</p>
-                <p className="text-[10px] font-light text-white/25 mt-0.5">
-                  Fonte de dados de performance — conector Meta Ads
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span
-                className={cn(
-                  "text-[9px] font-light px-2.5 py-1 rounded-full border",
-                  windsorStatus.configured
-                    ? "text-emerald-400/60 border-emerald-400/20 bg-emerald-400/[0.05]"
-                    : "text-amber-400/50 border-amber-400/15 bg-amber-400/[0.04]"
-                )}
-              >
-                {windsorStatus.configured ? "Chave configurada" : "Chave ausente"}
-              </span>
-              <Badge label="Estrutura preparada" variant="info" />
-            </div>
-          </div>
+        <div className="space-y-3">
+          {/* Windsor AI — painel de preview interativo */}
+          <WindsorPreviewPanel
+            windsorConfigured={windsorStatus.configured}
+            maskedKey={windsorStatus.configured ? windsorStatus.maskedKey : undefined}
+          />
 
           {/* Meta Ads */}
-          <div className="flex items-center justify-between px-5 py-4 gap-4 flex-wrap">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0">
-                <Target size={14} className="text-vitti-light/30" />
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.01]">
+            <div className="flex items-center justify-between px-5 py-4 gap-4 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0">
+                  <Target size={14} className="text-vitti-light/30" />
+                </div>
+                <div>
+                  <p className="text-xs font-light text-white/65">Meta Ads</p>
+                  <p className="text-[10px] font-light text-white/25 mt-0.5">
+                    Via Windsor AI — dados em performance_daily
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs font-light text-white/65">Meta Ads</p>
-                <p className="text-[10px] font-light text-white/25 mt-0.5">
-                  Via Windsor AI — dados em performance_daily
-                </p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[9px] font-light px-2.5 py-1 rounded-full border border-white/[0.08] text-white/25 bg-white/[0.01]">
+                  Sincronização manual
+                </span>
+                <button
+                  disabled
+                  className="text-[9px] font-light px-3 py-1.5 rounded-full border border-white/[0.07] text-white/20 cursor-not-allowed select-none"
+                >
+                  Sincronizar — Em breve
+                </button>
               </div>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[9px] font-light px-2.5 py-1 rounded-full border border-white/[0.08] text-white/25 bg-white/[0.01]">
-                Sincronização manual
-              </span>
-              <button
-                disabled
-                className="text-[9px] font-light px-3 py-1.5 rounded-full border border-white/[0.07] text-white/20 cursor-not-allowed select-none"
-              >
-                Sincronizar — Em breve
-              </button>
             </div>
           </div>
-
         </div>
       </section>
 

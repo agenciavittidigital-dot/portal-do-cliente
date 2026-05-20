@@ -5,10 +5,15 @@
 // Métricas numéricas podem vir como number ou string dependendo do conector
 export interface WindsorRawRecord {
   date?: string | null;
+  // Campos retornados pelo conector /all (preview mínimo)
+  datasource?: string | null;
+  source?: string | null;
+  campaign?: string | null;       // Windsor usa 'campaign', não 'campaign_name'
+  // Campos do conjunto completo (Sprint 6C)
   account_id?: string | null;
   account_name?: string | null;
   campaign_id?: string | null;
-  campaign_name?: string | null;
+  campaign_name?: string | null;  // fallback — pode vir em outros conectores
   adset_id?: string | null;
   adset_name?: string | null;
   ad_id?: string | null;
@@ -68,6 +73,7 @@ export interface WindsorNormalizedRecord {
 export interface WindsorApiResponse {
   data?: WindsorRawRecord[];
   error?: string;
+  errorDetail?: string;   // trecho sanitizado do body HTTP em caso de erro
   [key: string]: unknown;
 }
 
@@ -82,5 +88,29 @@ export interface WindsorPreviewResult {
   recordCount: number;
   records: WindsorNormalizedRecord[];
   fetchedAt: string;
+  error?: string;
+}
+
+// Resposta segura da rota /api/admin/windsor/preview
+// Pode ser importada em Client Components — não contém dados sensíveis
+export interface WindsorPreviewApiResponse {
+  success: boolean;
+  totalRecords: number;
+  dateRange: { start: string; end: string };
+  sampleRecords: Array<{
+    date: string;
+    campaign_name: string | null;
+    spend: number;
+    clicks: number;
+  }>;
+  totals: {
+    spend: number;
+    impressions: number;
+    reach: number;
+    clicks: number;
+    messages_started: number;
+    leads: number;
+    purchases: number;
+  };
   error?: string;
 }

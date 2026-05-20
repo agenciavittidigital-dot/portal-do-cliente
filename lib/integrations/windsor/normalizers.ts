@@ -21,7 +21,8 @@ export function normalizeWindsorRecord(raw: WindsorRawRecord): WindsorNormalized
     account_id: safeStr(raw.account_id),
     account_name: safeStr(raw.account_name),
     campaign_id: safeStr(raw.campaign_id),
-    campaign_name: safeStr(raw.campaign_name),
+    // Windsor retorna 'campaign' no conector /all; 'campaign_name' é fallback para outros conectores
+    campaign_name: safeStr(raw.campaign ?? raw.campaign_name),
     adset_id: safeStr(raw.adset_id),
     adset_name: safeStr(raw.adset_name),
     ad_id: safeStr(raw.ad_id),

@@ -20,11 +20,15 @@ export async function previewWindsorPerformance(
 
   console.log("[windsor/preview] Chave Windsor presente. Buscando período:", dateStart, "→", dateEnd);
 
-  const response = await fetchWindsorRawData(dateStart, dateEnd);
+  // TODO Sprint 6C: passar dateStart e dateEnd quando fetchWindsorRawData suportar date_from/date_to
+  const response = await fetchWindsorRawData();
 
   if (response.error) {
-    console.error("[windsor/preview] Erro na busca:", response.error);
-    return { status, recordCount: 0, records: [], fetchedAt, error: response.error };
+    // Inclui errorDetail no log para diagnóstico — nunca inclui a api_key
+    const detail = response.errorDetail ? ` — ${response.errorDetail}` : "";
+    console.error("[windsor/preview] Erro na busca:", response.error + detail);
+    const fullError = response.error + (response.errorDetail ? ` — ${response.errorDetail}` : "");
+    return { status, recordCount: 0, records: [], fetchedAt, error: fullError };
   }
 
   if (!response.data?.length) {
@@ -42,8 +46,8 @@ export async function previewWindsorPerformance(
     console.log("[windsor/preview] Exemplo normalizado:", {
       date: sample.date,
       campaign_name: sample.campaign_name,
-      impressions: sample.impressions,
-      leads: sample.leads,
+      clicks: sample.clicks,
+      spend: sample.spend,
     });
   }
 
