@@ -1,10 +1,74 @@
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { BarChart3 } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { loadUserContext } from "@/lib/data/user-context";
+import {
+  loadActiveClients,
+  loadClientDashboards,
+} from "@/lib/data/dashboards";
+import { ClientSelector } from "@/components/metricas/ClientSelector";
+import { MetricasDashboard } from "@/components/metricas/MetricasDashboard";
 
-const channels = ["Meta Ads", "Google Ads", "SEO", "Social Media"];
+export default async function MetricasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ clientId?: string }>;
+}) {
+  const params = await searchParams;
 
-export default function MetricasPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const ctx = user ? await loadUserContext(user.id) : null;
+  const isAdmin = ctx?.isAdmin ?? false;
+
+  // ── Determina cliente alvo ────────────────────────────────────
+  // Admin: lista todos os clientes ativos, valida o ?clientId param.
+  // Client_user: usa o cliente vinculado ao contexto.
+
+  let targetClientId: string | null = null;
+
+  if (isAdmin) {
+    const { clients, loadError } = await loadActiveClients();
+    const requestedId = params.clientId ?? null;
+    const valid = requestedId
+      ? clients.some((c) => c.id === requestedId)
+      : false;
+
+    const dashboards =
+      valid && requestedId ? await loadClientDashboards(requestedId) : [];
+
+    if (valid) targetClientId = requestedId;
+
+    return (
+      <div className="space-y-6 max-w-6xl">
+        <div>
+          <h2 className="text-xl font-light text-white/90 tracking-wide">
+            Dados e Métricas
+          </h2>
+          <p className="text-sm text-white/25 mt-0.5 font-light">
+            Acompanhe a performance das suas campanhas por plataforma
+          </p>
+        </div>
+
+        <ClientSelector
+          clients={clients}
+          selectedClientId={targetClientId}
+          loadError={loadError}
+        />
+
+        {targetClientId && <MetricasDashboard dashboards={dashboards} />}
+      </div>
+    );
+  }
+
+  // ── Client_user: usa cliente do contexto ──────────────────────
+  targetClientId = ctx?.client?.id ?? null;
+
+  const dashboards = targetClientId
+    ? await loadClientDashboards(targetClientId)
+    : [];
+
   return (
     <div className="space-y-6 max-w-6xl">
       <div>
@@ -12,30 +76,22 @@ export default function MetricasPage() {
           Dados e Métricas
         </h2>
         <p className="text-sm text-white/25 mt-0.5 font-light">
-          Acompanhe sua performance em tempo real
+          Acompanhe a performance das suas campanhas por plataforma
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {channels.map((channel) => (
-          <Card key={channel}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>{channel}</CardTitle>
-                <Badge label="Em breve" variant="info" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-36 flex flex-col items-center justify-center gap-2 border border-dashed border-white/5 rounded-lg">
-                <BarChart3 size={22} className="text-white/8" />
-                <p className="text-white/15 text-xs font-light">
-                  Dados de {channel}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {targetClientId ? (
+        <MetricasDashboard dashboards={dashboards} />
+      ) : (
+        <div className="flex flex-col items-center justify-center py-20 gap-3 rounded-xl border border-dashed border-white/5">
+          <p className="text-sm font-light text-white/30">
+            Nenhum cliente vinculado à sua conta.
+          </p>
+          <p className="text-xs text-white/20 font-light">
+            Contate a equipe Vitti para vinculação.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

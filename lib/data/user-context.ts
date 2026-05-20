@@ -35,8 +35,9 @@ function coerceClient(raw: Record<string, unknown>): Client {
     id: String(raw.id ?? ""),
     name: String(raw.name ?? ""),
     slug: String(raw.slug ?? ""),
+    segment: raw.segment ? String(raw.segment) : null,
+    status: String(raw.status ?? ""),
     logo_url: raw.logo_url ? String(raw.logo_url) : null,
-    active: raw.active === true,
   };
 }
 
@@ -97,7 +98,7 @@ export async function loadUserContext(userId: string): Promise<UserContext> {
     if (clientUserRow?.client_id) {
       const { data: clientRaw } = await admin
         .from("clients")
-        .select("id, name, slug, logo_url, active")
+        .select("id, name, slug, segment, status, logo_url")
         .eq("id", clientUserRow.client_id)
         .maybeSingle();
 
