@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/Badge";
 import { WindsorPreviewPanel } from "@/components/admin/WindsorPreviewPanel";
 import { WindsorAccountMapping } from "@/components/admin/WindsorAccountMapping";
 import { WindsorSyncPanel } from "@/components/admin/WindsorSyncPanel";
+import { WindsorFieldsTestPanel } from "@/components/admin/WindsorFieldsTestPanel";
 import { getWindsorStatus } from "@/lib/integrations/windsor/client";
 import { loadActiveClients } from "@/lib/data/dashboards";
 import {
@@ -59,6 +60,9 @@ export default async function AdminPage() {
 
           {/* Windsor — sincronização manual para performance_daily */}
           <WindsorSyncPanel />
+
+          {/* Windsor — teste de campos avançados */}
+          <WindsorFieldsTestPanel />
 
           {/* Meta Ads — sincronização automática (futura) */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.01]">
