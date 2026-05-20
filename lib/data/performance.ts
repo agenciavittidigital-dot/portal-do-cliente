@@ -99,36 +99,71 @@ export async function loadPerformanceData(
       video_views_75: s("video_views_75"),
     };
 
-    // Processa linhas individuais com métricas derivadas por dia
-    const rows: PerformanceRow[] = rawRows
-      .map((raw) => {
-        const r = raw as Record<string, unknown>;
-        const spend = Number(r.spend) || 0;
-        const impressions = Number(r.impressions) || 0;
-        const reach = Number(r.reach) || 0;
-        const clicks = Number(r.clicks) || 0;
-        const leads = Number(r.leads) || 0;
-        return {
-          date: String(r.date),
+    // Agrega múltiplas linhas por data (uma por campanha após Windsor sync)
+    // em um único PerformanceRow por dia, somando métricas e recalculando derivadas.
+    // Isso garante que gráfico e tabela recebam sempre um ponto por data.
+    const byDate = new Map<string, PerformanceRow>();
+
+    for (const raw of rawRows) {
+      const r = raw as Record<string, unknown>;
+      const date = String(r.date);
+      const spend = Number(r.spend) || 0;
+      const impressions = Number(r.impressions) || 0;
+      const reach = Number(r.reach) || 0;
+      const clicks = Number(r.clicks) || 0;
+      const leads = Number(r.leads) || 0;
+      const messages_started = Number(r.messages_started) || 0;
+      const purchases = Number(r.purchases) || 0;
+      const purchase_value = Number(r.purchase_value) || 0;
+      const engagements = Number(r.engagements) || 0;
+      const video_views_25 = Number(r.video_views_25) || 0;
+      const video_views_75 = Number(r.video_views_75) || 0;
+
+      const existing = byDate.get(date);
+      if (existing) {
+        existing.spend += spend;
+        existing.impressions += impressions;
+        existing.reach += reach;
+        existing.clicks += clicks;
+        existing.leads += leads;
+        existing.messages_started += messages_started;
+        existing.purchases += purchases;
+        existing.purchase_value += purchase_value;
+        existing.engagements += engagements;
+        existing.video_views_25 += video_views_25;
+        existing.video_views_75 += video_views_75;
+        // Recalcula derivadas com os totais acumulados do dia
+        existing.ctr = existing.impressions > 0 ? (existing.clicks / existing.impressions) * 100 : null;
+        existing.cpc = existing.clicks > 0 ? existing.spend / existing.clicks : null;
+        existing.cpm = existing.impressions > 0 ? (existing.spend / existing.impressions) * 1000 : null;
+        existing.frequency = existing.reach > 0 ? existing.impressions / existing.reach : null;
+        existing.cost_per_lead = existing.leads > 0 ? existing.spend / existing.leads : null;
+      } else {
+        byDate.set(date, {
+          date,
           spend,
           impressions,
           reach,
           clicks,
-          messages_started: Number(r.messages_started) || 0,
+          messages_started,
           leads,
-          purchases: Number(r.purchases) || 0,
-          purchase_value: Number(r.purchase_value) || 0,
-          engagements: Number(r.engagements) || 0,
-          video_views_25: Number(r.video_views_25) || 0,
-          video_views_75: Number(r.video_views_75) || 0,
+          purchases,
+          purchase_value,
+          engagements,
+          video_views_25,
+          video_views_75,
           ctr: impressions > 0 ? (clicks / impressions) * 100 : null,
           cpc: clicks > 0 ? spend / clicks : null,
           cpm: impressions > 0 ? (spend / impressions) * 1000 : null,
           frequency: reach > 0 ? impressions / reach : null,
           cost_per_lead: leads > 0 ? spend / leads : null,
-        };
-      })
-      .sort((a, b) => a.date.localeCompare(b.date));
+        });
+      }
+    }
+
+    const rows: PerformanceRow[] = [...byDate.values()].sort((a, b) =>
+      a.date.localeCompare(b.date)
+    );
 
     return { summary, rows };
   } catch (err) {

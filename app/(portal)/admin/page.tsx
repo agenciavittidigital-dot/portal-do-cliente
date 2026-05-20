@@ -2,6 +2,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { WindsorPreviewPanel } from "@/components/admin/WindsorPreviewPanel";
 import { WindsorAccountMapping } from "@/components/admin/WindsorAccountMapping";
+import { WindsorSyncPanel } from "@/components/admin/WindsorSyncPanel";
 import { getWindsorStatus } from "@/lib/integrations/windsor/client";
 import { loadActiveClients } from "@/lib/data/dashboards";
 import {
@@ -56,7 +57,10 @@ export default async function AdminPage() {
           {/* Windsor — mapeamento de contas por cliente */}
           <WindsorAccountMapping clients={clients} />
 
-          {/* Meta Ads */}
+          {/* Windsor — sincronização manual para performance_daily */}
+          <WindsorSyncPanel />
+
+          {/* Meta Ads — sincronização automática (futura) */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.01]">
             <div className="flex items-center justify-between px-5 py-4 gap-4 flex-wrap">
               <div className="flex items-center gap-3">

@@ -1,0 +1,257 @@
+"use client";
+
+import { useState } from "react";
+import { Database, RefreshCw, AlertCircle, CheckCircle2, AlertTriangle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { WindsorSyncApiResponse } from "@/app/api/admin/windsor/sync/route";
+
+// ── Formatters ────────────────────────────────────────────────────────────────
+
+function fmtInt(v: number): string {
+  return new Intl.NumberFormat("pt-BR").format(Math.round(v));
+}
+
+function fmtCurrency(v: number): string {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(v);
+}
+
+function fmtDateBR(iso: string): string {
+  if (!iso) return "—";
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+
+// ── Stat card ─────────────────────────────────────────────────────────────────
+
+function Stat({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: string | number;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="bg-white/[0.02] rounded-lg border border-white/[0.04] px-3 py-2.5">
+      <p className="text-[8px] text-white/20 uppercase tracking-[0.15em] font-light">{label}</p>
+      <p
+        className={cn(
+          "text-sm font-light tabular-nums mt-1",
+          highlight ? "text-emerald-400/70" : "text-white/65"
+        )}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+export function WindsorSyncPanel() {
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<WindsorSyncApiResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSync() {
+    setLoading(true);
+    setResult(null);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/admin/windsor/sync", { method: "POST" });
+      const json: WindsorSyncApiResponse = await res.json();
+
+      if (!json.success) {
+        const msg = json.errorDetail
+          ? `${json.error ?? "Erro na sincronização."} — ${json.errorDetail}`
+          : (json.error ?? "Erro na sincronização.");
+        setError(msg);
+        return;
+      }
+
+      setResult(json);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Falha na requisição ao servidor.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-white/[0.06] bg-white/[0.01] divide-y divide-white/[0.04]">
+
+      {/* ── Header ────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-5 py-4 gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0">
+            <Database size={14} className="text-vitti-light/30" />
+          </div>
+          <div>
+            <p className="text-xs font-light text-white/65">
+              Sincronização Windsor → performance_daily
+            </p>
+            <p className="text-[10px] font-light text-white/25 mt-0.5">
+              Grava dados da Windsor apenas para contas mapeadas
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={handleSync}
+          disabled={loading}
+          className={cn(
+            "flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-[11px] font-light transition-all duration-150 select-none",
+            loading
+              ? "border-white/[0.07] text-white/20 cursor-not-allowed"
+              : "border-vitti-blue/30 text-vitti-light/80 bg-vitti-blue/[0.10] hover:bg-vitti-blue/[0.16] cursor-pointer"
+          )}
+        >
+          <RefreshCw size={10} className={cn("shrink-0", loading && "animate-spin")} />
+          {loading ? "Sincronizando..." : "Sincronizar dados mapeados"}
+        </button>
+      </div>
+
+      {/* ── Aviso ─────────────────────────────────────────────────── */}
+      <div className="px-5 py-3">
+        <div className="flex items-start gap-2 rounded-lg border border-amber-400/[0.12] bg-amber-400/[0.03] px-3.5 py-2.5">
+          <AlertTriangle size={11} className="text-amber-400/45 shrink-0 mt-0.5" />
+          <p className="text-[10px] font-light text-amber-400/50 leading-relaxed">
+            Somente contas mapeadas serão gravadas em{" "}
+            <span className="font-mono text-[9px]">performance_daily</span>. A sincronização é
+            idempotente — pode ser repetida sem duplicar dados.
+          </p>
+        </div>
+      </div>
+
+      {/* ── Conteúdo ──────────────────────────────────────────────── */}
+      <div className="px-5 py-4 space-y-4">
+
+        {/* Erro */}
+        {error && (
+          <div className="flex items-start gap-2.5 rounded-xl border border-red-500/15 bg-red-500/[0.04] px-4 py-3">
+            <AlertCircle size={13} className="text-red-400/50 shrink-0 mt-0.5" />
+            <p className="text-[11px] font-light text-red-400/60 leading-relaxed break-words">
+              {error}
+            </p>
+          </div>
+        )}
+
+        {/* Sucesso */}
+        {result && result.success && (
+          <div className="space-y-4">
+            {/* Badge de sucesso */}
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={12} className="text-emerald-400/50 shrink-0" />
+              <p className="text-[11px] font-light text-white/40">
+                Sincronização concluída ·{" "}
+                <span className="font-mono text-[9px] text-white/25">{result.datePreset}</span>
+              </p>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+              <Stat label="Buscados" value={fmtInt(result.totalFetched)} />
+              <Stat label="Mapeados" value={fmtInt(result.mappedRecords)} />
+              <Stat label="Agrupados" value={fmtInt(result.groupedRecords)} />
+              <Stat label="Ignorados" value={fmtInt(result.skippedUnmapped)} />
+              <Stat
+                label="Gravados"
+                value={fmtInt(result.upserted)}
+                highlight={result.upserted > 0}
+              />
+            </div>
+
+            {/* Contas não mapeadas */}
+            {result.unmappedAccounts.length > 0 && (
+              <div className="rounded-lg border border-white/[0.05] bg-white/[0.01] px-4 py-3 space-y-1.5">
+                <p className="text-[9px] text-white/[0.15] uppercase tracking-[0.15em] font-light">
+                  Contas ignoradas — sem mapeamento
+                </p>
+                <div className="space-y-1">
+                  {result.unmappedAccounts.map((name) => (
+                    <p key={name} className="text-[10px] font-light text-white/30">
+                      · {name}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Amostra gravada */}
+            {result.sampleSaved.length > 0 && (
+              <div>
+                <p className="text-[9px] text-white/[0.15] uppercase tracking-[0.15em] font-light mb-2">
+                  Amostra gravada ({result.sampleSaved.length} de {fmtInt(result.upserted)})
+                </p>
+                <div className="rounded-xl border border-white/[0.05] overflow-hidden">
+                  <div className="grid grid-cols-4 px-4 py-2 bg-white/[0.02] border-b border-white/[0.04]">
+                    {(["Data", "Conta", "Campanha", "Invest."] as const).map((h) => (
+                      <p
+                        key={h}
+                        className="text-[9px] text-white/20 uppercase tracking-[0.12em] font-light"
+                      >
+                        {h}
+                      </p>
+                    ))}
+                  </div>
+                  {result.sampleSaved.map((rec, i) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        "grid grid-cols-4 px-4 py-2.5 text-[10px] font-light tabular-nums items-center",
+                        i < result.sampleSaved.length - 1 && "border-b border-white/[0.03]"
+                      )}
+                    >
+                      <span className="text-white/40">{fmtDateBR(rec.date)}</span>
+                      <span className="text-white/35 truncate pr-2">{rec.accountName}</span>
+                      <span className="text-white/35 truncate pr-2">
+                        {rec.campaignName ?? "—"}
+                      </span>
+                      <span className="text-white/55">{fmtCurrency(rec.spend)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Nenhum dado da Windsor */}
+            {result.totalFetched === 0 && (
+              <p className="text-[11px] font-light text-white/[0.18]">
+                Nenhum dado retornado pela Windsor para o período atual.
+              </p>
+            )}
+
+            {/* Dados buscados mas nenhuma conta mapeada */}
+            {result.totalFetched > 0 && result.upserted === 0 && result.errors === 0 && (
+              <p className="text-[11px] font-light text-white/[0.18]">
+                Nenhuma conta com mapeamento ativo encontrada. Configure os mapeamentos acima antes
+                de sincronizar.
+              </p>
+            )}
+
+            {/* Erros parciais */}
+            {result.errors > 0 && (
+              <p className="text-[10px] font-light text-amber-400/50">
+                {fmtInt(result.errors)} registro{result.errors !== 1 ? "s" : ""} com erro. Verifique
+                os logs do servidor.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Estado inicial */}
+        {!result && !error && !loading && (
+          <p className="text-[11px] font-light text-white/[0.18] text-center py-2">
+            Clique em &quot;Sincronizar dados mapeados&quot; para iniciar.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
