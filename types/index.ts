@@ -108,3 +108,33 @@ export interface DashboardWithBlocks {
   dashboard: ClientDashboard;
   blocks: BlockWithMetrics[];
 }
+
+// ── Sprint 5: Performance diária ──────────────────────────────────────────────
+
+// Mapa de métricas agregadas: chave = coluna de performance_daily (ou derivada)
+export type PerformanceSummary = Record<string, number | null>;
+
+export interface PerformanceRow {
+  date: string;
+  spend: number;
+  impressions: number;
+  reach: number;
+  clicks: number;
+  messages_started: number;
+  leads: number;
+  purchases: number;
+  purchase_value: number;
+  engagements: number;
+  video_views_25: number;
+  video_views_75: number;
+  ctr: number | null;
+  cpc: number | null;
+  cpm: number | null;
+  frequency: number | null;
+  cost_per_lead: number | null;
+}
+
+export interface PerformanceData {
+  summary: PerformanceSummary;
+  rows: PerformanceRow[];
+}

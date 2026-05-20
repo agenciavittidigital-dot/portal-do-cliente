@@ -1,19 +1,33 @@
 import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
-import {
-  loadActiveClients,
-  loadClientDashboards,
-} from "@/lib/data/dashboards";
+import { loadActiveClients, loadClientDashboards } from "@/lib/data/dashboards";
+import { computeDateRange, loadPerformanceData } from "@/lib/data/performance";
 import { ClientSelector } from "@/components/metricas/ClientSelector";
 import { MetricasDashboard } from "@/components/metricas/MetricasDashboard";
 
 export default async function MetricasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ clientId?: string }>;
+  searchParams: Promise<{
+    clientId?: string;
+    period?: string;
+    startDate?: string;
+    endDate?: string;
+    view?: string;
+    analysis?: string;
+  }>;
 }) {
   const params = await searchParams;
 
+  // ── Parâmetros de filtro ──────────────────────────────────────
+  const period = params.period ?? "last_7_days";
+  const startDate = params.startDate ?? "";
+  const endDate = params.endDate ?? "";
+  const view = params.view ?? "campaign";
+  const analysis = params.analysis ?? "all";
+
+  const { start: perfStart, end: perfEnd } = computeDateRange(period, startDate, endDate);
+  // ── Auth ──────────────────────────────────────────────────────
   const supabase = await createClient();
   const {
     data: { user },
@@ -22,23 +36,29 @@ export default async function MetricasPage({
   const ctx = user ? await loadUserContext(user.id) : null;
   const isAdmin = ctx?.isAdmin ?? false;
 
-  // ── Determina cliente alvo ────────────────────────────────────
-  // Admin: lista todos os clientes ativos, valida o ?clientId param.
-  // Client_user: usa o cliente vinculado ao contexto.
+  const filterProps = {
+    initialPeriod: period,
+    initialView: view,
+    initialAnalysis: analysis,
+    initialStartDate: startDate,
+    initialEndDate: endDate,
+  };
 
-  let targetClientId: string | null = null;
-
+  // ── Admin ─────────────────────────────────────────────────────
   if (isAdmin) {
     const { clients, loadError } = await loadActiveClients();
     const requestedId = params.clientId ?? null;
-    const valid = requestedId
-      ? clients.some((c) => c.id === requestedId)
-      : false;
+    const valid = requestedId ? clients.some((c) => c.id === requestedId) : false;
 
     const dashboards =
       valid && requestedId ? await loadClientDashboards(requestedId) : [];
 
-    if (valid) targetClientId = requestedId;
+    const performance =
+      valid && requestedId
+        ? await loadPerformanceData(requestedId, "meta_ads", perfStart, perfEnd)
+        : null;
+
+const targetClientId = valid ? requestedId : null;
 
     return (
       <div className="space-y-6 max-w-6xl">
@@ -57,17 +77,27 @@ export default async function MetricasPage({
           loadError={loadError}
         />
 
-        {targetClientId && <MetricasDashboard dashboards={dashboards} />}
+        {targetClientId && (
+          <MetricasDashboard
+            dashboards={dashboards}
+            performance={performance}
+            {...filterProps}
+          />
+        )}
       </div>
     );
   }
 
-  // ── Client_user: usa cliente do contexto ──────────────────────
-  targetClientId = ctx?.client?.id ?? null;
+  // ── Client_user ───────────────────────────────────────────────
+  const targetClientId = ctx?.client?.id ?? null;
 
   const dashboards = targetClientId
     ? await loadClientDashboards(targetClientId)
     : [];
+
+  const performance = targetClientId
+    ? await loadPerformanceData(targetClientId, "meta_ads", perfStart, perfEnd)
+    : null;
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -81,7 +111,11 @@ export default async function MetricasPage({
       </div>
 
       {targetClientId ? (
-        <MetricasDashboard dashboards={dashboards} />
+        <MetricasDashboard
+          dashboards={dashboards}
+          performance={performance}
+          {...filterProps}
+        />
       ) : (
         <div className="flex flex-col items-center justify-center py-20 gap-3 rounded-xl border border-dashed border-white/5">
           <p className="text-sm font-light text-white/30">

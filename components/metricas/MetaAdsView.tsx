@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BarChart3, Calendar, ChevronDown, Filter, Layers } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Calendar, ChevronDown, Filter, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { BlockMetric, BlockWithMetrics } from "@/types";
+import type { BlockMetric, BlockWithMetrics, PerformanceData, PerformanceSummary } from "@/types";
+import { MetaAdsChart } from "./MetaAdsChart";
+import { MetaAdsTable } from "./MetaAdsTable";
 
 // ── Opções dos filtros ────────────────────────────────────────────────────────
 
@@ -34,12 +37,6 @@ const PERIOD_OPTIONS = [
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function unitPlaceholder(unit: string | null): string {
-  if (unit === "percentage") return "—%";
-  if (unit === "currency") return "R$ —";
-  return "—";
-}
-
 function findBlock(blocks: BlockWithMetrics[], fragment: string): BlockWithMetrics | undefined {
   const lower = fragment.toLowerCase();
   return blocks.find((b) => b.block.title?.toLowerCase().includes(lower));
@@ -52,6 +49,48 @@ function kpiGridCols(count: number): string {
   return "grid-cols-1";
 }
 
+// Resolve o valor de performance para um metric usando a seguinte prioridade:
+// 1. junction.source_field (override específico do bloco)
+// 2. catalog.default_source_field (mapeamento padrão no catálogo)
+// 3. catalog.key (fallback)
+function resolveMetricValue(
+  metric: BlockMetric,
+  performance: PerformanceSummary | null
+): number | null {
+  if (!performance) return null;
+  const key =
+    metric.source_field ??
+    metric.catalog?.default_source_field ??
+    metric.catalog?.key ??
+    null;
+  if (!key) return null;
+  const val = performance[key];
+  return typeof val === "number" ? val : null;
+}
+
+function formatValue(value: number, format: string | null): string {
+  switch (format) {
+    case "currency":
+    case "currency_brl":
+      return new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(value);
+    case "percentage":
+      return `${value.toFixed(2)}%`;
+    case "integer":
+      return new Intl.NumberFormat("pt-BR").format(Math.round(value));
+    case "decimal":
+      return value.toFixed(2);
+    default:
+      if (value < 10) return value.toFixed(2);
+      return new Intl.NumberFormat("pt-BR").format(Math.round(value));
+  }
+}
+
+// URL update sem refetch (view, analysis)
 function updateUrlParams(params: Record<string, string>) {
   if (typeof window === "undefined") return;
   const url = new URL(window.location.href);
@@ -72,7 +111,7 @@ function resolvePeriodLabel(period: string, start: string, end: string): string 
   return PERIOD_OPTIONS.find((o) => o.value === period)?.label ?? "Período";
 }
 
-// ── Dropdown genérico ─────────────────────────────────────────────────────────
+// ── Dropdown genérico (view / analysis) ──────────────────────────────────────
 
 function FilterDropdown({
   icon: Icon,
@@ -91,9 +130,7 @@ function FilterDropdown({
   useEffect(() => {
     if (!open) return;
     function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     }
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -125,10 +162,7 @@ function FilterDropdown({
           {options.map((opt) => (
             <button
               key={opt.value}
-              onClick={() => {
-                onChange(opt.value);
-                setOpen(false);
-              }}
+              onClick={() => { onChange(opt.value); setOpen(false); }}
               className={cn(
                 "w-full text-left px-4 py-2.5 text-[11px] font-light transition-colors",
                 value === opt.value
@@ -145,7 +179,7 @@ function FilterDropdown({
   );
 }
 
-// ── Filtro de período ─────────────────────────────────────────────────────────
+// ── Filtro de período (com refetch via router) ────────────────────────────────
 
 function PeriodFilter({
   period,
@@ -164,9 +198,7 @@ function PeriodFilter({
   useEffect(() => {
     if (!open) return;
     function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     }
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -254,39 +286,81 @@ function PeriodFilter({
 
 // ── KPI cards ─────────────────────────────────────────────────────────────────
 
-function KpiCard({ metric }: { metric: BlockMetric }) {
+function KpiCard({
+  metric,
+  performance,
+}: {
+  metric: BlockMetric;
+  performance: PerformanceSummary | null | undefined;
+}) {
   const name = metric.display_name ?? metric.catalog?.name ?? "Métrica";
-  const unit = metric.catalog?.unit ?? null;
+  const value = resolveMetricValue(metric, performance ?? null);
+  const format = metric.catalog?.format ?? null;
+  const hasData = value !== null;
+
   return (
     <div className="bg-white/[0.02] rounded-xl border border-white/5 p-4 flex flex-col gap-2">
       <p className="text-[9px] text-white/25 tracking-[0.15em] uppercase font-light truncate">
         {name}
       </p>
-      <p className="text-2xl font-light text-white/20 tabular-nums leading-none mt-1">
-        {unitPlaceholder(unit)}
+      <p
+        className={cn(
+          "text-2xl font-light tabular-nums leading-none mt-1",
+          hasData ? "text-white/85" : "text-white/20"
+        )}
+      >
+        {hasData ? formatValue(value!, format) : "—"}
       </p>
-      <span className="text-[9px] text-amber-400/40 font-light">Aguardando dados</span>
+      <span
+        className={cn(
+          "text-[9px] font-light",
+          hasData ? "text-emerald-400/50" : "text-amber-400/40"
+        )}
+      >
+        {hasData ? "Atualizado" : "Aguardando dados"}
+      </span>
     </div>
   );
 }
 
-function KpiCardSm({ metric }: { metric: BlockMetric }) {
+function KpiCardSm({
+  metric,
+  performance,
+}: {
+  metric: BlockMetric;
+  performance: PerformanceSummary | null | undefined;
+}) {
   const name = metric.display_name ?? metric.catalog?.name ?? "Métrica";
-  const unit = metric.catalog?.unit ?? null;
+  const value = resolveMetricValue(metric, performance ?? null);
+  const format = metric.catalog?.format ?? null;
+  const hasData = value !== null;
+
   return (
     <div className="bg-white/[0.02] rounded-lg border border-white/5 p-3 flex flex-col gap-1.5">
       <p className="text-[9px] text-white/20 tracking-[0.15em] uppercase font-light truncate">
         {name}
       </p>
-      <p className="text-xl font-light text-white/[0.14] tabular-nums leading-none">
-        {unitPlaceholder(unit)}
+      <p
+        className={cn(
+          "text-xl font-light tabular-nums leading-none",
+          hasData ? "text-white/80" : "text-white/[0.14]"
+        )}
+      >
+        {hasData ? formatValue(value!, format) : "—"}
       </p>
-      <span className="text-[8px] text-amber-400/30 font-light">Aguardando dados</span>
+      <span
+        className={cn(
+          "text-[8px] font-light",
+          hasData ? "text-emerald-400/40" : "text-amber-400/30"
+        )}
+      >
+        {hasData ? "Atualizado" : "Aguardando dados"}
+      </span>
     </div>
   );
 }
 
-// ── Placeholders de conteúdo ──────────────────────────────────────────────────
+// ── Placeholder de métricas vazias ────────────────────────────────────────────
 
 function EmptyMetrics() {
   return (
@@ -296,95 +370,34 @@ function EmptyMetrics() {
   );
 }
 
-function ChartAreaPlaceholder() {
-  return (
-    <div className="relative h-full min-h-[200px] rounded-xl border border-white/[0.06] bg-white/[0.01] overflow-hidden flex flex-col items-center justify-center gap-2">
-      <svg
-        className="absolute inset-0 w-full h-full"
-        viewBox="0 0 400 200"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        <defs>
-          <linearGradient id="metaAreaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#638ACC" stopOpacity="0.07" />
-            <stop offset="100%" stopColor="#638ACC" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        {[50, 100, 150].map((y) => (
-          <line
-            key={y}
-            x1="0"
-            y1={y}
-            x2="400"
-            y2={y}
-            stroke="white"
-            strokeOpacity="0.03"
-            strokeWidth="1"
-          />
-        ))}
-        <path
-          d="M0,160 C60,150 100,130 160,118 C220,108 270,82 320,72 C360,65 385,56 400,52 L400,200 L0,200 Z"
-          fill="url(#metaAreaGrad)"
-        />
-        <path
-          d="M0,160 C60,150 100,130 160,118 C220,108 270,82 320,72 C360,65 385,56 400,52"
-          fill="none"
-          stroke="#638ACC"
-          strokeOpacity="0.22"
-          strokeWidth="1.5"
-        />
-      </svg>
-      <BarChart3 size={16} className="text-white/[0.07] relative z-10" />
-      <p className="text-[10px] text-white/[0.10] font-light relative z-10">
-        Aguardando sincronização
-      </p>
-    </div>
-  );
-}
-
-function TablePlaceholder() {
-  const cols = ["Campanha", "Investimento", "Impressões", "Cliques", "CTR", "CPC"];
-  const skeleton = [
-    [65, 40, 55, 35, 45, 30],
-    [80, 55, 45, 50, 35, 40],
-    [50, 45, 60, 40, 50, 35],
-    [70, 35, 50, 45, 40, 55],
-  ];
-  return (
-    <div className="rounded-xl border border-white/5 bg-white/[0.01] overflow-hidden">
-      <div className="grid grid-cols-6 border-b border-white/[0.06] px-4 py-2.5 bg-white/[0.02]">
-        {cols.map((col) => (
-          <p key={col} className="text-[9px] text-white/20 tracking-[0.12em] uppercase font-light">
-            {col}
-          </p>
-        ))}
-      </div>
-      {skeleton.map((row, i) => (
-        <div
-          key={i}
-          className={cn(
-            "grid grid-cols-6 px-4 py-3 gap-x-4",
-            i < skeleton.length - 1 && "border-b border-white/[0.03]"
-          )}
-        >
-          {row.map((w, j) => (
-            <div key={j} className="h-1.5 rounded-full bg-white/[0.05]" style={{ width: `${w}%` }} />
-          ))}
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // ── MetaAdsView ───────────────────────────────────────────────────────────────
 
-export function MetaAdsView({ blocks }: { blocks: BlockWithMetrics[] }) {
-  const [view, setView] = useState("campaign");
-  const [analysis, setAnalysis] = useState("all");
-  const [period, setPeriod] = useState("last_7_days");
-  const [customStart, setCustomStart] = useState("");
-  const [customEnd, setCustomEnd] = useState("");
+interface MetaAdsViewProps {
+  blocks: BlockWithMetrics[];
+  performance?: PerformanceData | null;
+  initialPeriod?: string;
+  initialView?: string;
+  initialAnalysis?: string;
+  initialStartDate?: string;
+  initialEndDate?: string;
+}
+
+export function MetaAdsView({
+  blocks,
+  performance,
+  initialPeriod = "last_7_days",
+  initialView = "campaign",
+  initialAnalysis = "all",
+  initialStartDate = "",
+  initialEndDate = "",
+}: MetaAdsViewProps) {
+  const router = useRouter();
+
+  const [view, setView] = useState(initialView);
+  const [analysis, setAnalysis] = useState(initialAnalysis);
+  const [period, setPeriod] = useState(initialPeriod);
+  const [customStart, setCustomStart] = useState(initialStartDate);
+  const [customEnd, setCustomEnd] = useState(initialEndDate);
 
   function handleViewChange(v: string) {
     setView(v);
@@ -396,17 +409,28 @@ export function MetaAdsView({ blocks }: { blocks: BlockWithMetrics[] }) {
     updateUrlParams({ analysis: v });
   }
 
+  // Mudança de período: usa router.replace para acionar refetch no servidor
   function handlePeriodChange(p: string, start: string, end: string) {
     setPeriod(p);
     setCustomStart(start);
     setCustomEnd(end);
-    const params: Record<string, string> = { period: p };
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("period", p);
     if (p === "custom") {
-      if (start) params.startDate = start;
-      if (end) params.endDate = end;
+      if (start) url.searchParams.set("startDate", start);
+      else url.searchParams.delete("startDate");
+      if (end) url.searchParams.set("endDate", end);
+      else url.searchParams.delete("endDate");
+    } else {
+      url.searchParams.delete("startDate");
+      url.searchParams.delete("endDate");
     }
-    updateUrlParams(params);
+    router.replace(url.pathname + url.search, { scroll: false });
   }
+
+  const summary = performance?.summary ?? null;
+  const rows = performance?.rows ?? [];
 
   const overviewBlock =
     findBlock(blocks, "visão geral") ?? findBlock(blocks, "visao geral");
@@ -434,18 +458,8 @@ export function MetaAdsView({ blocks }: { blocks: BlockWithMetrics[] }) {
           </h3>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <FilterDropdown
-            icon={Layers}
-            options={VIEW_OPTIONS}
-            value={view}
-            onChange={handleViewChange}
-          />
-          <FilterDropdown
-            icon={Filter}
-            options={ANALYSIS_OPTIONS}
-            value={analysis}
-            onChange={handleAnalysisChange}
-          />
+          <FilterDropdown icon={Layers} options={VIEW_OPTIONS} value={view} onChange={handleViewChange} />
+          <FilterDropdown icon={Filter} options={ANALYSIS_OPTIONS} value={analysis} onChange={handleAnalysisChange} />
           <PeriodFilter
             period={period}
             customStart={customStart}
@@ -455,7 +469,7 @@ export function MetaAdsView({ blocks }: { blocks: BlockWithMetrics[] }) {
         </div>
       </div>
 
-      {/* ── Alcance e entrega (Visão Geral) ─────────────────────── */}
+      {/* ── Alcance e entrega ───────────────────────────────────── */}
       {overviewBlock && (
         <section>
           <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase font-light mb-3">
@@ -464,7 +478,7 @@ export function MetaAdsView({ blocks }: { blocks: BlockWithMetrics[] }) {
           {overviewBlock.metrics.length > 0 ? (
             <div className={cn("grid gap-3", kpiGridCols(overviewBlock.metrics.length))}>
               {overviewBlock.metrics.map((m) => (
-                <KpiCard key={m.id} metric={m} />
+                <KpiCard key={m.id} metric={m} performance={summary} />
               ))}
             </div>
           ) : (
@@ -482,7 +496,9 @@ export function MetaAdsView({ blocks }: { blocks: BlockWithMetrics[] }) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="flex flex-col gap-3">
               {performanceBlock.metrics.length > 0 ? (
-                performanceBlock.metrics.map((m) => <KpiCardSm key={m.id} metric={m} />)
+                performanceBlock.metrics.map((m) => (
+                  <KpiCardSm key={m.id} metric={m} performance={summary} />
+                ))
               ) : (
                 <div className="h-32 flex items-center justify-center rounded-xl border border-dashed border-white/[0.04]">
                   <p className="text-[10px] text-white/[0.10] font-light">Sem métricas</p>
@@ -490,7 +506,7 @@ export function MetaAdsView({ blocks }: { blocks: BlockWithMetrics[] }) {
               )}
             </div>
             <div className="md:col-span-2">
-              <ChartAreaPlaceholder />
+              <MetaAdsChart rows={rows} />
             </div>
           </div>
         </section>
@@ -505,7 +521,7 @@ export function MetaAdsView({ blocks }: { blocks: BlockWithMetrics[] }) {
           {conversionsBlock.metrics.length > 0 ? (
             <div className={cn("grid gap-3", kpiGridCols(conversionsBlock.metrics.length))}>
               {conversionsBlock.metrics.map((m) => (
-                <KpiCard key={m.id} metric={m} />
+                <KpiCard key={m.id} metric={m} performance={summary} />
               ))}
             </div>
           ) : (
@@ -517,7 +533,7 @@ export function MetaAdsView({ blocks }: { blocks: BlockWithMetrics[] }) {
       {/* ── Divisor ─────────────────────────────────────────────── */}
       <div className="border-t border-white/[0.04]" />
 
-      {/* ── Análise detalhada (blocos secundários) ──────────────── */}
+      {/* ── Análise detalhada ───────────────────────────────────── */}
       {otherBlocks.length > 0 && (
         <section>
           <p className="text-[9px] text-white/[0.12] tracking-[0.2em] uppercase font-light mb-3">
@@ -525,17 +541,14 @@ export function MetaAdsView({ blocks }: { blocks: BlockWithMetrics[] }) {
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {otherBlocks.map(({ block, metrics }) => (
-              <div
-                key={block.id}
-                className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-4"
-              >
+              <div key={block.id} className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-4">
                 <p className="text-[9px] text-white/[0.15] tracking-[0.15em] uppercase font-light mb-3">
                   {block.title ?? "Bloco"}
                 </p>
                 {metrics.length > 0 ? (
                   <div className="grid grid-cols-2 gap-2">
                     {metrics.map((m) => (
-                      <KpiCardSm key={m.id} metric={m} />
+                      <KpiCardSm key={m.id} metric={m} performance={summary} />
                     ))}
                   </div>
                 ) : (
@@ -549,12 +562,12 @@ export function MetaAdsView({ blocks }: { blocks: BlockWithMetrics[] }) {
         </section>
       )}
 
-      {/* ── Campanhas ativas ────────────────────────────────────── */}
+      {/* ── Dados por dia ───────────────────────────────────────── */}
       <section>
         <p className="text-[9px] text-white/[0.12] tracking-[0.2em] uppercase font-light mb-3">
-          Campanhas ativas
+          Dados por dia
         </p>
-        <TablePlaceholder />
+        <MetaAdsTable rows={rows} />
       </section>
     </div>
   );

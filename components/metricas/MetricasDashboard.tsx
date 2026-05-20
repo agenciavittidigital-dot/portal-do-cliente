@@ -5,7 +5,7 @@ import { Target, Search, Globe, Users, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardBlockCard } from "./DashboardBlockCard";
 import { MetaAdsView } from "./MetaAdsView";
-import type { DashboardWithBlocks, PlatformKey } from "@/types";
+import type { DashboardWithBlocks, PerformanceData, PlatformKey } from "@/types";
 
 interface PlatformDef {
   key: PlatformKey;
@@ -22,9 +22,23 @@ const PLATFORMS: PlatformDef[] = [
 
 interface Props {
   dashboards: DashboardWithBlocks[];
+  performance?: PerformanceData | null;
+  initialPeriod?: string;
+  initialView?: string;
+  initialAnalysis?: string;
+  initialStartDate?: string;
+  initialEndDate?: string;
 }
 
-export function MetricasDashboard({ dashboards }: Props) {
+export function MetricasDashboard({
+  dashboards,
+  performance,
+  initialPeriod,
+  initialView,
+  initialAnalysis,
+  initialStartDate,
+  initialEndDate,
+}: Props) {
   // Inicia no default_channel do primeiro dashboard (ex: "meta_ads")
   const initialChannel = (dashboards[0]?.dashboard.platform ?? "meta_ads") as PlatformKey;
   const [selected, setSelected] = useState<PlatformKey>(initialChannel);
@@ -95,7 +109,15 @@ export function MetricasDashboard({ dashboards }: Props) {
       {/* ── Blocos do canal ───────────────────────────────────── */}
       {blocksForChannel.length > 0 ? (
         selected === "meta_ads" ? (
-          <MetaAdsView blocks={blocksForChannel} />
+          <MetaAdsView
+            blocks={blocksForChannel}
+            performance={performance}
+            initialPeriod={initialPeriod}
+            initialView={initialView}
+            initialAnalysis={initialAnalysis}
+            initialStartDate={initialStartDate}
+            initialEndDate={initialEndDate}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {blocksForChannel.map(({ block, metrics }) => (
