@@ -13,6 +13,7 @@ export interface WindsorSyncApiResponse {
   upserted: number;
   errors: number;
   datePreset: string;
+  fieldsSynced: string[];
   unmappedAccounts: string[];
   sampleSaved: SyncSample[];
   error?: string;
@@ -28,6 +29,7 @@ function emptyBase(): Omit<WindsorSyncApiResponse, "success" | "error" | "errorD
     upserted: 0,
     errors: 0,
     datePreset: "last_7d",
+    fieldsSynced: [],
     unmappedAccounts: [],
     sampleSaved: [],
   };
@@ -50,6 +52,7 @@ function toResponse(result: SyncResult): WindsorSyncApiResponse {
     upserted: result.upserted,
     errors: result.errors,
     datePreset: result.datePreset,
+    fieldsSynced: result.fieldsSynced,
     unmappedAccounts: result.unmappedAccounts,
     sampleSaved: result.sampleSaved,
     ...(result.error ? { error: result.error } : {}),

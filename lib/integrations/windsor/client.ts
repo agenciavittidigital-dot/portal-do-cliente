@@ -4,7 +4,7 @@ import type { WindsorApiResponse, WindsorStatus } from "./types";
 // Conector unificado da Windsor AI
 const WINDSOR_ALL_ENDPOINT = "https://connectors.windsor.ai/all";
 
-// Campos mínimos confirmados pelo painel Windsor — Sprint 6C expandirá para o conjunto completo
+// Campos mínimos para o painel de preview
 const WINDSOR_PREVIEW_FIELDS = [
   "date",
   "datasource",
@@ -14,6 +14,31 @@ const WINDSOR_PREVIEW_FIELDS = [
   "clicks",
   "spend",
 ].join(",");
+
+// Campos completos confirmados pela Sprint 6E-A — usados na sincronização
+export const WINDSOR_SYNC_FIELDS = [
+  "date",
+  "datasource",
+  "account_name",
+  "source",
+  "campaign",
+  "clicks",
+  "spend",
+  "impressions",
+  "reach",
+  "frequency",
+  "ctr",
+  "cpc",
+  "cpm",
+  "leads",
+  "messages_started",
+  "purchases",
+  "purchase_value",
+  "roas",
+  "engagements",
+  "video_views_25",
+  "video_views_75",
+] as const;
 
 // Verifica se WINDSOR_API_KEY está presente no servidor
 // Nunca expõe a chave completa — retorna versão mascarada para logs/UI
@@ -30,10 +55,7 @@ export function getWindsorStatus(): WindsorStatus {
   return { configured: true, maskedKey: masked };
 }
 
-// Busca dados brutos da Windsor AI.
-// TODO Sprint 6C: adicionar params dateStart e dateEnd e substituir date_preset
-// por date_from/date_to para respeitar o período selecionado pelo usuário.
-export async function fetchWindsorRawData(): Promise<WindsorApiResponse> {
+async function fetchWindsor(fields: string): Promise<WindsorApiResponse> {
   const status = getWindsorStatus();
   if (!status.configured) {
     return { error: status.reason };
@@ -41,8 +63,7 @@ export async function fetchWindsorRawData(): Promise<WindsorApiResponse> {
 
   const url = new URL(WINDSOR_ALL_ENDPOINT);
   url.searchParams.set("api_key", process.env.WINDSOR_API_KEY!);
-  url.searchParams.set("fields", WINDSOR_PREVIEW_FIELDS);
-  // TODO Sprint 6C: usar date_from=_dateStart&date_to=_dateEnd
+  url.searchParams.set("fields", fields);
   url.searchParams.set("date_preset", "last_7d");
 
   try {
@@ -53,7 +74,6 @@ export async function fetchWindsorRawData(): Promise<WindsorApiResponse> {
     });
 
     if (!res.ok) {
-      // Lê o body para diagnóstico — sanitiza possível vazamento de chave
       const rawBody = await res.text().catch(() => "");
       const safeBody = rawBody
         .replace(/api_key=[^\s&"']*/gi, "api_key=***")
@@ -69,4 +89,14 @@ export async function fetchWindsorRawData(): Promise<WindsorApiResponse> {
     const msg = err instanceof Error ? err.message : "Erro desconhecido";
     return { error: `Falha na conexão com Windsor: ${msg}` };
   }
+}
+
+// Preview: campos mínimos, sem gravar nada
+export async function fetchWindsorRawData(): Promise<WindsorApiResponse> {
+  return fetchWindsor(WINDSOR_PREVIEW_FIELDS);
+}
+
+// Sync: conjunto completo de campos confirmados pela Sprint 6E-A
+export async function fetchWindsorSyncData(): Promise<WindsorApiResponse> {
+  return fetchWindsor(WINDSOR_SYNC_FIELDS.join(","));
 }

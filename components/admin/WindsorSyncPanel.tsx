@@ -167,6 +167,25 @@ export function WindsorSyncPanel() {
               />
             </div>
 
+            {/* Campos sincronizados */}
+            {result.fieldsSynced.length > 0 && (
+              <div>
+                <p className="text-[9px] text-white/[0.15] uppercase tracking-[0.15em] font-light mb-2">
+                  Campos salvos em performance_daily
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {result.fieldsSynced.map((f) => (
+                    <span
+                      key={f}
+                      className="text-[8px] font-mono px-1.5 py-0.5 rounded border border-white/[0.07] text-white/30 bg-white/[0.01]"
+                    >
+                      {f}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Contas não mapeadas */}
             {result.unmappedAccounts.length > 0 && (
               <div className="rounded-lg border border-white/[0.05] bg-white/[0.01] px-4 py-3 space-y-1.5">
@@ -190,8 +209,8 @@ export function WindsorSyncPanel() {
                   Amostra gravada ({result.sampleSaved.length} de {fmtInt(result.upserted)})
                 </p>
                 <div className="rounded-xl border border-white/[0.05] overflow-hidden">
-                  <div className="grid grid-cols-4 px-4 py-2 bg-white/[0.02] border-b border-white/[0.04]">
-                    {(["Data", "Conta", "Campanha", "Invest."] as const).map((h) => (
+                  <div className="grid grid-cols-6 px-4 py-2 bg-white/[0.02] border-b border-white/[0.04]">
+                    {(["Data", "Conta", "Campanha", "Invest.", "Impress.", "Leads"] as const).map((h) => (
                       <p
                         key={h}
                         className="text-[9px] text-white/20 uppercase tracking-[0.12em] font-light"
@@ -204,7 +223,7 @@ export function WindsorSyncPanel() {
                     <div
                       key={i}
                       className={cn(
-                        "grid grid-cols-4 px-4 py-2.5 text-[10px] font-light tabular-nums items-center",
+                        "grid grid-cols-6 px-4 py-2.5 text-[10px] font-light tabular-nums items-center",
                         i < result.sampleSaved.length - 1 && "border-b border-white/[0.03]"
                       )}
                     >
@@ -214,6 +233,8 @@ export function WindsorSyncPanel() {
                         {rec.campaignName ?? "—"}
                       </span>
                       <span className="text-white/55">{fmtCurrency(rec.spend)}</span>
+                      <span className="text-white/40">{fmtInt(rec.impressions)}</span>
+                      <span className="text-white/40">{fmtInt(rec.leads)}</span>
                     </div>
                   ))}
                 </div>

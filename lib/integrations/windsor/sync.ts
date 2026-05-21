@@ -1,5 +1,5 @@
 import "server-only";
-import { fetchWindsorRawData } from "./client";
+import { fetchWindsorSyncData, WINDSOR_SYNC_FIELDS } from "./client";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -40,8 +40,18 @@ interface AggregatedRecord {
   accountName: string;
   campaignName: string | null;
   campaignId: string;
+  // Métricas somáveis
   spend: number;
   clicks: number;
+  impressions: number;
+  reach: number;
+  leads: number;
+  messages_started: number;
+  purchases: number;
+  purchase_value: number;
+  engagements: number;
+  video_views_25: number;
+  video_views_75: number;
   groupedCount: number;
   rawSample: Record<string, unknown>;
 }
@@ -52,6 +62,8 @@ export interface SyncSample {
   campaignName: string | null;
   spend: number;
   clicks: number;
+  impressions: number;
+  leads: number;
 }
 
 export interface SyncResult {
@@ -63,6 +75,7 @@ export interface SyncResult {
   upserted: number;
   errors: number;
   datePreset: string;
+  fieldsSynced: string[];
   unmappedAccounts: string[];
   sampleSaved: SyncSample[];
   error?: string;
@@ -81,12 +94,13 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
     upserted: 0,
     errors: 0,
     datePreset: "last_7d",
+    fieldsSynced: [...WINDSOR_SYNC_FIELDS],
     unmappedAccounts: [],
     sampleSaved: [],
   };
 
-  // ── 1. Fetch Windsor ──────────────────────────────────────────────────────
-  const response = await fetchWindsorRawData();
+  // ── 1. Fetch Windsor (conjunto completo de campos) ────────────────────────
+  const response = await fetchWindsorSyncData();
 
   if (response.error) {
     const detail = response.errorDetail ? ` — ${response.errorDetail}` : "";
@@ -172,9 +186,18 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
 
     const existing = aggregated.get(key);
     if (existing) {
-      // Múltiplos registros Windsor para a mesma linha → soma métricas
+      // Múltiplos registros Windsor para a mesma linha → soma métricas somáveis
       existing.spend += safeNum(raw.spend);
       existing.clicks += safeNum(raw.clicks);
+      existing.impressions += safeNum(raw.impressions);
+      existing.reach += safeNum(raw.reach);
+      existing.leads += safeNum(raw.leads);
+      existing.messages_started += safeNum(raw.messages_started);
+      existing.purchases += safeNum(raw.purchases);
+      existing.purchase_value += safeNum(raw.purchase_value);
+      existing.engagements += safeNum(raw.engagements);
+      existing.video_views_25 += safeNum(raw.video_views_25);
+      existing.video_views_75 += safeNum(raw.video_views_75);
       existing.groupedCount++;
     } else {
       aggregated.set(key, {
@@ -185,6 +208,15 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
         campaignId,
         spend: safeNum(raw.spend),
         clicks: safeNum(raw.clicks),
+        impressions: safeNum(raw.impressions),
+        reach: safeNum(raw.reach),
+        leads: safeNum(raw.leads),
+        messages_started: safeNum(raw.messages_started),
+        purchases: safeNum(raw.purchases),
+        purchase_value: safeNum(raw.purchase_value),
+        engagements: safeNum(raw.engagements),
+        video_views_25: safeNum(raw.video_views_25),
+        video_views_75: safeNum(raw.video_views_75),
         groupedCount: 1,
         rawSample: raw as Record<string, unknown>,
       });
@@ -205,7 +237,12 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
   const rows: Record<string, unknown>[] = [];
 
   for (const rec of aggregated.values()) {
+    // Métricas derivadas — calculadas dos totais agrupados
     const cpc = rec.clicks > 0 ? rec.spend / rec.clicks : 0;
+    const cpm = rec.impressions > 0 ? (rec.spend / rec.impressions) * 1000 : 0;
+    const ctr = rec.impressions > 0 ? (rec.clicks / rec.impressions) * 100 : 0;
+    const frequency = rec.reach > 0 ? rec.impressions / rec.reach : 0;
+    const roas = rec.spend > 0 ? rec.purchase_value / rec.spend : 0;
 
     rows.push({
       client_id: rec.integration.clientId,
@@ -222,20 +259,20 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
       ad_name: null,
       spend: rec.spend,
       clicks: rec.clicks,
-      impressions: 0,
-      reach: 0,
-      ctr: 0,
+      impressions: rec.impressions,
+      reach: rec.reach,
+      frequency,
+      ctr,
       cpc,
-      cpm: 0,
-      messages_started: 0,
-      leads: 0,
-      purchases: 0,
-      purchase_value: 0,
-      roas: 0,
-      engagements: 0,
-      video_views_25: 0,
-      video_views_75: 0,
-      frequency: 0,
+      cpm,
+      leads: rec.leads,
+      messages_started: rec.messages_started,
+      purchases: rec.purchases,
+      purchase_value: rec.purchase_value,
+      roas,
+      engagements: rec.engagements,
+      video_views_25: rec.video_views_25,
+      video_views_75: rec.video_views_75,
       raw_data: {
         windsor_raw_sample: rec.rawSample,
         sync_meta: {
@@ -244,6 +281,7 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
           integration_id: rec.integration.integrationId,
           matched_by: "account_name",
           grouped_count: rec.groupedCount,
+          fields_synced: WINDSOR_SYNC_FIELDS,
         },
       },
       updated_at: syncedAt,
@@ -281,6 +319,8 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
     campaignName: r.campaignName,
     spend: r.spend,
     clicks: r.clicks,
+    impressions: r.impressions,
+    leads: r.leads,
   }));
 
   return { ...base, success: true };
