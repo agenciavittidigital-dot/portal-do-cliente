@@ -20,11 +20,11 @@ import {
 
 const ACTIVE_MODULES = [
   { label: "Clientes", icon: Users, description: "Gerenciar clientes e contratos", href: "/admin/clientes" },
+  { label: "Dashboards", icon: BarChart3, description: "Configurar dashboards e métricas por cliente", href: "/admin/dashboards" },
 ];
 
 const OTHER_MODULES = [
   { label: "Usuários", icon: ShieldCheck, description: "Controle de acesso e permissões" },
-  { label: "Métricas", icon: BarChart3, description: "Dashboards e visualizações" },
   { label: "Relatórios", icon: FileText, description: "Geração e gestão de relatórios" },
   { label: "Financeiro", icon: CreditCard, description: "Pagamentos e cobranças" },
   { label: "Comunicados", icon: Megaphone, description: "Mensagens e notificações para clientes" },
