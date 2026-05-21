@@ -4,6 +4,7 @@ import { WindsorPreviewPanel } from "@/components/admin/WindsorPreviewPanel";
 import { WindsorAccountMapping } from "@/components/admin/WindsorAccountMapping";
 import { WindsorSyncPanel } from "@/components/admin/WindsorSyncPanel";
 import { WindsorFieldsTestPanel } from "@/components/admin/WindsorFieldsTestPanel";
+import { WindsorConversionTestPanel } from "@/components/admin/WindsorConversionTestPanel";
 import { getWindsorStatus } from "@/lib/integrations/windsor/client";
 import { loadActiveClients } from "@/lib/data/dashboards";
 import Link from "next/link";
@@ -21,10 +22,10 @@ import {
 const ACTIVE_MODULES = [
   { label: "Clientes", icon: Users, description: "Gerenciar clientes e contratos", href: "/admin/clientes" },
   { label: "Dashboards", icon: BarChart3, description: "Configurar dashboards e métricas por cliente", href: "/admin/dashboards" },
+  { label: "Usuários", icon: ShieldCheck, description: "Perfis, vínculos e permissões de acesso", href: "/admin/usuarios" },
 ];
 
 const OTHER_MODULES = [
-  { label: "Usuários", icon: ShieldCheck, description: "Controle de acesso e permissões" },
   { label: "Relatórios", icon: FileText, description: "Geração e gestão de relatórios" },
   { label: "Financeiro", icon: CreditCard, description: "Pagamentos e cobranças" },
   { label: "Comunicados", icon: Megaphone, description: "Mensagens e notificações para clientes" },
@@ -67,6 +68,9 @@ export default async function AdminPage() {
 
           {/* Windsor — teste de campos avançados */}
           <WindsorFieldsTestPanel />
+
+          {/* Windsor — diagnóstico de campos de conversão */}
+          <WindsorConversionTestPanel />
 
           {/* Meta Ads — sincronização automática (futura) */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.01]">
