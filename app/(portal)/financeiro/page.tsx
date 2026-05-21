@@ -1,21 +1,64 @@
+import { createClient } from "@/lib/supabase/server";
+import { loadUserContext } from "@/lib/data/user-context";
+import { resolveClientForUser, listClientInvoices } from "@/lib/data/invoices-client";
+import type { ClientInvoiceRow } from "@/lib/data/invoices-client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import {
   CreditCard,
   FileText,
-  Download,
-  Copy,
+  ExternalLink,
   Barcode,
-  AlertCircle,
+  Bell,
+  Clock,
 } from "lucide-react";
+import Link from "next/link";
 
-const invoices = [
-  { ref: "NF-e 000.001", period: "Abr 2025", amount: "—" },
-  { ref: "NF-e 000.002", period: "Mar 2025", amount: "—" },
-  { ref: "NF-e 000.003", period: "Fev 2025", amount: "—" },
-];
+function formatCurrency(amount: number | null): string {
+  if (amount == null) return "—";
+  return amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
 
-export default function FinanceiroPage() {
+function formatDate(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleDateString("pt-BR");
+}
+
+function statusLabel(status: ClientInvoiceRow["status"]): string {
+  if (status === "pendente") return "Pendente";
+  if (status === "cancelada") return "Cancelada";
+  return "Emitida";
+}
+
+function statusVariant(
+  status: ClientInvoiceRow["status"]
+): "success" | "warning" | "default" {
+  if (status === "emitida") return "success";
+  if (status === "pendente") return "warning";
+  return "default";
+}
+
+export default async function FinanceiroPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const ctx = user ? await loadUserContext(user.id) : null;
+  const isAdmin = ctx?.isAdmin ?? false;
+
+  let invoices: ClientInvoiceRow[] = [];
+  let clientFound = false;
+
+  if (user && !isAdmin) {
+    const clientId = await resolveClientForUser(user.id);
+    if (clientId) {
+      clientFound = true;
+      invoices = await listClientInvoices(clientId);
+    }
+  }
+
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Header */}
@@ -28,33 +71,120 @@ export default function FinanceiroPage() {
         </p>
       </div>
 
-      {/* Summary — 2 cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Admin notice */}
+      {isAdmin && (
         <Card>
-          <CardHeader>
-            <CardTitle>Próximo Vencimento</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-light text-white/70">—</p>
-            <Badge label="Aguardando dados" variant="default" className="mt-2" />
+          <CardContent className="py-5">
+            <div className="flex items-center gap-3">
+              <CreditCard size={14} className="text-vitti-light/40 shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-light text-white/60">
+                  Você está autenticado como administrador Vitti.
+                </p>
+                <p className="text-xs text-white/25 font-light mt-0.5">
+                  O painel de NFs dos clientes fica na área administrativa.
+                </p>
+              </div>
+              <Link
+                href="/admin/financeiro"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-vitti-blue/30 text-[11px] font-light text-vitti-light/70 hover:border-vitti-blue/50 hover:text-vitti-light transition-all"
+              >
+                <ExternalLink size={11} />
+                Admin Financeiro
+              </Link>
+            </div>
           </CardContent>
         </Card>
+      )}
 
+      {/* Client with no linked client */}
+      {!isAdmin && !clientFound && (
+        <Card>
+          <CardContent className="py-8 text-center">
+            <CreditCard size={20} className="text-white/10 mx-auto mb-3" />
+            <p className="text-sm font-light text-white/30">
+              Nenhum cliente vinculado à sua conta.
+            </p>
+            <p className="text-xs text-white/15 font-light mt-1">
+              Entre em contato com a Vitti Digital.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Notas Fiscais — real data */}
+      {!isAdmin && clientFound && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Status Atual</CardTitle>
-              <AlertCircle size={13} className="text-white/15" />
+              <div className="flex items-center gap-2">
+                <FileText size={13} className="text-vitti-light/30" />
+                <CardTitle>Notas Fiscais</CardTitle>
+              </div>
+              <Badge label={`${invoices.length} NF${invoices.length !== 1 ? "s" : ""}`} variant="info" />
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-light text-white/70">—</p>
-            <Badge label="Aguardando dados" variant="info" className="mt-2" />
+            {invoices.length === 0 ? (
+              <div className="py-8 text-center">
+                <FileText size={20} className="text-white/10 mx-auto mb-3" />
+                <p className="text-sm font-light text-white/25">
+                  Nenhuma nota fiscal registrada ainda.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {invoices.map((nf) => (
+                  <div
+                    key={nf.id}
+                    className="flex items-center justify-between p-3.5 rounded-lg border border-white/5 hover:border-white/8 hover:bg-white/[0.02] transition-all"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <FileText size={14} className="text-vitti-light/25 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-light text-white/70 truncate">
+                          {nf.title}
+                        </p>
+                        <p className="text-[11px] text-white/25 font-light mt-0.5">
+                          {nf.competence}
+                          {nf.issuedAt ? ` · ${formatDate(nf.issuedAt)}` : ""}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0 ml-4">
+                      <span className="text-sm font-light text-white/40">
+                        {formatCurrency(nf.amount)}
+                      </span>
+                      <Badge
+                        label={statusLabel(nf.status)}
+                        variant={statusVariant(nf.status)}
+                      />
+                      {nf.nfUrl ? (
+                        <a
+                          href={nf.nfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="Ver nota fiscal"
+                          className="p-1.5 text-white/25 hover:text-vitti-light/60 transition-colors"
+                        >
+                          <ExternalLink size={13} />
+                        </a>
+                      ) : (
+                        <span className="p-1.5 text-white/10">
+                          <ExternalLink size={13} />
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
-      </div>
+      )}
 
-      {/* Pagamentos & Boletos */}
+      {/* Em breve — Pagamentos & Boletos */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -62,121 +192,42 @@ export default function FinanceiroPage() {
               <Barcode size={13} className="text-vitti-light/30" />
               <CardTitle>Pagamentos & Boletos</CardTitle>
             </div>
-            <Badge label="Em desenvolvimento" variant="info" />
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {/* Boleto placeholder row */}
-          <div className="rounded-lg border border-white/8 p-4 space-y-3">
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div className="space-y-2.5">
-                <div className="flex items-center gap-2">
-                  <CreditCard size={13} className="text-vitti-light/30 shrink-0" />
-                  <span className="text-[10px] font-light text-white/35 uppercase tracking-[0.15em]">
-                    Referência — Maio/2025
-                  </span>
-                </div>
-                <div className="flex items-end gap-6">
-                  <div>
-                    <p className="text-[10px] text-white/20 font-light uppercase tracking-wider mb-0.5">
-                      Valor
-                    </p>
-                    <p className="text-xl font-light text-white/40">—</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-white/20 font-light uppercase tracking-wider mb-0.5">
-                      Vencimento
-                    </p>
-                    <p className="text-sm font-light text-white/40">—</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col items-end gap-2.5 shrink-0">
-                <Badge label="Aguardando" variant="default" />
-                <div className="flex gap-2">
-                  <button
-                    disabled
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-light text-white/20 border border-white/5 opacity-50 cursor-not-allowed"
-                  >
-                    <Copy size={11} />
-                    Copiar código
-                  </button>
-                  <button
-                    disabled
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-light text-white/20 border border-white/5 opacity-50 cursor-not-allowed"
-                  >
-                    <Download size={11} />
-                    PDF
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Barcode decorative */}
-            <div
-              className="h-7 rounded opacity-[0.05]"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(90deg, white 0px, white 2px, transparent 2px, transparent 5px, white 5px, white 6px, transparent 6px, transparent 10px, white 10px, white 13px, transparent 13px, transparent 16px)",
-              }}
-            />
-          </div>
-
-          <p className="text-center text-[11px] text-white/15 font-light pt-1">
-            Integração de cobranças em desenvolvimento
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Notas Fiscais */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <FileText size={13} className="text-vitti-light/30" />
-              <CardTitle>Notas Fiscais</CardTitle>
-            </div>
-            <Badge label="Em desenvolvimento" variant="info" />
+            <Badge label="Em breve" variant="default" />
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            {invoices.map((nf) => (
-              <div
-                key={nf.ref}
-                className="flex items-center justify-between p-3.5 rounded-lg border border-white/5 hover:border-white/8 hover:bg-white/[0.02] transition-all cursor-default"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <FileText size={14} className="text-vitti-light/25 shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-light text-white/60 truncate">
-                      {nf.ref}
-                    </p>
-                    <p className="text-[11px] text-white/25 font-light mt-0.5">
-                      {nf.period}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 shrink-0 ml-4">
-                  <span className="text-sm font-light text-white/30">{nf.amount}</span>
-                  <Badge label="Aguardando" variant="default" />
-                  <button
-                    aria-label="Baixar nota fiscal"
-                    className="p-1.5 text-white/15 hover:text-vitti-light/50 transition-colors cursor-not-allowed"
-                    disabled
-                  >
-                    <Download size={13} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="text-center text-[11px] text-white/15 mt-4 font-light">
-            Dados de exemplo — integração em desenvolvimento
+          <p className="text-[11px] text-white/20 font-light text-center py-4">
+            Emissão de boletos e acompanhamento de pagamentos em desenvolvimento.
           </p>
         </CardContent>
       </Card>
+
+      {/* Em breve — Histórico */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Card className="opacity-50">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Clock size={13} className="text-vitti-light/25" />
+              <CardTitle>Histórico de Pagamentos</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-[11px] text-white/15 font-light">Em breve</p>
+          </CardContent>
+        </Card>
+
+        <Card className="opacity-50">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Bell size={13} className="text-vitti-light/25" />
+              <CardTitle>Alertas Financeiros</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-[11px] text-white/15 font-light">Em breve</p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

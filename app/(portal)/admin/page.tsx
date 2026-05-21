@@ -23,11 +23,11 @@ const ACTIVE_MODULES = [
   { label: "Clientes", icon: Users, description: "Gerenciar clientes e contratos", href: "/admin/clientes" },
   { label: "Dashboards", icon: BarChart3, description: "Configurar dashboards e métricas por cliente", href: "/admin/dashboards" },
   { label: "Usuários", icon: ShieldCheck, description: "Perfis, vínculos e permissões de acesso", href: "/admin/usuarios" },
+  { label: "Financeiro", icon: CreditCard, description: "Notas fiscais manuais por cliente", href: "/admin/financeiro" },
 ];
 
 const OTHER_MODULES = [
   { label: "Relatórios", icon: FileText, description: "Geração e gestão de relatórios" },
-  { label: "Financeiro", icon: CreditCard, description: "Pagamentos e cobranças" },
   { label: "Comunicados", icon: Megaphone, description: "Mensagens e notificações para clientes" },
   { label: "Logs", icon: ScrollText, description: "Auditoria e histórico de atividades" },
 ];
