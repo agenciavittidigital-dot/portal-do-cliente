@@ -6,6 +6,7 @@ import { WindsorSyncPanel } from "@/components/admin/WindsorSyncPanel";
 import { WindsorFieldsTestPanel } from "@/components/admin/WindsorFieldsTestPanel";
 import { getWindsorStatus } from "@/lib/integrations/windsor/client";
 import { loadActiveClients } from "@/lib/data/dashboards";
+import Link from "next/link";
 import {
   Users,
   BarChart3,
@@ -17,8 +18,11 @@ import {
   Target,
 } from "lucide-react";
 
+const ACTIVE_MODULES = [
+  { label: "Clientes", icon: Users, description: "Gerenciar clientes e contratos", href: "/admin/clientes" },
+];
+
 const OTHER_MODULES = [
-  { label: "Clientes", icon: Users, description: "Gerenciar clientes e contratos" },
   { label: "Usuários", icon: ShieldCheck, description: "Controle de acesso e permissões" },
   { label: "Métricas", icon: BarChart3, description: "Dashboards e visualizações" },
   { label: "Relatórios", icon: FileText, description: "Geração e gestão de relatórios" },
@@ -94,23 +98,47 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      {/* ── Outros módulos ───────────────────────────────────────── */}
+      {/* ── Módulos ativos ───────────────────────────────────────── */}
       <section>
         <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase font-light mb-3">
           Módulos
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {ACTIVE_MODULES.map((mod) => {
+            const Icon = mod.icon;
+            return (
+              <Link key={mod.label} href={mod.href}>
+                <Card className="hover:border-vitti-blue/20 hover:bg-vitti-dark/60 transition-all cursor-pointer h-full">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Icon size={15} className="text-vitti-light/50" />
+                        <CardTitle>{mod.label}</CardTitle>
+                      </div>
+                      <Badge label="Ativo" variant="success" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-[11px] text-white/30 font-light leading-relaxed">
+                      {mod.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+
           {OTHER_MODULES.map((mod) => {
             const Icon = mod.icon;
             return (
               <Card
                 key={mod.label}
-                className="hover:border-white/10 hover:bg-vitti-dark/60 transition-all cursor-pointer"
+                className="opacity-60 cursor-default"
               >
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Icon size={15} className="text-vitti-light/40" />
+                      <Icon size={15} className="text-vitti-light/25" />
                       <CardTitle>{mod.label}</CardTitle>
                     </div>
                     <Badge label="Em breve" variant="default" />
