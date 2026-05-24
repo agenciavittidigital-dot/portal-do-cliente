@@ -7,16 +7,17 @@ import type { InvoiceStatus } from "./invoices-admin";
 export interface ClientInvoiceRow {
   id: string;
   title: string;
-  competence: string;
-  issuedAt: string | null;
-  status: InvoiceStatus;
+  description: string | null;
+  referenceMonth: string | null;
   amount: number | null;
-  nfUrl: string | null;
-  notes: string | null;
+  invoiceNumber: string | null;
+  issuedAt: string | null;
+  filePath: string;
+  fileName: string | null;
+  status: InvoiceStatus;
 }
 
 // ── resolveClientForUser ───────────────────────────────────────────────────────
-// Lookup direto usando profile_id (schema real de client_users)
 
 export async function resolveClientForUser(authUserId: string): Promise<string | null> {
   const admin = mkAdmin();
@@ -44,7 +45,9 @@ export async function listClientInvoices(clientId: string): Promise<ClientInvoic
   const admin = mkAdmin();
   const { data, error } = await admin
     .from("invoices")
-    .select("id, title, competence, issued_at, status, amount, nf_url, notes")
+    .select(
+      "id, title, description, reference_month, amount, invoice_number, issued_at, file_path, file_name, status"
+    )
     .eq("client_id", clientId)
     .order("created_at", { ascending: false });
 
@@ -56,12 +59,16 @@ export async function listClientInvoices(clientId: string): Promise<ClientInvoic
   return (data ?? []).map((r: Record<string, unknown>) => ({
     id: String(r.id ?? ""),
     title: String(r.title ?? ""),
-    competence: String(r.competence ?? ""),
-    issuedAt: r.issued_at ? String(r.issued_at) : null,
-    status:
-      r.status === "pendente" || r.status === "cancelada" ? r.status : "emitida",
+    description: r.description ? String(r.description) : null,
+    referenceMonth: r.reference_month ? String(r.reference_month) : null,
     amount: r.amount != null ? Number(r.amount) : null,
-    nfUrl: r.nf_url ? String(r.nf_url) : null,
-    notes: r.notes ? String(r.notes) : null,
+    invoiceNumber: r.invoice_number ? String(r.invoice_number) : null,
+    issuedAt: r.issued_at ? String(r.issued_at) : null,
+    filePath: String(r.file_path ?? ""),
+    fileName: r.file_name ? String(r.file_name) : null,
+    status:
+      r.status === "pending" || r.status === "cancelled"
+        ? (r.status as InvoiceStatus)
+        : "issued",
   }));
 }

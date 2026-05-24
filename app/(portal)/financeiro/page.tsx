@@ -2,12 +2,14 @@ import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
 import { resolveClientForUser, listClientInvoices } from "@/lib/data/invoices-client";
 import type { ClientInvoiceRow } from "@/lib/data/invoices-client";
+import { getSignedDownloadUrl } from "@/lib/storage/portal-files";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import {
   CreditCard,
   FileText,
   ExternalLink,
+  Download,
   Barcode,
   Bell,
   Clock,
@@ -25,17 +27,32 @@ function formatDate(iso: string | null): string {
   return d.toLocaleDateString("pt-BR");
 }
 
+function formatReferenceMonth(dateStr: string | null): string {
+  if (!dateStr) return "—";
+  // date from DB is YYYY-MM-DD
+  const parts = dateStr.split("-");
+  if (parts.length >= 2) {
+    const months = [
+      "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+      "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+    ];
+    const month = months[parseInt(parts[1], 10) - 1] ?? parts[1];
+    return `${month}/${parts[0]}`;
+  }
+  return dateStr;
+}
+
 function statusLabel(status: ClientInvoiceRow["status"]): string {
-  if (status === "pendente") return "Pendente";
-  if (status === "cancelada") return "Cancelada";
+  if (status === "pending") return "Pendente";
+  if (status === "cancelled") return "Cancelada";
   return "Emitida";
 }
 
 function statusVariant(
   status: ClientInvoiceRow["status"]
 ): "success" | "warning" | "default" {
-  if (status === "emitida") return "success";
-  if (status === "pendente") return "warning";
+  if (status === "issued") return "success";
+  if (status === "pending") return "warning";
   return "default";
 }
 
@@ -49,6 +66,7 @@ export default async function FinanceiroPage() {
   const isAdmin = ctx?.isAdmin ?? false;
 
   let invoices: ClientInvoiceRow[] = [];
+  const downloadUrls: Record<string, string | null> = {};
   let clientFound = false;
 
   if (user && !isAdmin) {
@@ -56,6 +74,15 @@ export default async function FinanceiroPage() {
     if (clientId) {
       clientFound = true;
       invoices = await listClientInvoices(clientId);
+      await Promise.all(
+        invoices.map(async (inv) => {
+          try {
+            downloadUrls[inv.id] = await getSignedDownloadUrl(inv.filePath, 3600);
+          } catch {
+            downloadUrls[inv.id] = null;
+          }
+        })
+      );
     }
   }
 
@@ -112,7 +139,7 @@ export default async function FinanceiroPage() {
         </Card>
       )}
 
-      {/* Notas Fiscais — real data */}
+      {/* Notas Fiscais */}
       {!isAdmin && clientFound && (
         <Card>
           <CardHeader>
@@ -121,7 +148,10 @@ export default async function FinanceiroPage() {
                 <FileText size={13} className="text-vitti-light/30" />
                 <CardTitle>Notas Fiscais</CardTitle>
               </div>
-              <Badge label={`${invoices.length} NF${invoices.length !== 1 ? "s" : ""}`} variant="info" />
+              <Badge
+                label={`${invoices.length} NF${invoices.length !== 1 ? "s" : ""}`}
+                variant="info"
+              />
             </div>
           </CardHeader>
           <CardContent>
@@ -134,50 +164,59 @@ export default async function FinanceiroPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {invoices.map((nf) => (
-                  <div
-                    key={nf.id}
-                    className="flex items-center justify-between p-3.5 rounded-lg border border-white/5 hover:border-white/8 hover:bg-white/[0.02] transition-all"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <FileText size={14} className="text-vitti-light/25 shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-light text-white/70 truncate">
-                          {nf.title}
-                        </p>
-                        <p className="text-[11px] text-white/25 font-light mt-0.5">
-                          {nf.competence}
-                          {nf.issuedAt ? ` · ${formatDate(nf.issuedAt)}` : ""}
-                        </p>
+                {invoices.map((nf) => {
+                  const url = downloadUrls[nf.id] ?? null;
+                  return (
+                    <div
+                      key={nf.id}
+                      className="flex items-center justify-between p-3.5 rounded-lg border border-white/5 hover:border-white/8 hover:bg-white/[0.02] transition-all"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <FileText size={14} className="text-vitti-light/25 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-light text-white/70 truncate">
+                            {nf.title}
+                          </p>
+                          <p className="text-[11px] text-white/25 font-light mt-0.5">
+                            {formatReferenceMonth(nf.referenceMonth)}
+                            {nf.issuedAt ? ` · ${formatDate(nf.issuedAt)}` : ""}
+                            {nf.invoiceNumber ? ` · NF ${nf.invoiceNumber}` : ""}
+                          </p>
+                          {nf.description && (
+                            <p className="text-[10px] text-white/20 font-light mt-0.5 truncate max-w-xs">
+                              {nf.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 shrink-0 ml-4">
+                        <span className="text-sm font-light text-white/40">
+                          {formatCurrency(nf.amount)}
+                        </span>
+                        <Badge
+                          label={statusLabel(nf.status)}
+                          variant={statusVariant(nf.status)}
+                        />
+                        {url ? (
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="Baixar nota fiscal"
+                            className="p-1.5 text-white/25 hover:text-vitti-light/60 transition-colors"
+                          >
+                            <Download size={13} />
+                          </a>
+                        ) : (
+                          <span className="p-1.5 text-white/10">
+                            <Download size={13} />
+                          </span>
+                        )}
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-3 shrink-0 ml-4">
-                      <span className="text-sm font-light text-white/40">
-                        {formatCurrency(nf.amount)}
-                      </span>
-                      <Badge
-                        label={statusLabel(nf.status)}
-                        variant={statusVariant(nf.status)}
-                      />
-                      {nf.nfUrl ? (
-                        <a
-                          href={nf.nfUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label="Ver nota fiscal"
-                          className="p-1.5 text-white/25 hover:text-vitti-light/60 transition-colors"
-                        >
-                          <ExternalLink size={13} />
-                        </a>
-                      ) : (
-                        <span className="p-1.5 text-white/10">
-                          <ExternalLink size={13} />
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>

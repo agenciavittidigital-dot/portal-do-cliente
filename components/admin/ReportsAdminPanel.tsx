@@ -11,57 +11,49 @@ import {
   Loader2,
   Download,
   Pencil,
-  Upload,
+  Eye,
+  EyeOff,
+  Archive,
   AlertCircle,
   RefreshCw,
+  Upload,
 } from "lucide-react";
-import type { AdminInvoiceRow, InvoiceStatus } from "@/lib/data/invoices-admin";
+import type { AdminReportRow, ReportStatus } from "@/lib/data/reports-admin";
 import type { AdminClientRow } from "@/lib/data/clients-admin";
-import type { InvoiceListResponse, InvoiceCreateResponse } from "@/app/api/admin/finance/invoices/route";
-import type { InvoicePatchResponse } from "@/app/api/admin/finance/invoices/[id]/route";
+import type { ReportListResponse, ReportCreateResponse } from "@/app/api/admin/reports/route";
+import type { ReportPatchResponse } from "@/app/api/admin/reports/[id]/route";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
+// DB values: draft | published | archived
+// UI labels (Portuguese)
 
-const STATUS_LABELS: Record<InvoiceStatus, string> = {
-  issued:    "Emitida",
-  pending:   "Pendente",
-  cancelled: "Cancelada",
+const STATUS_LABELS: Record<ReportStatus, string> = {
+  draft:     "Rascunho",
+  published: "Publicado",
+  archived:  "Arquivado",
 };
 
-const STATUS_STYLES: Record<InvoiceStatus, string> = {
-  issued:    "border-emerald-400/30 text-emerald-400/70 bg-emerald-400/5",
-  pending:   "border-amber-400/30 text-amber-400/70 bg-amber-400/5",
-  cancelled: "border-white/[0.08] text-white/25 bg-white/[0.02]",
+const STATUS_STYLES: Record<ReportStatus, string> = {
+  published: "border-emerald-400/30 text-emerald-400/70 bg-emerald-400/5",
+  draft:     "border-amber-400/30 text-amber-400/70 bg-amber-400/5",
+  archived:  "border-white/[0.08] text-white/25 bg-white/[0.02]",
+};
+
+const STATUS_ICONS: Record<ReportStatus, React.ElementType> = {
+  published: Eye,
+  draft:     EyeOff,
+  archived:  Archive,
 };
 
 const ACCEPTED_TYPES = "application/pdf,image/png,image/jpeg";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-function formatCurrency(amount: number | null): string {
-  if (amount === null) return "—";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(amount);
-}
-
-function formatDate(date: string | null): string {
-  if (!date) return "—";
-  const parts = date.split("T")[0].split("-");
+function formatDate(iso: string): string {
+  if (!iso) return "—";
+  const parts = iso.split("T")[0].split("-");
   if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-  return date;
-}
-
-function formatReferenceMonth(dateStr: string | null): string {
-  if (!dateStr) return "—";
-  const parts = dateStr.split("-");
-  if (parts.length >= 2) {
-    const months = [
-      "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-      "Jul", "Ago", "Set", "Out", "Nov", "Dez",
-    ];
-    const month = months[parseInt(parts[1], 10) - 1] ?? parts[1];
-    return `${month}/${parts[0]}`;
-  }
-  return dateStr;
+  return iso;
 }
 
 function formatFileSize(bytes: number | null): string {
@@ -87,21 +79,23 @@ export function BackToAdmin() {
 
 // ── StatusBadge ────────────────────────────────────────────────────────────────
 
-function StatusBadge({ status }: { status: InvoiceStatus }) {
+function StatusBadge({ status }: { status: ReportStatus }) {
+  const Icon = STATUS_ICONS[status];
   return (
-    <span className={`text-[8px] font-light px-2 py-0.5 rounded-full border ${STATUS_STYLES[status]}`}>
+    <span className={`inline-flex items-center gap-1 text-[8px] font-light px-2 py-0.5 rounded-full border ${STATUS_STYLES[status]}`}>
+      <Icon size={8} />
       {STATUS_LABELS[status]}
     </span>
   );
 }
 
-// ── Invoice row ────────────────────────────────────────────────────────────────
+// ── Report row ─────────────────────────────────────────────────────────────────
 
-function InvoiceRow({
-  invoice,
+function ReportRow({
+  report,
   onEdit,
 }: {
-  invoice: AdminInvoiceRow;
+  report: AdminReportRow;
   onEdit: () => void;
 }) {
   return (
@@ -112,40 +106,29 @@ function InvoiceRow({
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[12px] font-light text-white/80 truncate">{invoice.title}</span>
-          <StatusBadge status={invoice.status} />
+          <span className="text-[12px] font-light text-white/80 truncate">{report.title}</span>
+          <StatusBadge status={report.status} />
         </div>
         <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-          <span className="text-[10px] font-light text-white/40">
-            {formatReferenceMonth(invoice.referenceMonth)}
-          </span>
-          {invoice.issuedAt && (
-            <span className="text-[10px] font-light text-white/25">
-              {formatDate(invoice.issuedAt)}
-            </span>
-          )}
-          {invoice.amount !== null && (
-            <span className="text-[10px] font-light text-vitti-light/50">
-              {formatCurrency(invoice.amount)}
-            </span>
-          )}
-          {invoice.invoiceNumber && (
-            <span className="text-[10px] font-light text-white/20">
-              NF {invoice.invoiceNumber}
-            </span>
-          )}
-          {invoice.fileName && (
-            <span className="text-[10px] font-light text-white/20 truncate max-w-[120px]">
-              {invoice.fileName}
-              {invoice.fileSize ? ` · ${formatFileSize(invoice.fileSize)}` : ""}
+          <span className="text-[10px] font-light text-white/40">{report.period}</span>
+          <span className="text-[10px] font-light text-white/20">{formatDate(report.createdAt)}</span>
+          {report.fileName && (
+            <span className="text-[10px] font-light text-white/20 truncate max-w-[140px]">
+              {report.fileName}
+              {report.fileSize ? ` · ${formatFileSize(report.fileSize)}` : ""}
             </span>
           )}
         </div>
+        {report.summary && (
+          <p className="text-[10px] font-light text-white/25 mt-1 truncate max-w-md">
+            {report.summary}
+          </p>
+        )}
       </div>
 
       <div className="shrink-0 flex items-center gap-2">
         <a
-          href={`/api/admin/finance/invoices/${invoice.id}/download`}
+          href={`/api/admin/reports/${report.id}/download`}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1 text-[9px] font-light text-vitti-light/30 hover:text-vitti-light/70 transition-colors px-2 py-1 rounded-lg hover:bg-white/[0.04]"
@@ -165,28 +148,26 @@ function InvoiceRow({
   );
 }
 
-// ── Invoice modal (create / edit) ──────────────────────────────────────────────
+// ── Report modal (create / edit) ───────────────────────────────────────────────
 
-function InvoiceModal({
-  invoice,
+function ReportModal({
+  report,
   clientId,
   onClose,
   onSaved,
 }: {
-  invoice: AdminInvoiceRow | null;
+  report: AdminReportRow | null;
   clientId: string;
   onClose: () => void;
-  onSaved: (saved: AdminInvoiceRow) => void;
+  onSaved: (saved: AdminReportRow) => void;
 }) {
-  const isNew = invoice === null;
+  const isNew = report === null;
 
-  const [title, setTitle] = useState(invoice?.title ?? "");
-  const [description, setDescription] = useState(invoice?.description ?? "");
-  const [referenceMonth, setReferenceMonth] = useState(invoice?.referenceMonth?.slice(0, 7) ?? "");
-  const [issuedAt, setIssuedAt] = useState(invoice?.issuedAt?.slice(0, 10) ?? "");
-  const [amount, setAmount] = useState(invoice?.amount != null ? String(invoice.amount) : "");
-  const [invoiceNumber, setInvoiceNumber] = useState(invoice?.invoiceNumber ?? "");
-  const [status, setStatus] = useState<InvoiceStatus>(invoice?.status ?? "issued");
+  const [title, setTitle] = useState(report?.title ?? "");
+  const [period, setPeriod] = useState(report?.period ?? "");
+  const [status, setStatus] = useState<ReportStatus>(report?.status ?? "draft");
+  const [summary, setSummary] = useState(report?.summary ?? "");
+  const [description, setDescription] = useState(report?.description ?? "");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -194,6 +175,7 @@ function InvoiceModal({
 
   const handleSave = useCallback(async () => {
     if (!title.trim()) { setValidationError("Título é obrigatório."); return; }
+    if (!period.trim()) { setValidationError("Período é obrigatório."); return; }
     if (isNew && !selectedFile) { setValidationError("Arquivo é obrigatório."); return; }
     setValidationError(null);
     setSaveState("saving");
@@ -203,58 +185,52 @@ function InvoiceModal({
         const fd = new FormData();
         fd.append("clientId", clientId);
         fd.append("title", title.trim());
+        fd.append("period", period.trim());
         fd.append("status", status);
+        if (summary.trim()) fd.append("summary", summary.trim());
         if (description.trim()) fd.append("description", description.trim());
-        if (referenceMonth) fd.append("referenceMonth", `${referenceMonth}-01`);
-        if (amount) fd.append("amount", amount);
-        if (invoiceNumber.trim()) fd.append("invoiceNumber", invoiceNumber.trim());
-        if (issuedAt) fd.append("issuedAt", issuedAt);
         fd.append("file", selectedFile!);
 
-        const res = await fetch("/api/admin/finance/invoices", { method: "POST", body: fd });
-        const json: InvoiceCreateResponse = await res.json();
-        if (!json.success || !json.invoice) {
-          const base = json.error ?? "Erro ao criar NF.";
+        const res = await fetch("/api/admin/reports", { method: "POST", body: fd });
+        const json: ReportCreateResponse = await res.json();
+        if (!json.success || !json.report) {
+          const base = json.error ?? "Erro ao criar relatório.";
           setValidationError(json.detail ? `${base} — ${json.detail}` : base);
           setSaveState("idle");
           return;
         }
         setSaveState("saved");
-        const saved = json.invoice;
+        const saved = json.report;
         setTimeout(() => onSaved(saved), 600);
       } else {
         const body: Record<string, unknown> = {
           title: title.trim(),
+          period: period.trim(),
           status,
+          summary: summary.trim() || null,
           description: description.trim() || null,
-          referenceMonth: referenceMonth ? `${referenceMonth}-01` : null,
-          amount: amount ? Number(amount) : null,
-          invoiceNumber: invoiceNumber.trim() || null,
-          issuedAt: issuedAt || null,
         };
-        const res = await fetch(`/api/admin/finance/invoices/${invoice!.id}`, {
+        const res = await fetch(`/api/admin/reports/${report!.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
-        const json: InvoicePatchResponse = await res.json();
-        if (!json.success || !json.invoice) {
-          setValidationError(json.error ?? "Erro ao atualizar NF.");
+        const json: ReportPatchResponse = await res.json();
+        if (!json.success || !json.report) {
+          const base = json.error ?? "Erro ao atualizar relatório.";
+          setValidationError(json.detail ? `${base} — ${json.detail}` : base);
           setSaveState("idle");
           return;
         }
         setSaveState("saved");
-        const saved = json.invoice;
+        const saved = json.report;
         setTimeout(() => onSaved(saved), 600);
       }
     } catch {
       setValidationError("Não foi possível conectar ao servidor.");
       setSaveState("idle");
     }
-  }, [
-    isNew, title, description, referenceMonth, issuedAt, amount, invoiceNumber,
-    status, selectedFile, clientId, invoice, onSaved,
-  ]);
+  }, [isNew, title, period, status, summary, description, selectedFile, clientId, report, onSaved]);
 
   return (
     <div
@@ -271,7 +247,7 @@ function InvoiceModal({
               <FileText size={11} className="text-vitti-light/40" />
             </div>
             <p className="text-[11px] font-light text-white/70">
-              {isNew ? "Nova Nota Fiscal" : "Editar Nota Fiscal"}
+              {isNew ? "Novo Relatório" : "Editar Relatório"}
             </p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/[0.04] transition-colors">
@@ -292,91 +268,57 @@ function InvoiceModal({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Serviços de Marketing Digital"
+              placeholder="Ex: Relatório Mensal — Marketing Digital"
               className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-white/70 placeholder-white/20 focus:outline-none focus:border-vitti-medium/40 transition-colors"
             />
           </div>
 
-          {/* Descrição */}
+          {/* Período */}
           <div>
             <label className="text-[9px] font-light text-white/30 block mb-1">
-              Descrição <span className="text-white/15">(opcional)</span>
+              Período / Competência *
             </label>
             <input
               type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Ex: Gestão de tráfego pago + criação de conteúdo"
+              value={period}
+              onChange={(e) => setPeriod(e.target.value)}
+              placeholder="Ex: Maio/2026 ou 01/05 a 31/05/2026"
               className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-white/70 placeholder-white/20 focus:outline-none focus:border-vitti-medium/40 transition-colors"
             />
-          </div>
-
-          {/* Competência + NF número */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[9px] font-light text-white/30 block mb-1">Competência</label>
-              <input
-                type="month"
-                value={referenceMonth}
-                onChange={(e) => setReferenceMonth(e.target.value)}
-                className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-white/60 focus:outline-none focus:border-vitti-medium/40 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="text-[9px] font-light text-white/30 block mb-1">Nº NF</label>
-              <input
-                type="text"
-                value={invoiceNumber}
-                onChange={(e) => setInvoiceNumber(e.target.value)}
-                placeholder="12345"
-                className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-white/70 placeholder-white/20 focus:outline-none focus:border-vitti-medium/40 transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* Data emissão + Valor */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[9px] font-light text-white/30 block mb-1">Data de emissão</label>
-              <input
-                type="date"
-                value={issuedAt}
-                onChange={(e) => setIssuedAt(e.target.value)}
-                className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-white/60 focus:outline-none focus:border-vitti-medium/40 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="text-[9px] font-light text-white/30 block mb-1">Valor (R$)</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0,00"
-                className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-white/70 placeholder-white/20 focus:outline-none focus:border-vitti-medium/40 transition-colors"
-              />
-            </div>
           </div>
 
           {/* Status */}
           <div>
             <label className="text-[9px] font-light text-white/30 block mb-1.5">Status</label>
             <div className="flex gap-2 flex-wrap">
-              {(["issued", "pending", "cancelled"] as const).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setStatus(s)}
-                  className={`text-[9px] font-light px-3 py-1.5 rounded-full border transition-all ${
-                    status === s
-                      ? STATUS_STYLES[s]
-                      : "border-white/[0.08] text-white/25 hover:border-white/20"
-                  }`}
-                >
-                  {STATUS_LABELS[s]}
-                </button>
-              ))}
+              {(["draft", "published", "archived"] as const).map((s) => {
+                const Icon = STATUS_ICONS[s];
+                return (
+                  <button
+                    key={s}
+                    onClick={() => setStatus(s)}
+                    className={`inline-flex items-center gap-1.5 text-[9px] font-light px-3 py-1.5 rounded-full border transition-all ${
+                      status === s
+                        ? STATUS_STYLES[s]
+                        : "border-white/[0.08] text-white/25 hover:border-white/20"
+                    }`}
+                  >
+                    <Icon size={9} />
+                    {STATUS_LABELS[s]}
+                  </button>
+                );
+              })}
             </div>
+            {status === "draft" && (
+              <p className="text-[9px] font-light text-amber-400/50 mt-1.5">
+                Rascunho não é visível para o cliente.
+              </p>
+            )}
+            {status === "published" && (
+              <p className="text-[9px] font-light text-emerald-400/50 mt-1.5">
+                Publicado — visível no portal do cliente.
+              </p>
+            )}
           </div>
 
           {/* Arquivo — somente na criação */}
@@ -414,17 +356,17 @@ function InvoiceModal({
           )}
 
           {/* Arquivo existente — na edição, info only */}
-          {!isNew && invoice?.fileName && (
+          {!isNew && report?.fileName && (
             <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-white/[0.06] bg-white/[0.02]">
               <FileText size={11} className="text-vitti-light/30 shrink-0" />
               <div className="min-w-0">
-                <p className="text-[10px] font-light text-white/40 truncate">{invoice.fileName}</p>
-                {invoice.fileSize && (
-                  <p className="text-[9px] font-light text-white/20">{formatFileSize(invoice.fileSize)}</p>
+                <p className="text-[10px] font-light text-white/40 truncate">{report.fileName}</p>
+                {report.fileSize && (
+                  <p className="text-[9px] font-light text-white/20">{formatFileSize(report.fileSize)}</p>
                 )}
               </div>
               <a
-                href={`/api/admin/finance/invoices/${invoice.id}/download`}
+                href={`/api/admin/reports/${report.id}/download`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="ml-auto text-[9px] font-light text-vitti-light/40 hover:text-vitti-light/70 transition-colors flex items-center gap-1"
@@ -434,6 +376,34 @@ function InvoiceModal({
               </a>
             </div>
           )}
+
+          {/* Resumo */}
+          <div>
+            <label className="text-[9px] font-light text-white/30 block mb-1">
+              Resumo / Observações <span className="text-white/15">(opcional)</span>
+            </label>
+            <textarea
+              value={summary}
+              onChange={(e) => setSummary(e.target.value)}
+              placeholder="Descrição do relatório, principais métricas, destaques do período…"
+              rows={4}
+              className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-white/70 placeholder-white/20 focus:outline-none focus:border-vitti-medium/40 transition-colors resize-none"
+            />
+          </div>
+
+          {/* Descrição interna */}
+          <div>
+            <label className="text-[9px] font-light text-white/30 block mb-1">
+              Descrição interna <span className="text-white/15">(opcional)</span>
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Anotações internas sobre este relatório…"
+              rows={3}
+              className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-white/70 placeholder-white/20 focus:outline-none focus:border-vitti-medium/40 transition-colors resize-none"
+            />
+          </div>
 
           {/* Save */}
           <div className="flex justify-end pt-1">
@@ -458,7 +428,7 @@ function InvoiceModal({
               ) : saveState === "error" ? (
                 "Erro — tentar novamente"
               ) : isNew ? (
-                "Criar NF"
+                "Criar relatório"
               ) : (
                 "Salvar alterações"
               )}
@@ -472,40 +442,40 @@ function InvoiceModal({
 
 // ── Main panel ─────────────────────────────────────────────────────────────────
 
-export function FinanceAdminPanel({ allClients }: { allClients: AdminClientRow[] }) {
+export function ReportsAdminPanel({ allClients }: { allClients: AdminClientRow[] }) {
   const [selectedClientId, setSelectedClientId] = useState<string>("");
-  const [invoices, setInvoices] = useState<AdminInvoiceRow[]>([]);
-  const [loadingInvoices, setLoadingInvoices] = useState(false);
+  const [reports, setReports] = useState<AdminReportRow[]>([]);
+  const [loadingReports, setLoadingReports] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [editingInvoice, setEditingInvoice] = useState<AdminInvoiceRow | "new" | null>(null);
+  const [editingReport, setEditingReport] = useState<AdminReportRow | "new" | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | InvoiceStatus>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | ReportStatus>("all");
 
   const handleClientSelect = useCallback((clientId: string) => {
     setSelectedClientId(clientId);
     setSearchQuery("");
     setStatusFilter("all");
-    setInvoices([]);
+    setReports([]);
     setFetchError(null);
     if (!clientId) return;
-    setLoadingInvoices(true);
-    fetch(`/api/admin/finance/invoices?clientId=${encodeURIComponent(clientId)}`)
+    setLoadingReports(true);
+    fetch(`/api/admin/reports?clientId=${encodeURIComponent(clientId)}`)
       .then((r) => r.json())
-      .then((json: InvoiceListResponse) => {
+      .then((json: ReportListResponse) => {
         if (!json.success) {
-          setFetchError(json.error ?? "Erro ao carregar notas fiscais.");
-          setInvoices([]);
+          setFetchError(json.error ?? "Erro ao carregar relatórios.");
+          setReports([]);
         } else {
-          setInvoices(json.invoices ?? []);
+          setReports(json.reports ?? []);
         }
       })
       .catch(() => setFetchError("Não foi possível conectar ao servidor."))
-      .finally(() => setLoadingInvoices(false));
+      .finally(() => setLoadingReports(false));
   }, []);
 
-  const handleSaved = useCallback((saved: AdminInvoiceRow) => {
-    setInvoices((prev) => {
-      const idx = prev.findIndex((i) => i.id === saved.id);
+  const handleSaved = useCallback((saved: AdminReportRow) => {
+    setReports((prev) => {
+      const idx = prev.findIndex((r) => r.id === saved.id);
       if (idx >= 0) {
         const next = [...prev];
         next[idx] = saved;
@@ -513,24 +483,30 @@ export function FinanceAdminPanel({ allClients }: { allClients: AdminClientRow[]
       }
       return [saved, ...prev];
     });
-    setEditingInvoice(null);
+    setEditingReport(null);
   }, []);
 
-  const filtered = invoices.filter((inv) => {
+  const filtered = reports.filter((rep) => {
     const q = searchQuery.toLowerCase();
     const matchQ =
       !q ||
-      inv.title.toLowerCase().includes(q) ||
-      (inv.invoiceNumber ?? "").toLowerCase().includes(q);
-    const matchS = statusFilter === "all" || inv.status === statusFilter;
+      rep.title.toLowerCase().includes(q) ||
+      rep.period.toLowerCase().includes(q);
+    const matchS = statusFilter === "all" || rep.status === statusFilter;
     return matchQ && matchS;
   });
 
   const selectedClient = allClients.find((c) => c.id === selectedClientId);
 
+  const counts = {
+    published: reports.filter((r) => r.status === "published").length,
+    draft:     reports.filter((r) => r.status === "draft").length,
+    archived:  reports.filter((r) => r.status === "archived").length,
+  };
+
   return (
     <div className="space-y-5">
-      {/* Client selector + Nova NF */}
+      {/* Client selector + Novo Relatório */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex-1 min-w-[220px]">
           <select
@@ -550,11 +526,11 @@ export function FinanceAdminPanel({ allClients }: { allClients: AdminClientRow[]
 
         {selectedClientId && (
           <button
-            onClick={() => setEditingInvoice("new")}
+            onClick={() => setEditingReport("new")}
             className="flex items-center gap-1.5 text-[9px] font-light px-3 py-2 rounded-full border border-vitti-medium/30 text-vitti-light/60 hover:border-vitti-medium/60 hover:text-vitti-light/90 transition-all"
           >
             <Plus size={10} />
-            Nova NF
+            Novo Relatório
           </button>
         )}
       </div>
@@ -564,13 +540,13 @@ export function FinanceAdminPanel({ allClients }: { allClients: AdminClientRow[]
         <div className="flex flex-col items-center gap-2 py-16">
           <FileText size={24} className="text-white/10" />
           <p className="text-[11px] font-light text-white/20">
-            Selecione um cliente para visualizar e gerenciar as notas fiscais.
+            Selecione um cliente para visualizar e gerenciar os relatórios.
           </p>
         </div>
       )}
 
       {/* Loading */}
-      {selectedClientId && loadingInvoices && (
+      {selectedClientId && loadingReports && (
         <div className="flex items-center gap-2 py-10 justify-center text-white/30">
           <Loader2 size={14} className="animate-spin" />
           <span className="text-[11px] font-light">Carregando…</span>
@@ -578,7 +554,7 @@ export function FinanceAdminPanel({ allClients }: { allClients: AdminClientRow[]
       )}
 
       {/* Fetch error */}
-      {selectedClientId && !loadingInvoices && fetchError && (
+      {selectedClientId && !loadingReports && fetchError && (
         <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-red-400/20 bg-red-400/[0.03]">
           <AlertCircle size={13} className="text-red-400/60 shrink-0" />
           <p className="text-[11px] font-light text-red-400/70 flex-1">{fetchError}</p>
@@ -592,9 +568,30 @@ export function FinanceAdminPanel({ allClients }: { allClients: AdminClientRow[]
         </div>
       )}
 
-      {/* Invoice list */}
-      {selectedClientId && !loadingInvoices && !fetchError && (
+      {/* Report list */}
+      {selectedClientId && !loadingReports && !fetchError && (
         <div className="space-y-4">
+          {/* Stats */}
+          {reports.length > 0 && (
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-[9px] font-light text-emerald-400/60">
+                {counts.published} publicado{counts.published !== 1 ? "s" : ""}
+              </span>
+              <span className="text-white/10 text-[9px]">·</span>
+              <span className="text-[9px] font-light text-amber-400/50">
+                {counts.draft} rascunho{counts.draft !== 1 ? "s" : ""}
+              </span>
+              {counts.archived > 0 && (
+                <>
+                  <span className="text-white/10 text-[9px]">·</span>
+                  <span className="text-[9px] font-light text-white/20">
+                    {counts.archived} arquivado{counts.archived !== 1 ? "s" : ""}
+                  </span>
+                </>
+              )}
+            </div>
+          )}
+
           {/* Search + status filter */}
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-[180px]">
@@ -603,7 +600,7 @@ export function FinanceAdminPanel({ allClients }: { allClients: AdminClientRow[]
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar por título ou nº NF…"
+                placeholder="Buscar por título ou período…"
                 className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-8 pr-3 py-2.5 text-[11px] font-light text-white/70 placeholder-white/20 focus:outline-none focus:border-vitti-medium/30 transition-colors"
               />
               {searchQuery && (
@@ -617,7 +614,7 @@ export function FinanceAdminPanel({ allClients }: { allClients: AdminClientRow[]
             </div>
 
             <div className="flex items-center gap-1">
-              {(["all", "issued", "pending", "cancelled"] as const).map((s) => (
+              {(["all", "published", "draft", "archived"] as const).map((s) => (
                 <button
                   key={s}
                   onClick={() => setStatusFilter(s)}
@@ -627,50 +624,50 @@ export function FinanceAdminPanel({ allClients }: { allClients: AdminClientRow[]
                       : "border-white/[0.07] text-white/25 hover:border-white/15"
                   }`}
                 >
-                  {s === "all" ? "Todos" : STATUS_LABELS[s as InvoiceStatus]}
+                  {s === "all" ? "Todos" : STATUS_LABELS[s as ReportStatus]}
                 </button>
               ))}
             </div>
 
             <span className="text-[9px] font-light text-white/20 ml-auto">
-              {filtered.length} de {invoices.length}
+              {filtered.length} de {reports.length}
             </span>
           </div>
 
-          {/* Empty — no invoices */}
-          {invoices.length === 0 && (
+          {/* Empty — no reports */}
+          {reports.length === 0 && (
             <div className="flex flex-col items-center gap-2 py-12">
               <FileText size={22} className="text-white/10" />
               <p className="text-[11px] font-light text-white/20">
-                Nenhuma NF cadastrada para{" "}
+                Nenhum relatório cadastrado para{" "}
                 {selectedClient?.name ?? "este cliente"}.
               </p>
               <button
-                onClick={() => setEditingInvoice("new")}
+                onClick={() => setEditingReport("new")}
                 className="mt-1 text-[9px] font-light px-3 py-1.5 rounded-full border border-vitti-medium/25 text-vitti-light/50 hover:border-vitti-medium/50 hover:text-vitti-light/80 transition-all"
               >
-                + Criar primeira NF
+                + Criar primeiro relatório
               </button>
             </div>
           )}
 
           {/* Empty — filtered */}
-          {invoices.length > 0 && filtered.length === 0 && (
+          {reports.length > 0 && filtered.length === 0 && (
             <div className="flex flex-col items-center gap-2 py-10">
               <p className="text-[11px] font-light text-white/20">
-                Nenhuma NF encontrada com esses filtros.
+                Nenhum relatório encontrado com esses filtros.
               </p>
             </div>
           )}
 
-          {/* Invoice rows */}
+          {/* Report rows */}
           {filtered.length > 0 && (
             <div className="space-y-2">
-              {filtered.map((inv) => (
-                <InvoiceRow
-                  key={inv.id}
-                  invoice={inv}
-                  onEdit={() => setEditingInvoice(inv)}
+              {filtered.map((rep) => (
+                <ReportRow
+                  key={rep.id}
+                  report={rep}
+                  onEdit={() => setEditingReport(rep)}
                 />
               ))}
             </div>
@@ -678,21 +675,22 @@ export function FinanceAdminPanel({ allClients }: { allClients: AdminClientRow[]
         </div>
       )}
 
-      {/* Note */}
+      {/* Info note */}
       <div className="rounded-xl border border-white/[0.04] bg-white/[0.01] px-4 py-3">
         <p className="text-[9px] font-light text-white/25 leading-relaxed">
-          <span className="text-white/40">Notas fiscais por upload</span> — faça upload do arquivo
-          da NF (PDF, PNG ou JPEG). O arquivo fica em storage privado e o download é gerado com
-          link temporário. Boletos e cobranças automáticas ficam para sprint futura.
+          <span className="text-white/40">Relatórios por upload</span> — faça upload do arquivo
+          (PDF, PNG ou JPEG). Apenas relatórios com status{" "}
+          <span className="text-emerald-400/60">Publicado</span> são visíveis no portal do
+          cliente. O arquivo fica em storage privado e o download é gerado com link temporário.
         </p>
       </div>
 
       {/* Modal */}
-      {editingInvoice !== null && (
-        <InvoiceModal
-          invoice={editingInvoice === "new" ? null : editingInvoice}
+      {editingReport !== null && (
+        <ReportModal
+          report={editingReport === "new" ? null : editingReport}
           clientId={selectedClientId}
-          onClose={() => setEditingInvoice(null)}
+          onClose={() => setEditingReport(null)}
           onSaved={handleSaved}
         />
       )}

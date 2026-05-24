@@ -2,20 +2,20 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
-import { listInvoicesByClient, createInvoice } from "@/lib/data/invoices-admin";
-import type { AdminInvoiceRow, InvoiceStatus } from "@/lib/data/invoices-admin";
+import { listReportsByClient, createReport } from "@/lib/data/reports-admin";
+import type { AdminReportRow, ReportStatus } from "@/lib/data/reports-admin";
 import { uploadPortalFile, deletePortalFile } from "@/lib/storage/portal-files";
 
-export interface InvoiceListResponse {
+export interface ReportListResponse {
   success: boolean;
-  invoices?: AdminInvoiceRow[];
+  reports?: AdminReportRow[];
   error?: string;
   detail?: string;
 }
 
-export interface InvoiceCreateResponse {
+export interface ReportCreateResponse {
   success: boolean;
-  invoice?: AdminInvoiceRow;
+  report?: AdminReportRow;
   error?: string;
   detail?: string;
 }
@@ -27,7 +27,7 @@ async function requireAdmin(): Promise<{ userId: string } | { error: Response }>
   } = await supabase.auth.getUser();
   if (!user) {
     return {
-      error: NextResponse.json<InvoiceListResponse>(
+      error: NextResponse.json<ReportListResponse>(
         { success: false, error: "Não autenticado." },
         { status: 401 }
       ),
@@ -36,7 +36,7 @@ async function requireAdmin(): Promise<{ userId: string } | { error: Response }>
   const ctx = await loadUserContext(user.id);
   if (!ctx.isAdmin) {
     return {
-      error: NextResponse.json<InvoiceListResponse>(
+      error: NextResponse.json<ReportListResponse>(
         { success: false, error: "Acesso restrito a administradores Vitti." },
         { status: 403 }
       ),
@@ -53,34 +53,34 @@ function mimeToFileType(mime: string): string {
   return mime.split("/").pop() ?? "pdf";
 }
 
-const VALID_STATUSES: InvoiceStatus[] = ["issued", "pending", "cancelled"];
+const VALID_STATUSES: ReportStatus[] = ["draft", "published", "archived"];
 
-// GET /api/admin/finance/invoices?clientId=...
+// GET /api/admin/reports?clientId=...
 export async function GET(req: NextRequest): Promise<Response> {
   const auth = await requireAdmin();
   if ("error" in auth) return auth.error;
 
   const clientId = new URL(req.url).searchParams.get("clientId");
   if (!clientId) {
-    return NextResponse.json<InvoiceListResponse>(
+    return NextResponse.json<ReportListResponse>(
       { success: false, error: "clientId é obrigatório." },
       { status: 400 }
     );
   }
 
   try {
-    const invoices = await listInvoicesByClient(clientId);
-    return NextResponse.json<InvoiceListResponse>({ success: true, invoices });
+    const reports = await listReportsByClient(clientId);
+    return NextResponse.json<ReportListResponse>({ success: true, reports });
   } catch (err) {
     const detail = err instanceof Error ? err.message : "Erro desconhecido.";
-    return NextResponse.json<InvoiceListResponse>(
-      { success: false, error: "Erro ao listar notas fiscais.", detail },
+    return NextResponse.json<ReportListResponse>(
+      { success: false, error: "Erro ao listar relatórios.", detail },
       { status: 500 }
     );
   }
 }
 
-// POST /api/admin/finance/invoices — accepts multipart/form-data
+// POST /api/admin/reports — accepts multipart/form-data
 export async function POST(req: NextRequest): Promise<Response> {
   const auth = await requireAdmin();
   if ("error" in auth) return auth.error;
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   try {
     formData = await req.formData();
   } catch {
-    return NextResponse.json<InvoiceCreateResponse>(
+    return NextResponse.json<ReportCreateResponse>(
       { success: false, error: "Falha ao processar o formulário." },
       { status: 400 }
     );
@@ -97,15 +97,15 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   const file = formData.get("file");
   if (!(file instanceof File) || !file.size) {
-    return NextResponse.json<InvoiceCreateResponse>(
-      { success: false, error: "Arquivo da nota fiscal é obrigatório." },
+    return NextResponse.json<ReportCreateResponse>(
+      { success: false, error: "Arquivo do relatório é obrigatório." },
       { status: 400 }
     );
   }
 
   const clientId = formData.get("clientId");
   if (!clientId || typeof clientId !== "string" || !clientId.trim()) {
-    return NextResponse.json<InvoiceCreateResponse>(
+    return NextResponse.json<ReportCreateResponse>(
       { success: false, error: "clientId é obrigatório." },
       { status: 400 }
     );
@@ -113,39 +113,29 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   const title = formData.get("title");
   if (!title || typeof title !== "string" || !title.trim()) {
-    return NextResponse.json<InvoiceCreateResponse>(
+    return NextResponse.json<ReportCreateResponse>(
       { success: false, error: "Título é obrigatório." },
       { status: 400 }
     );
   }
 
+  const period = formData.get("period");
+  if (!period || typeof period !== "string" || !period.trim()) {
+    return NextResponse.json<ReportCreateResponse>(
+      { success: false, error: "Período é obrigatório." },
+      { status: 400 }
+    );
+  }
+
   const rawStatus = formData.get("status");
-  const status: InvoiceStatus =
-    typeof rawStatus === "string" && VALID_STATUSES.includes(rawStatus as InvoiceStatus)
-      ? (rawStatus as InvoiceStatus)
-      : "issued";
+  const status: ReportStatus =
+    typeof rawStatus === "string" && VALID_STATUSES.includes(rawStatus as ReportStatus)
+      ? (rawStatus as ReportStatus)
+      : "draft";
 
-  const rawReferenceMonth = formData.get("referenceMonth");
-  const referenceMonth =
-    typeof rawReferenceMonth === "string" && rawReferenceMonth.trim()
-      ? rawReferenceMonth.trim()
-      : null;
-
-  const rawAmount = formData.get("amount");
-  const amount =
-    typeof rawAmount === "string" && rawAmount.trim() && !isNaN(Number(rawAmount))
-      ? Number(rawAmount)
-      : null;
-
-  const rawInvoiceNumber = formData.get("invoiceNumber");
-  const invoiceNumber =
-    typeof rawInvoiceNumber === "string" && rawInvoiceNumber.trim()
-      ? rawInvoiceNumber.trim()
-      : null;
-
-  const rawIssuedAt = formData.get("issuedAt");
-  const issuedAt =
-    typeof rawIssuedAt === "string" && rawIssuedAt.trim() ? rawIssuedAt.trim() : null;
+  const rawSummary = formData.get("summary");
+  const summary =
+    typeof rawSummary === "string" && rawSummary.trim() ? rawSummary.trim() : null;
 
   const rawDescription = formData.get("description");
   const description =
@@ -156,10 +146,10 @@ export async function POST(req: NextRequest): Promise<Response> {
   // Upload to Storage first
   let uploaded: Awaited<ReturnType<typeof uploadPortalFile>>;
   try {
-    uploaded = await uploadPortalFile(file, `clients/${clientId.trim()}/invoices`);
+    uploaded = await uploadPortalFile(file, `clients/${clientId.trim()}/reports`);
   } catch (err) {
     const detail = err instanceof Error ? err.message : "Erro desconhecido.";
-    return NextResponse.json<InvoiceCreateResponse>(
+    return NextResponse.json<ReportCreateResponse>(
       { success: false, error: "Falha ao enviar arquivo.", detail },
       { status: 500 }
     );
@@ -167,32 +157,33 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   // Insert into DB — cleanup orphan file if this fails
   try {
-    const invoice = await createInvoice({
+    const report = await createReport({
       clientId: clientId.trim(),
       title: title.trim(),
-      description,
-      referenceMonth,
-      amount,
-      invoiceNumber,
-      issuedAt,
+      period: period.trim(),
+      status,
       filePath: uploaded.filePath,
       fileName: uploaded.fileName,
       fileType: mimeToFileType(uploaded.fileType),
       fileSize: uploaded.fileSize,
-      status,
+      summary,
+      description,
     });
-    return NextResponse.json<InvoiceCreateResponse>({ success: true, invoice }, { status: 201 });
+    return NextResponse.json<ReportCreateResponse>({ success: true, report }, { status: 201 });
   } catch (err) {
     await deletePortalFile(uploaded.filePath).catch(() => {});
     const detail = err instanceof Error ? err.message : "Erro desconhecido.";
-    console.error("[POST /api/admin/finance/invoices] DB insert falhou:", detail);
-    const isConstraint = detail.includes("file_type_check");
-    return NextResponse.json<InvoiceCreateResponse>(
+    console.error("[POST /api/admin/reports] DB insert falhou:", detail);
+    const isStatusConstraint = detail.includes("status_check");
+    const isFileTypeConstraint = detail.includes("file_type_check");
+    return NextResponse.json<ReportCreateResponse>(
       {
         success: false,
-        error: isConstraint
-          ? "Tipo de arquivo não aceito pelo banco. Use PDF, PNG ou JPEG."
-          : "Erro ao salvar nota fiscal no banco.",
+        error: isStatusConstraint
+          ? "Status inválido para o relatório."
+          : isFileTypeConstraint
+            ? "Tipo de arquivo não aceito pelo banco. Use PDF, PNG ou JPEG."
+            : "Erro ao salvar relatório no banco.",
         detail,
       },
       { status: 500 }
