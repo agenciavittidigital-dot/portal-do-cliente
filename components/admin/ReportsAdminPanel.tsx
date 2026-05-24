@@ -17,6 +17,7 @@ import {
   AlertCircle,
   RefreshCw,
   Upload,
+  ExternalLink,
 } from "lucide-react";
 import type { AdminReportRow, ReportStatus } from "@/lib/data/reports-admin";
 import type { AdminClientRow } from "@/lib/data/clients-admin";
@@ -532,6 +533,17 @@ export function ReportsAdminPanel({ allClients }: { allClients: AdminClientRow[]
             <Plus size={10} />
             Novo Relatório
           </button>
+        )}
+
+        {selectedClientId && (
+          <Link
+            href={`/relatorios?clientId=${encodeURIComponent(selectedClientId)}`}
+            target="_blank"
+            className="flex items-center gap-1.5 text-[9px] font-light px-3 py-2 rounded-full border border-white/[0.07] text-white/30 hover:text-white/60 hover:border-white/[0.15] transition-all"
+          >
+            <ExternalLink size={10} />
+            Ver como cliente
+          </Link>
         )}
       </div>
 

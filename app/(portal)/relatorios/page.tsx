@@ -13,6 +13,7 @@ import {
   Download,
   Sparkles,
   Clock,
+  ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -76,7 +77,13 @@ function ReportCard({
   );
 }
 
-export default async function RelatoriosPage() {
+export default async function RelatoriosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ clientId?: string }>;
+}) {
+  const { clientId: urlClientId } = await searchParams;
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -88,21 +95,41 @@ export default async function RelatoriosPage() {
   let reports: ClientReportRow[] = [];
   const downloadUrls: Record<string, string | null> = {};
   let clientFound = false;
+  let adminPreview = false;
 
-  if (user && !isAdmin) {
-    const clientId = await resolveClientForUser(user.id);
-    if (clientId) {
-      clientFound = true;
-      reports = await listPublishedReports(clientId);
-      await Promise.all(
-        reports.map(async (rep) => {
-          try {
-            downloadUrls[rep.id] = await getSignedDownloadUrl(rep.filePath, 3600);
-          } catch {
-            downloadUrls[rep.id] = null;
-          }
-        })
-      );
+  if (user) {
+    if (isAdmin) {
+      // Admin: usa clientId da URL se fornecido — cliente comum nunca entra aqui
+      if (urlClientId) {
+        adminPreview = true;
+        clientFound = true;
+        reports = await listPublishedReports(urlClientId);
+        await Promise.all(
+          reports.map(async (rep) => {
+            try {
+              downloadUrls[rep.id] = await getSignedDownloadUrl(rep.filePath, 3600);
+            } catch {
+              downloadUrls[rep.id] = null;
+            }
+          })
+        );
+      }
+    } else {
+      // Cliente comum: ignora qualquer clientId da URL, usa sempre o vínculo do usuário
+      const clientId = await resolveClientForUser(user.id);
+      if (clientId) {
+        clientFound = true;
+        reports = await listPublishedReports(clientId);
+        await Promise.all(
+          reports.map(async (rep) => {
+            try {
+              downloadUrls[rep.id] = await getSignedDownloadUrl(rep.filePath, 3600);
+            } catch {
+              downloadUrls[rep.id] = null;
+            }
+          })
+        );
+      }
     }
   }
 
@@ -116,8 +143,8 @@ export default async function RelatoriosPage() {
         </p>
       </div>
 
-      {/* Admin notice */}
-      {isAdmin && (
+      {/* Admin sem clientId → redireciona para o admin */}
+      {isAdmin && !adminPreview && (
         <Card>
           <CardContent className="py-5">
             <div className="flex items-center gap-3">
@@ -127,12 +154,12 @@ export default async function RelatoriosPage() {
                   Você está autenticado como administrador Vitti.
                 </p>
                 <p className="text-xs text-white/25 font-light mt-0.5">
-                  Cadastre e gerencie relatórios dos clientes na área administrativa.
+                  Selecione um cliente em Admin → Relatórios e clique em &ldquo;Ver como cliente&rdquo;.
                 </p>
               </div>
               <Link
                 href="/admin/relatorios"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-vitti-blue/30 text-[11px] font-light text-vitti-light/70 hover:border-vitti-blue/50 hover:text-vitti-light transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-vitti-blue/30 text-[11px] font-light text-vitti-light/70 hover:border-vitti-blue/50 hover:text-vitti-light transition-all shrink-0"
               >
                 <ExternalLink size={11} />
                 Admin Relatórios
@@ -142,7 +169,23 @@ export default async function RelatoriosPage() {
         </Card>
       )}
 
-      {/* Client with no linked client */}
+      {/* Banner admin em modo preview */}
+      {isAdmin && adminPreview && (
+        <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-vitti-blue/20 bg-vitti-blue/5">
+          <span className="text-[10px] font-light text-vitti-light/50">
+            Visualização do cliente — modo admin
+          </span>
+          <Link
+            href="/admin/relatorios"
+            className="ml-auto inline-flex items-center gap-1 text-[10px] font-light text-vitti-light/50 hover:text-vitti-light/80 transition-colors"
+          >
+            <ArrowLeft size={9} />
+            Voltar ao Admin
+          </Link>
+        </div>
+      )}
+
+      {/* Sem cliente vinculado (cliente comum) */}
       {!isAdmin && !clientFound && (
         <Card>
           <CardContent className="py-8 text-center">
@@ -157,8 +200,8 @@ export default async function RelatoriosPage() {
         </Card>
       )}
 
-      {/* Reports list */}
-      {!isAdmin && clientFound && (
+      {/* Lista de relatórios — exibe para cliente comum OU admin em preview */}
+      {clientFound && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">

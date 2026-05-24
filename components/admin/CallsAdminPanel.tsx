@@ -628,6 +628,17 @@ export function CallsAdminPanel({ allClients }: { allClients: AdminClientRow[] }
           )}
 
           {selectedClientId && (
+            <Link
+              href={`/calls?clientId=${encodeURIComponent(selectedClientId)}`}
+              target="_blank"
+              className="inline-flex items-center gap-1.5 text-[9px] font-light px-3 py-2 rounded-full border border-white/[0.07] text-white/30 hover:text-white/60 hover:border-white/[0.15] transition-all"
+            >
+              <ExternalLink size={10} />
+              Ver como cliente
+            </Link>
+          )}
+
+          {selectedClientId && (
             <button
               onClick={() => setShowCreate(true)}
               className="ml-auto inline-flex items-center gap-2 px-3 py-2 text-xs font-light bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.07] rounded-lg text-white/60 transition-colors"
