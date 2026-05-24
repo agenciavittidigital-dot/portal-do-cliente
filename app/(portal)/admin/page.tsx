@@ -17,6 +17,7 @@ import {
   ScrollText,
   ShieldCheck,
   Target,
+  Phone,
 } from "lucide-react";
 
 const ACTIVE_MODULES = [
@@ -25,6 +26,7 @@ const ACTIVE_MODULES = [
   { label: "Usuários", icon: ShieldCheck, description: "Perfis, vínculos e permissões de acesso", href: "/admin/usuarios" },
   { label: "Financeiro", icon: CreditCard, description: "Notas fiscais manuais por cliente", href: "/admin/financeiro" },
   { label: "Relatórios", icon: FileText, description: "Relatórios manuais por cliente", href: "/admin/relatorios" },
+  { label: "Calls", icon: Phone, description: "Calls manuais com link de gravação por cliente", href: "/admin/calls" },
 ];
 
 const OTHER_MODULES = [
