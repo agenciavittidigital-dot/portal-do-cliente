@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
 import { loadActiveClients, loadClientDashboards } from "@/lib/data/dashboards";
-import { computeDateRange, loadPerformanceData } from "@/lib/data/performance";
+import { computeDateRange, loadPerformanceData, loadGoogleAdsCampaigns } from "@/lib/data/performance";
 import { ClientSelector } from "@/components/metricas/ClientSelector";
 import { MetricasDashboard } from "@/components/metricas/MetricasDashboard";
 
@@ -53,12 +53,16 @@ export default async function MetricasPage({
     const dashboards =
       valid && requestedId ? await loadClientDashboards(requestedId) : [];
 
-    const performance =
+    const [performance, performanceGoogleAds, googleAdsCampaigns] =
       valid && requestedId
-        ? await loadPerformanceData(requestedId, "meta_ads", perfStart, perfEnd)
-        : null;
+        ? await Promise.all([
+            loadPerformanceData(requestedId, "meta_ads", perfStart, perfEnd),
+            loadPerformanceData(requestedId, "google_ads", perfStart, perfEnd),
+            loadGoogleAdsCampaigns(requestedId, perfStart, perfEnd),
+          ])
+        : [null, null, []];
 
-const targetClientId = valid ? requestedId : null;
+    const targetClientId = valid ? requestedId : null;
 
     return (
       <div className="space-y-6 max-w-6xl">
@@ -81,6 +85,8 @@ const targetClientId = valid ? requestedId : null;
           <MetricasDashboard
             dashboards={dashboards}
             performance={performance}
+            performanceGoogleAds={performanceGoogleAds}
+            googleAdsCampaigns={googleAdsCampaigns ?? []}
             {...filterProps}
           />
         )}
@@ -95,9 +101,13 @@ const targetClientId = valid ? requestedId : null;
     ? await loadClientDashboards(targetClientId)
     : [];
 
-  const performance = targetClientId
-    ? await loadPerformanceData(targetClientId, "meta_ads", perfStart, perfEnd)
-    : null;
+  const [performance, performanceGoogleAds, googleAdsCampaigns] = targetClientId
+    ? await Promise.all([
+        loadPerformanceData(targetClientId, "meta_ads", perfStart, perfEnd),
+        loadPerformanceData(targetClientId, "google_ads", perfStart, perfEnd),
+        loadGoogleAdsCampaigns(targetClientId, perfStart, perfEnd),
+      ])
+    : [null, null, []];
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -114,6 +124,8 @@ const targetClientId = valid ? requestedId : null;
         <MetricasDashboard
           dashboards={dashboards}
           performance={performance}
+          performanceGoogleAds={performanceGoogleAds}
+          googleAdsCampaigns={googleAdsCampaigns ?? []}
           {...filterProps}
         />
       ) : (

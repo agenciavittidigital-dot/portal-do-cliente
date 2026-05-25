@@ -171,3 +171,78 @@ export async function loadPerformanceData(
     return null;
   }
 }
+
+// ── Loader de campanhas Google Ads ────────────────────────────────────────────
+
+export interface GoogleAdsCampaignRow {
+  campaignId: string;
+  campaignName: string | null;
+  spend: number;
+  impressions: number;
+  clicks: number;
+  leads: number;
+  ctr: number | null;
+  cpc: number | null;
+  costPerLead: number | null;
+}
+
+export async function loadGoogleAdsCampaigns(
+  clientId: string,
+  startDate: string,
+  endDate: string
+): Promise<GoogleAdsCampaignRow[]> {
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("performance_daily")
+      .select("campaign_id, campaign_name, spend, impressions, clicks, leads")
+      .eq("client_id", clientId)
+      .eq("channel", "google_ads")
+      .gte("date", startDate)
+      .lte("date", endDate);
+
+    if (error || !data?.length) return [];
+
+    const byId = new Map<string, { campaignName: string | null; spend: number; impressions: number; clicks: number; leads: number }>();
+    for (const row of data) {
+      const id = String((row as Record<string, unknown>).campaign_id ?? "unknown");
+      const name = (row as Record<string, unknown>).campaign_name;
+      const spend = Number((row as Record<string, unknown>).spend) || 0;
+      const impressions = Number((row as Record<string, unknown>).impressions) || 0;
+      const clicks = Number((row as Record<string, unknown>).clicks) || 0;
+      const leads = Number((row as Record<string, unknown>).leads) || 0;
+
+      const existing = byId.get(id);
+      if (existing) {
+        existing.spend += spend;
+        existing.impressions += impressions;
+        existing.clicks += clicks;
+        existing.leads += leads;
+      } else {
+        byId.set(id, {
+          campaignName: typeof name === "string" && name ? name : null,
+          spend,
+          impressions,
+          clicks,
+          leads,
+        });
+      }
+    }
+
+    return [...byId.entries()]
+      .map(([campaignId, c]) => ({
+        campaignId,
+        campaignName: c.campaignName,
+        spend: c.spend,
+        impressions: c.impressions,
+        clicks: c.clicks,
+        leads: c.leads,
+        ctr: c.impressions > 0 ? (c.clicks / c.impressions) * 100 : null,
+        cpc: c.clicks > 0 ? c.spend / c.clicks : null,
+        costPerLead: c.leads > 0 ? c.spend / c.leads : null,
+      }))
+      .sort((a, b) => b.spend - a.spend);
+  } catch {
+    return [];
+  }
+}

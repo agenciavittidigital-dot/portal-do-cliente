@@ -5,6 +5,7 @@ import { WindsorAccountMapping } from "@/components/admin/WindsorAccountMapping"
 import { WindsorSyncPanel } from "@/components/admin/WindsorSyncPanel";
 import { WindsorFieldsTestPanel } from "@/components/admin/WindsorFieldsTestPanel";
 import { WindsorConversionTestPanel } from "@/components/admin/WindsorConversionTestPanel";
+import { WindsorGoogleAdsPanel } from "@/components/admin/WindsorGoogleAdsPanel";
 import { getWindsorStatus } from "@/lib/integrations/windsor/client";
 import { loadActiveClients } from "@/lib/data/dashboards";
 import Link from "next/link";
@@ -73,6 +74,9 @@ export default async function AdminPage() {
 
           {/* Windsor — diagnóstico de campos de conversão */}
           <WindsorConversionTestPanel />
+
+          {/* Google Ads — mapeamento e sincronização */}
+          <WindsorGoogleAdsPanel clients={clients} />
 
           {/* Meta Ads — sincronização automática (futura) */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.01]">

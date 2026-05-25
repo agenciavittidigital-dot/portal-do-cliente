@@ -5,7 +5,9 @@ import { Target, Search, Globe, Users, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardBlockCard } from "./DashboardBlockCard";
 import { MetaAdsView } from "./MetaAdsView";
+import { GoogleAdsView } from "./GoogleAdsView";
 import type { DashboardWithBlocks, PerformanceData, PlatformKey } from "@/types";
+import type { GoogleAdsCampaignRow } from "@/lib/data/performance";
 
 interface PlatformDef {
   key: PlatformKey;
@@ -23,6 +25,8 @@ const PLATFORMS: PlatformDef[] = [
 interface Props {
   dashboards: DashboardWithBlocks[];
   performance?: PerformanceData | null;
+  performanceGoogleAds?: PerformanceData | null;
+  googleAdsCampaigns?: GoogleAdsCampaignRow[];
   initialPeriod?: string;
   initialView?: string;
   initialAnalysis?: string;
@@ -33,6 +37,8 @@ interface Props {
 export function MetricasDashboard({
   dashboards,
   performance,
+  performanceGoogleAds,
+  googleAdsCampaigns,
   initialPeriod,
   initialView,
   initialAnalysis,
@@ -107,7 +113,9 @@ export function MetricasDashboard({
       </div>
 
       {/* ── Blocos do canal ───────────────────────────────────── */}
-      {blocksForChannel.length > 0 ? (
+      {selected === "google_ads" ? (
+        <GoogleAdsView performance={performanceGoogleAds} campaigns={googleAdsCampaigns} />
+      ) : blocksForChannel.length > 0 ? (
         selected === "meta_ads" ? (
           <MetaAdsView
             blocks={blocksForChannel}
