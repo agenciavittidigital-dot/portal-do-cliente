@@ -1,82 +1,418 @@
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { BarChart3, TrendingUp, Users, DollarSign } from "lucide-react";
+import type { ReactNode } from "react";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { loadUserContext } from "@/lib/data/user-context";
+import { loadActiveClients } from "@/lib/data/dashboards";
+import { computeDateRange, loadPerformanceData } from "@/lib/data/performance";
+import { listClientInvoices } from "@/lib/data/invoices-client";
+import { listPublishedReports } from "@/lib/data/reports-client";
+import { listPublishedCalls } from "@/lib/data/calls-client";
+import {
+  Target,
+  Search,
+  FileText,
+  CreditCard,
+  Phone,
+  BarChart3,
+  ArrowRight,
+  Users,
+} from "lucide-react";
+import type { PerformanceSummary } from "@/types";
+import type { ClientInvoiceRow } from "@/lib/data/invoices-client";
+import type { ClientReportRow } from "@/lib/data/reports-client";
+import type { ClientCallRow } from "@/lib/data/calls-client";
 
-const stats = [
-  { label: "Impressões", icon: BarChart3 },
-  { label: "Cliques", icon: TrendingUp },
-  { label: "Leads", icon: Users },
-  { label: "Investimento", icon: DollarSign },
-];
+// ── Formatadores ───────────────────────────────────────────────────────────────
 
-export default function DashboardPage() {
+function fmtCurrency(v: number): string {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(v);
+}
+
+function fmtNumber(v: number): string {
+  return new Intl.NumberFormat("pt-BR").format(Math.round(v));
+}
+
+function fmtDate(iso: string | null): string {
+  if (!iso) return "—";
+  const parts = iso.slice(0, 10).split("-");
+  if (parts.length < 3) return iso;
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+function fmtMonth(iso: string | null): string {
+  if (!iso) return "—";
+  const parts = iso.split("-");
+  if (parts.length < 2) return iso;
+  const months = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+  const m = parseInt(parts[1]) - 1;
+  return `${months[m] ?? parts[1]}. ${parts[0]}`;
+}
+
+// ── PlatformCard ───────────────────────────────────────────────────────────────
+
+function PlatformCard({
+  label,
+  icon,
+  summary,
+}: {
+  label: string;
+  icon: ReactNode;
+  summary: PerformanceSummary | null;
+}) {
+  const spend = typeof summary?.spend === "number" ? summary.spend : null;
+  const impressions = typeof summary?.impressions === "number" ? summary.impressions : null;
+  const clicks = typeof summary?.clicks === "number" ? summary.clicks : null;
+  const conversions = typeof summary?.leads === "number" ? summary.leads : null;
+
+  const rows: { label: string; value: string | null }[] = [
+    { label: "Investimento", value: spend !== null ? fmtCurrency(spend) : null },
+    { label: "Impressões", value: impressions !== null ? fmtNumber(impressions) : null },
+    { label: "Cliques", value: clicks !== null ? fmtNumber(clicks) : null },
+    { label: "Conversões", value: conversions !== null ? fmtNumber(conversions) : null },
+  ];
+
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="rounded-xl border border-white/[0.06] bg-white/[0.01] p-5">
+      <div className="flex items-center gap-2 mb-5">
+        <div className="w-7 h-7 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0">
+          {icon}
+        </div>
+        <span className="text-xs font-light text-white/50">{label}</span>
+      </div>
+      {summary === null ? (
+        <p className="text-xs font-light text-white/20 italic">Sem dados no período</p>
+      ) : (
+        <div className="space-y-3">
+          {rows.map((row) => (
+            <div key={row.label} className="flex items-baseline justify-between gap-2">
+              <span className="text-[10px] font-light text-white/25 shrink-0">{row.label}</span>
+              {row.value !== null ? (
+                <span className="text-sm font-light text-white/65 tabular-nums">{row.value}</span>
+              ) : (
+                <span className="text-xs font-light text-white/18 italic">—</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── RecentCard ─────────────────────────────────────────────────────────────────
+
+function RecentCard({
+  label,
+  icon,
+  title,
+  subtitle,
+  extra,
+  href,
+}: {
+  label: string;
+  icon: ReactNode;
+  title: string | null;
+  subtitle: string | null;
+  extra?: string | null;
+  href: string;
+}) {
+  return (
+    <Link href={href} className="group block h-full">
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.01] p-5 hover:border-white/[0.12] hover:bg-white/[0.03] transition-all h-full">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0">
+              {icon}
+            </div>
+            <span className="text-[10px] font-light text-white/25 uppercase tracking-widest">
+              {label}
+            </span>
+          </div>
+          <ArrowRight
+            size={11}
+            className="text-white/15 group-hover:text-white/40 transition-colors shrink-0"
+          />
+        </div>
+        {title ? (
+          <div className="space-y-1.5">
+            <p className="text-sm font-light text-white/60 line-clamp-2 leading-snug">
+              {title}
+            </p>
+            {subtitle && (
+              <p className="text-[10px] font-light text-white/25">{subtitle}</p>
+            )}
+            {extra && (
+              <p className="text-xs font-light text-white/40 tabular-nums">{extra}</p>
+            )}
+          </div>
+        ) : (
+          <p className="text-xs font-light text-white/20 italic">Nenhum registrado</p>
+        )}
+      </div>
+    </Link>
+  );
+}
+
+// ── QuickLink ──────────────────────────────────────────────────────────────────
+
+function QuickLink({
+  label,
+  href,
+  icon,
+}: {
+  label: string;
+  href: string;
+  icon: ReactNode;
+}) {
+  return (
+    <Link href={href} className="group">
+      <div className="flex items-center justify-between px-4 py-3.5 rounded-xl border border-white/[0.06] bg-white/[0.01] hover:border-vitti-blue/20 hover:bg-vitti-dark/60 transition-all">
+        <div className="flex items-center gap-2.5">
+          {icon}
+          <span className="text-xs font-light text-white/45 group-hover:text-white/70 transition-colors">
+            {label}
+          </span>
+        </div>
+        <ArrowRight
+          size={11}
+          className="text-white/15 group-hover:text-vitti-light/50 transition-colors"
+        />
+      </div>
+    </Link>
+  );
+}
+
+// ── Page ───────────────────────────────────────────────────────────────────────
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ clientId?: string }>;
+}) {
+  const { clientId: urlClientId } = await searchParams;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const ctx = user ? await loadUserContext(user.id) : null;
+  const isAdmin = ctx?.isAdmin ?? false;
+
+  // ── Resolve target client ──────────────────────────────────────────────────
+  let targetClientId: string | null = null;
+  let targetClientName: string | null = null;
+
+  if (isAdmin) {
+    if (urlClientId) {
+      const { clients } = await loadActiveClients();
+      const found = clients.find((c) => c.id === urlClientId);
+      if (found) {
+        targetClientId = found.id;
+        targetClientName = found.name;
+      }
+    }
+  } else {
+    // Cliente comum: ignora qualquer clientId da URL
+    targetClientId = ctx?.client?.id ?? null;
+    targetClientName = ctx?.client?.name ?? null;
+  }
+
+  // ── Admin sem cliente: orientação ──────────────────────────────────────────
+  if (isAdmin && !targetClientId) {
+    return (
+      <div className="space-y-6 max-w-6xl">
+        <div>
+          <h2 className="text-xl font-light text-white/90 tracking-wide">Admin Vitti</h2>
+          <p className="text-sm text-white/25 mt-0.5 font-light">Painel administrativo</p>
+        </div>
+        <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-white/5">
+          <div className="w-12 h-12 rounded-full bg-white/[0.03] border border-white/[0.08] flex items-center justify-center">
+            <Users size={18} className="text-white/15" />
+          </div>
+          <div className="text-center space-y-1.5">
+            <p className="text-sm font-light text-white/40">Nenhum cliente selecionado</p>
+            <p className="text-xs text-white/20 font-light max-w-xs leading-relaxed">
+              Acesse Métricas e selecione um cliente para visualizar a visão geral.
+            </p>
+          </div>
+          <div className="flex gap-3 mt-2">
+            <Link
+              href="/metricas"
+              className="flex items-center gap-2 text-xs font-light px-4 py-2 rounded-full border border-white/[0.08] text-white/40 hover:text-white/70 hover:border-white/[0.15] transition-all"
+            >
+              <BarChart3 size={12} />
+              Ir para Métricas
+            </Link>
+            <Link
+              href="/admin"
+              className="flex items-center gap-2 text-xs font-light px-4 py-2 rounded-full border border-white/[0.08] text-white/40 hover:text-white/70 hover:border-white/[0.15] transition-all"
+            >
+              <ArrowRight size={12} />
+              Ir para Admin
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Carregar dados em paralelo ─────────────────────────────────────────────
+  const { start: perfStart, end: perfEnd } = computeDateRange("last_30_days");
+
+  let metaAdsData = null as Awaited<ReturnType<typeof loadPerformanceData>>;
+  let googleAdsData = null as Awaited<ReturnType<typeof loadPerformanceData>>;
+  let invoiceList: ClientInvoiceRow[] = [];
+  let reportList: ClientReportRow[] = [];
+  let callList: ClientCallRow[] = [];
+
+  if (targetClientId) {
+    [metaAdsData, googleAdsData, invoiceList, reportList, callList] = await Promise.all([
+      loadPerformanceData(targetClientId, "meta_ads", perfStart, perfEnd),
+      loadPerformanceData(targetClientId, "google_ads", perfStart, perfEnd),
+      listClientInvoices(targetClientId),
+      listPublishedReports(targetClientId),
+      listPublishedCalls(targetClientId),
+    ]);
+  }
+
+  const metaAds = metaAdsData?.summary ?? null;
+  const googleAds = googleAdsData?.summary ?? null;
+  const latestInvoice = invoiceList[0] ?? null;
+  const latestReport = reportList[0] ?? null;
+  const latestCall = callList[0] ?? null;
+
+  // Query params para preview mode (admin → links incluem clientId)
+  const qp =
+    isAdmin && targetClientId
+      ? `?clientId=${encodeURIComponent(targetClientId)}`
+      : "";
+
+  const greeting = targetClientName ?? (isAdmin ? "Admin" : "Bem-vindo");
+  const userName = ctx?.profile?.name ? `, ${ctx.profile.name.split(" ")[0]}` : "";
+
+  // ── Sem cliente vinculado (cliente comum) ──────────────────────────────────
+  if (!targetClientId) {
+    return (
+      <div className="space-y-6 max-w-6xl">
+        <div>
+          <h2 className="text-xl font-light text-white/90 tracking-wide">
+            Olá{userName}
+          </h2>
+          <p className="text-sm text-white/25 mt-0.5 font-light">Visão geral</p>
+        </div>
+        <div className="flex flex-col items-center justify-center py-20 gap-3 rounded-xl border border-dashed border-white/5">
+          <p className="text-sm font-light text-white/30">
+            Nenhum cliente vinculado à sua conta.
+          </p>
+          <p className="text-xs text-white/20 font-light">
+            Contate a equipe Vitti para vinculação.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Visão geral completa ───────────────────────────────────────────────────
+  return (
+    <div className="space-y-8 max-w-6xl">
+      {/* Header */}
       <div>
         <h2 className="text-xl font-light text-white/90 tracking-wide">
-          Olá, bem-vindo
+          Olá, {greeting}
         </h2>
         <p className="text-sm text-white/25 mt-0.5 font-light">
-          Visão geral da sua performance
+          Visão geral · últimos 30 dias
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={stat.label}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>{stat.label}</CardTitle>
-                  <Icon size={14} className="text-vitti-light/20" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-light text-white/80">—</p>
-                <Badge label="Aguardando dados" variant="default" className="mt-2" />
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      {/* Performance por plataforma */}
+      <section>
+        <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase font-light mb-3">
+          Performance
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <PlatformCard
+            label="Meta Ads"
+            icon={<Target size={12} className="text-vitti-light/40" />}
+            summary={metaAds}
+          />
+          <PlatformCard
+            label="Google Ads"
+            icon={<Search size={12} className="text-vitti-light/40" />}
+            summary={googleAds}
+          />
+        </div>
+      </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Performance</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-52 flex flex-col items-center justify-center gap-2 border border-dashed border-white/5 rounded-lg">
-            <BarChart3 size={28} className="text-white/8" />
-            <p className="text-white/15 text-xs font-light">
-              Gráfico de performance em breve
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Itens recentes */}
+      <section>
+        <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase font-light mb-3">
+          Recentes
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <RecentCard
+            label="Última NF"
+            icon={<CreditCard size={11} className="text-vitti-light/30" />}
+            title={latestInvoice?.title ?? null}
+            subtitle={latestInvoice ? fmtMonth(latestInvoice.referenceMonth) : null}
+            extra={
+              latestInvoice?.amount != null
+                ? fmtCurrency(latestInvoice.amount)
+                : null
+            }
+            href={`/financeiro${qp}`}
+          />
+          <RecentCard
+            label="Último Relatório"
+            icon={<FileText size={11} className="text-vitti-light/30" />}
+            title={latestReport?.title ?? null}
+            subtitle={latestReport?.period ?? null}
+            href={`/relatorios${qp}`}
+          />
+          <RecentCard
+            label="Última Call"
+            icon={<Phone size={11} className="text-vitti-light/30" />}
+            title={latestCall?.title ?? null}
+            subtitle={latestCall ? fmtDate(latestCall.callDate) : null}
+            href={`/calls${qp}`}
+          />
+        </div>
+      </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Últimos Relatórios</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-28 flex items-center justify-center border border-dashed border-white/5 rounded-lg">
-              <p className="text-white/15 text-xs font-light">Em breve</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Próximas Calls</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-28 flex items-center justify-center border border-dashed border-white/5 rounded-lg">
-              <p className="text-white/15 text-xs font-light">Em breve</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Atalhos rápidos */}
+      <section>
+        <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase font-light mb-3">
+          Acessar
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <QuickLink
+            label="Métricas"
+            href={`/metricas${qp}`}
+            icon={<BarChart3 size={14} className="text-vitti-light/40" />}
+          />
+          <QuickLink
+            label="Financeiro"
+            href={`/financeiro${qp}`}
+            icon={<CreditCard size={14} className="text-vitti-light/40" />}
+          />
+          <QuickLink
+            label="Relatórios"
+            href={`/relatorios${qp}`}
+            icon={<FileText size={14} className="text-vitti-light/40" />}
+          />
+          <QuickLink
+            label="Calls"
+            href={`/calls${qp}`}
+            icon={<Phone size={14} className="text-vitti-light/40" />}
+          />
+        </div>
+      </section>
     </div>
   );
 }
