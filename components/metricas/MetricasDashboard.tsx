@@ -28,8 +28,6 @@ interface Props {
   performanceGoogleAds?: PerformanceData | null;
   googleAdsCampaigns?: GoogleAdsCampaignRow[];
   initialPeriod?: string;
-  initialView?: string;
-  initialAnalysis?: string;
   initialStartDate?: string;
   initialEndDate?: string;
 }
@@ -40,8 +38,6 @@ export function MetricasDashboard({
   performanceGoogleAds,
   googleAdsCampaigns,
   initialPeriod,
-  initialView,
-  initialAnalysis,
   initialStartDate,
   initialEndDate,
 }: Props) {
@@ -121,8 +117,6 @@ export function MetricasDashboard({
             blocks={blocksForChannel}
             performance={performance}
             initialPeriod={initialPeriod}
-            initialView={initialView}
-            initialAnalysis={initialAnalysis}
             initialStartDate={initialStartDate}
             initialEndDate={initialEndDate}
           />

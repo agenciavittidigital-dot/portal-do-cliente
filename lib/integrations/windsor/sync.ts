@@ -1,5 +1,11 @@
 import "server-only";
 import { fetchWindsorSyncData, WINDSOR_SYNC_FIELDS } from "./client";
+import {
+  extractFromActions,
+  LEAD_ACTION_TYPES,
+  MESSAGE_ACTION_TYPES,
+  PURCHASE_ACTION_TYPES,
+} from "./normalizers";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -52,6 +58,8 @@ interface AggregatedRecord {
   engagements: number;
   video_views_25: number;
   video_views_75: number;
+  // ROAS: soma ponderada por spend para calcular média ponderada ao final
+  roasWeightedSum: number;
   groupedCount: number;
   rawSample: Record<string, unknown>;
 }
@@ -184,39 +192,60 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
       "unknown", // ad_id
     ].join("::");
 
+    // Prioridade: campo achatado Windsor → escalar legado → array fallback
+    const rawLeads =
+      safeNum(raw.actions_onsite_conversion_lead_grouped) ||
+      safeNum(raw.leads) ||
+      extractFromActions(raw.actions, LEAD_ACTION_TYPES);
+    const rawMessages =
+      safeNum(raw.actions_onsite_conversion_messaging_conversation_started_7d) ||
+      safeNum(raw.messages_started) ||
+      extractFromActions(raw.actions, MESSAGE_ACTION_TYPES);
+    const rawPurchases =
+      safeNum(raw.actions_offsite_conversion_fb_pixel_purchase) ||
+      safeNum(raw.purchases) ||
+      extractFromActions(raw.actions, PURCHASE_ACTION_TYPES);
+    const rawPurchaseValue =
+      safeNum(raw.action_values_offsite_conversion_fb_pixel_purchase) ||
+      safeNum(raw.purchase_value) ||
+      extractFromActions(raw.action_values, PURCHASE_ACTION_TYPES);
+
     const existing = aggregated.get(key);
     if (existing) {
-      // Múltiplos registros Windsor para a mesma linha → soma métricas somáveis
-      existing.spend += safeNum(raw.spend);
+      const rawSpend = safeNum(raw.spend);
+      existing.spend += rawSpend;
       existing.clicks += safeNum(raw.clicks);
       existing.impressions += safeNum(raw.impressions);
       existing.reach += safeNum(raw.reach);
-      existing.leads += safeNum(raw.leads);
-      existing.messages_started += safeNum(raw.messages_started);
-      existing.purchases += safeNum(raw.purchases);
-      existing.purchase_value += safeNum(raw.purchase_value);
+      existing.leads += rawLeads;
+      existing.messages_started += rawMessages;
+      existing.purchases += rawPurchases;
+      existing.purchase_value += rawPurchaseValue;
       existing.engagements += safeNum(raw.engagements);
       existing.video_views_25 += safeNum(raw.video_views_25);
       existing.video_views_75 += safeNum(raw.video_views_75);
+      existing.roasWeightedSum += safeNum(raw.roas) * rawSpend;
       existing.groupedCount++;
     } else {
+      const rawSpend = safeNum(raw.spend);
       aggregated.set(key, {
         integration: integ,
         date,
         accountName,
         campaignName,
         campaignId,
-        spend: safeNum(raw.spend),
+        spend: rawSpend,
         clicks: safeNum(raw.clicks),
         impressions: safeNum(raw.impressions),
         reach: safeNum(raw.reach),
-        leads: safeNum(raw.leads),
-        messages_started: safeNum(raw.messages_started),
-        purchases: safeNum(raw.purchases),
-        purchase_value: safeNum(raw.purchase_value),
+        leads: rawLeads,
+        messages_started: rawMessages,
+        purchases: rawPurchases,
+        purchase_value: rawPurchaseValue,
         engagements: safeNum(raw.engagements),
         video_views_25: safeNum(raw.video_views_25),
         video_views_75: safeNum(raw.video_views_75),
+        roasWeightedSum: safeNum(raw.roas) * rawSpend,
         groupedCount: 1,
         rawSample: raw as Record<string, unknown>,
       });
@@ -242,7 +271,13 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
     const cpm = rec.impressions > 0 ? (rec.spend / rec.impressions) * 1000 : 0;
     const ctr = rec.impressions > 0 ? (rec.clicks / rec.impressions) * 100 : 0;
     const frequency = rec.reach > 0 ? rec.impressions / rec.reach : 0;
-    const roas = rec.spend > 0 ? rec.purchase_value / rec.spend : 0;
+    // ROAS: recalculado de purchase_value/spend quando há purchase_value (mais preciso);
+    // fallback para ROAS Windsor escalar ponderado (quando Windsor retorna roas mas não purchase_value)
+    const roas = rec.purchase_value > 0 && rec.spend > 0
+      ? rec.purchase_value / rec.spend
+      : rec.roasWeightedSum > 0 && rec.spend > 0
+      ? rec.roasWeightedSum / rec.spend
+      : 0;
 
     rows.push({
       client_id: rec.integration.clientId,

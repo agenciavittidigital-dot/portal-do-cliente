@@ -64,7 +64,9 @@ export async function loadPerformanceData(
       .eq("client_id", clientId)
       .eq("channel", channel)
       .gte("date", startDate)
-      .lte("date", endDate);
+      .lte("date", endDate)
+      .not("account_name", "ilike", "%demo%")
+      .not("campaign_id", "ilike", "%demo%");
 
     if (error || !rawRows?.length) return null;
 
@@ -77,7 +79,17 @@ export async function loadPerformanceData(
     const totalReach = s("reach");
     const totalClicks = s("clicks");
     const totalLeads = s("leads");
+    const totalMessages = s("messages_started");
+    const totalPurchases = s("purchases");
     const totalPurchaseValue = s("purchase_value");
+
+    // ROAS: média ponderada por spend dos valores armazenados pela Windsor.
+    // Quando purchase_value = 0 mas Windsor retornou roas escalar, usa o valor Windsor.
+    const roasWeightedSum = rawRows.reduce((acc, r) => {
+      const roasVal = Number((r as Record<string, unknown>).roas) || 0;
+      const spendVal = Number((r as Record<string, unknown>).spend) || 0;
+      return acc + roasVal * spendVal;
+    }, 0);
 
     const summary: PerformanceSummary = {
       spend: totalSpend,
@@ -88,12 +100,19 @@ export async function loadPerformanceData(
       ctr: totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : null,
       cpc: totalClicks > 0 ? totalSpend / totalClicks : null,
       cpm: totalImpressions > 0 ? (totalSpend / totalImpressions) * 1000 : null,
-      leads: totalLeads,
+      // Métricas de conversão: null quando Windsor não retornou dados (sum = 0)
+      leads: totalLeads > 0 ? totalLeads : null,
       cost_per_lead: totalLeads > 0 ? totalSpend / totalLeads : null,
-      messages_started: s("messages_started"),
-      purchases: s("purchases"),
-      purchase_value: totalPurchaseValue,
-      roas: totalSpend > 0 ? totalPurchaseValue / totalSpend : null,
+      messages_started: totalMessages > 0 ? totalMessages : null,
+      cost_per_message: totalMessages > 0 ? totalSpend / totalMessages : null,
+      purchases: totalPurchases > 0 ? totalPurchases : null,
+      cost_per_purchase: totalPurchases > 0 ? totalSpend / totalPurchases : null,
+      purchase_value: totalPurchaseValue > 0 ? totalPurchaseValue : null,
+      roas: totalPurchaseValue > 0 && totalSpend > 0
+        ? totalPurchaseValue / totalSpend
+        : roasWeightedSum > 0 && totalSpend > 0
+        ? roasWeightedSum / totalSpend
+        : null,
       engagements: s("engagements"),
       video_views_25: s("video_views_25"),
       video_views_75: s("video_views_75"),

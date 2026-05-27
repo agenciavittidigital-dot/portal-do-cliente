@@ -9,17 +9,21 @@ import {
   X,
   ShieldCheck,
   User,
+  UserPlus,
   CheckCircle2,
   XCircle,
   ChevronRight,
   Loader2,
   AlertTriangle,
+  Copy,
+  Check,
 } from "lucide-react";
 import type { AdminUserRow, AdminUserDetail, AdminPermission } from "@/lib/data/users-admin";
 import type { AdminClientRow } from "@/lib/data/clients-admin";
 import type { UserDetailResponse, UserPatchResponse } from "@/app/api/admin/users/[id]/route";
 import type { UserClientPatchResponse } from "@/app/api/admin/users/[id]/client/route";
 import type { UserPermissionsPatchResponse } from "@/app/api/admin/users/[id]/permissions/route";
+import type { UserCreateResponse } from "@/app/api/admin/users/route";
 import type { GlobalRole } from "@/types";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -194,6 +198,334 @@ function SaveButton({
         label
       )}
     </button>
+  );
+}
+
+// ── Field ──────────────────────────────────────────────────────────────────────
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="text-[9px] font-light text-white/30 block mb-1.5">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function TextInput({
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  disabled,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  type?: string;
+  disabled?: boolean;
+}) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      disabled={disabled}
+      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-white/70 placeholder-white/20 focus:outline-none focus:border-vitti-medium/40 transition-colors disabled:opacity-50"
+    />
+  );
+}
+
+// ── CreateUserModal ────────────────────────────────────────────────────────────
+
+function CreateUserModal({
+  allClients,
+  onClose,
+  onCreated,
+}: {
+  allClients: AdminClientRow[];
+  onClose: () => void;
+  onCreated: (user: AdminUserRow) => void;
+}) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [clientId, setClientId] = useState("");
+  const [role, setRole] = useState<ClientRole>("team");
+  const [status, setStatus] = useState<"active" | "inactive">("active");
+
+  const [submitting, setSubmitting] = useState(false);
+  const [fieldError, setFieldError] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [createdEmail, setCreatedEmail] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const validate = (): string | null => {
+    if (!name.trim()) return "Nome é obrigatório.";
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+      return "E-mail inválido.";
+    if (!clientId) return "Selecione um cliente.";
+    return null;
+  };
+
+  const handleSubmit = useCallback(async () => {
+    const err = validate();
+    if (err) { setFieldError(err); return; }
+    setFieldError(null);
+    setApiError(null);
+    setSubmitting(true);
+
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), email: email.trim().toLowerCase(), clientId, role, status }),
+      });
+      const json = (await res.json()) as UserCreateResponse;
+
+      if (!json.success) {
+        setApiError(json.error ?? "Erro desconhecido.");
+        return;
+      }
+
+      if (json.newUser) onCreated(json.newUser);
+      setCreatedEmail(email.trim().toLowerCase());
+      setTempPassword(json.tempPassword ?? null);
+      setSuccess(true);
+    } catch {
+      setApiError("Erro de conexão.");
+    } finally {
+      setSubmitting(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, email, clientId, role, status, onCreated]);
+
+  function copyPassword() {
+    if (!tempPassword) return;
+    navigator.clipboard.writeText(tempPassword).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-end">
+      <div
+        className="absolute inset-0 bg-black/60"
+        onClick={!success ? onClose : undefined}
+      />
+
+      <div className="relative w-full max-w-md h-full bg-[#0d1117] border-l border-white/[0.06] overflow-y-auto flex flex-col">
+        {/* Header */}
+        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-white/[0.06] bg-[#0d1117]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-full bg-emerald-400/10 border border-emerald-400/15 flex items-center justify-center">
+              <UserPlus size={11} className="text-emerald-400/50" />
+            </div>
+            <p className="text-[11px] font-light text-white/70">Novo usuário cliente</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-white/[0.04] transition-colors"
+          >
+            <X size={13} className="text-white/30" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 px-5 py-5">
+          {success ? (
+            /* ── Painel de sucesso ── */
+            <div className="space-y-5">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={14} className="text-emerald-400/70" />
+                <p className="text-sm font-light text-white/70">Usuário criado com sucesso</p>
+              </div>
+
+              {createdEmail && (
+                <p className="text-[10px] font-light text-white/30">{createdEmail}</p>
+              )}
+
+              {tempPassword ? (
+                <div className="space-y-3">
+                  <div className="rounded-xl border border-amber-400/15 bg-amber-400/[0.03] px-4 py-3">
+                    <p className="text-[9px] font-light text-amber-400/70 leading-relaxed">
+                      <span className="text-amber-400/90">Senha temporária</span> — exibida
+                      apenas uma vez. Informe o cliente e oriente-o a alterar após o primeiro
+                      acesso.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2.5">
+                    <code className="flex-1 text-[13px] font-mono text-white/80 tracking-widest select-all">
+                      {tempPassword}
+                    </code>
+                    <button
+                      onClick={copyPassword}
+                      className="shrink-0 p-1.5 rounded-md hover:bg-white/[0.06] transition-colors"
+                    >
+                      {copied ? (
+                        <Check size={13} className="text-emerald-400/70" />
+                      ) : (
+                        <Copy size={13} className="text-white/30 hover:text-white/60" />
+                      )}
+                    </button>
+                  </div>
+
+                  <p className="text-[9px] font-light text-white/20">
+                    Login: <span className="font-mono text-white/35">{createdEmail}</span>
+                  </p>
+                </div>
+              ) : (
+                <p className="text-[10px] font-light text-white/30">
+                  O usuário já possuía cadastro — vínculo com o cliente criado com sucesso.
+                </p>
+              )}
+
+              <button
+                onClick={onClose}
+                className="w-full text-[10px] font-light py-2.5 rounded-xl border border-white/[0.08] text-white/40 hover:text-white/70 hover:border-white/[0.15] transition-all mt-4"
+              >
+                Fechar
+              </button>
+            </div>
+          ) : (
+            /* ── Formulário de criação ── */
+            <div className="space-y-5">
+              <Field label="Nome">
+                <TextInput
+                  value={name}
+                  onChange={setName}
+                  placeholder="Nome completo"
+                  disabled={submitting}
+                />
+              </Field>
+
+              <Field label="E-mail">
+                <TextInput
+                  value={email}
+                  onChange={setEmail}
+                  placeholder="email@exemplo.com"
+                  type="email"
+                  disabled={submitting}
+                />
+              </Field>
+
+              <Field label="Cliente">
+                <select
+                  value={clientId}
+                  onChange={(e) => setClientId(e.target.value)}
+                  disabled={submitting}
+                  className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-white/70 focus:outline-none focus:border-vitti-medium/40 transition-colors appearance-none disabled:opacity-50"
+                >
+                  <option value="">— selecione um cliente —</option>
+                  {allClients.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                      {c.status !== "active" ? " (inativo)" : ""}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label="Função no cliente">
+                <div className="grid grid-cols-2 gap-1.5 mt-0.5">
+                  {(["admin", "finance", "team", "custom"] as const).map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setRole(r)}
+                      disabled={submitting}
+                      className={`text-left px-3 py-2.5 rounded-lg border transition-all disabled:opacity-50 ${
+                        role === r
+                          ? "border-vitti-medium/35 bg-vitti-medium/[0.08]"
+                          : "border-white/[0.06] bg-white/[0.01] hover:border-white/[0.12]"
+                      }`}
+                    >
+                      <p
+                        className={`text-[9px] font-light leading-snug ${
+                          role === r ? "text-vitti-light/80" : "text-white/40"
+                        }`}
+                      >
+                        {CLIENT_ROLE_LABELS[r]}
+                      </p>
+                      <p className="text-[8px] font-light text-white/20 mt-0.5">
+                        {CLIENT_ROLE_DESCRIPTIONS[r]}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </Field>
+
+              <Field label="Status">
+                <div className="flex gap-2 mt-0.5">
+                  {(["active", "inactive"] as const).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setStatus(s)}
+                      disabled={submitting}
+                      className={`text-[9px] font-light px-3 py-1.5 rounded-full border transition-all disabled:opacity-50 ${
+                        status === s
+                          ? s === "active"
+                            ? "border-emerald-400/30 text-emerald-400/70 bg-emerald-400/5"
+                            : "border-red-400/25 text-red-400/60 bg-red-400/5"
+                          : "border-white/[0.08] text-white/25 hover:border-white/20"
+                      }`}
+                    >
+                      {s === "active" ? "Ativo" : "Inativo"}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+
+              {/* Permissões do preset */}
+              {role !== "custom" && ROLE_PRESETS[role].length > 0 && (
+                <div className="rounded-lg border border-white/[0.05] bg-white/[0.01] px-3 py-2.5">
+                  <p className="text-[9px] font-light text-white/25 mb-1.5">
+                    Permissões aplicadas automaticamente ({CLIENT_ROLE_LABELS[role]}):
+                  </p>
+                  <p className="text-[8px] font-mono text-white/20 leading-relaxed">
+                    {ROLE_PRESETS[role].join(", ")}
+                  </p>
+                </div>
+              )}
+
+              {/* Erros */}
+              {(fieldError || apiError) && (
+                <div className="rounded-lg border border-red-400/20 bg-red-400/[0.04] px-3 py-2.5">
+                  <p className="text-[10px] font-light text-red-400/70">
+                    {fieldError ?? apiError}
+                  </p>
+                </div>
+              )}
+
+              {/* Botão */}
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="w-full flex items-center justify-center gap-2 text-[10px] font-light py-2.5 rounded-xl border border-vitti-medium/30 text-vitti-light/60 hover:border-vitti-medium/60 hover:text-vitti-light/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 size={11} className="animate-spin" />
+                    Criando usuário…
+                  </>
+                ) : (
+                  <>
+                    <UserPlus size={11} />
+                    Criar usuário
+                  </>
+                )}
+              </button>
+
+              <p className="text-[8px] font-light text-white/15 text-center leading-relaxed">
+                Uma senha temporária será gerada. O cliente pode alterá-la após o primeiro acesso.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -473,7 +805,6 @@ function EditModal({
                     Cliente e função
                   </p>
 
-                  {/* Cliente */}
                   <div>
                     <label className="text-[9px] font-light text-white/30 block mb-1.5">
                       Cliente vinculado
@@ -493,7 +824,6 @@ function EditModal({
                     </select>
                   </div>
 
-                  {/* Função — só visível com cliente selecionado */}
                   {selectedClientId && (
                     <div className="space-y-2">
                       <label className="text-[9px] font-light text-white/30 block">
@@ -598,7 +928,6 @@ function EditModal({
                 </section>
               )}
 
-              {/* Nota para vitti_admin */}
               {!isClientUser && (
                 <div className="rounded-lg border border-vitti-medium/10 bg-vitti-medium/[0.04] px-3 py-2.5">
                   <p className="text-[9px] font-light text-white/30 leading-relaxed">
@@ -629,6 +958,7 @@ export function UsersAdminPanel({ initialUsers, allPermissions, allClients, perm
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [creatingUser, setCreatingUser] = useState(false);
 
   const filtered = users.filter((u) => {
     const q = searchQuery.toLowerCase();
@@ -649,9 +979,13 @@ export function UsersAdminPanel({ initialUsers, allPermissions, allClients, perm
     []
   );
 
+  const handleCreated = useCallback((newUser: AdminUserRow) => {
+    setUsers((prev) => [newUser, ...prev]);
+  }, []);
+
   return (
     <div className="space-y-4">
-      {/* Aviso discreto quando ensureDefaultPermissions falhou */}
+      {/* Aviso de seed */}
       {permSeedWarning && (
         <div className="rounded-xl border border-amber-400/15 bg-amber-400/[0.03] px-4 py-3">
           <div className="flex items-start gap-2.5">
@@ -668,7 +1002,7 @@ export function UsersAdminPanel({ initialUsers, allPermissions, allClients, perm
         </div>
       )}
 
-      {/* Search + filter */}
+      {/* Toolbar: search + filter + Novo usuário */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[180px]">
           <Search size={11} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20" />
@@ -702,9 +1036,17 @@ export function UsersAdminPanel({ initialUsers, allPermissions, allClients, perm
           ))}
         </div>
 
-        <span className="text-[9px] font-light text-white/20 ml-auto">
+        <span className="text-[9px] font-light text-white/20">
           {filtered.length} de {users.length}
         </span>
+
+        <button
+          onClick={() => setCreatingUser(true)}
+          className="flex items-center gap-1.5 text-[9px] font-light px-3 py-2 rounded-full border border-emerald-400/20 text-emerald-400/60 hover:border-emerald-400/40 hover:text-emerald-400/80 transition-all"
+        >
+          <UserPlus size={10} />
+          Novo usuário
+        </button>
       </div>
 
       {/* User list */}
@@ -725,25 +1067,27 @@ export function UsersAdminPanel({ initialUsers, allPermissions, allClients, perm
         </div>
       )}
 
-      {/* Info: criação de usuários */}
+      {/* Nota de segurança */}
       <div className="rounded-xl border border-white/[0.04] bg-white/[0.01] px-4 py-3">
         <div className="flex items-start gap-2.5">
           <ShieldCheck size={12} className="text-white/20 shrink-0 mt-0.5" />
-          <div className="space-y-0.5">
-            <p className="text-[9px] font-light text-white/30 leading-relaxed">
-              <span className="text-white/50">Criação de novos usuários</span> — depende do
-              Supabase Auth (profiles.auth_user_id NOT NULL). Ficará para sprint futura com
-              fluxo de convite por email. Nesta sprint: editar perfis existentes, vincular
-              clientes e gerenciar permissões.
-            </p>
-            <p className="text-[9px] font-light text-white/20 font-mono">
-              Para criar: cadastrar via Supabase Auth → profile criado automaticamente → editar aqui.
-            </p>
-          </div>
+          <p className="text-[9px] font-light text-white/25 leading-relaxed">
+            Apenas usuários com <span className="text-white/40">global_role = client_user</span>{" "}
+            podem ser criados por esta tela. Vitti Admins são configurados diretamente no banco.
+          </p>
         </div>
       </div>
 
-      {/* Edit modal */}
+      {/* Modal de criação */}
+      {creatingUser && (
+        <CreateUserModal
+          allClients={allClients}
+          onClose={() => setCreatingUser(false)}
+          onCreated={handleCreated}
+        />
+      )}
+
+      {/* Modal de edição */}
       {editingUserId && (
         <EditModal
           userId={editingUserId}

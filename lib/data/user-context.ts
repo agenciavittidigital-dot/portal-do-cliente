@@ -61,7 +61,7 @@ export async function loadUserContext(userId: string): Promise<UserContext> {
   try {
     const admin = createAdminClient();
 
-    // ── 1. Profile via auth_user_id ─────────────────────────────────
+    // 1. Profile via auth_user_id
     const { data: profileRaw, error: profileError } = await admin
       .from("profiles")
       .select("id, auth_user_id, name, email, global_role, status")
@@ -74,25 +74,25 @@ export async function loadUserContext(userId: string): Promise<UserContext> {
 
     const profile = coerceProfile(profileRaw as Record<string, unknown>);
 
-    // ── 2. Validação de status ──────────────────────────────────────
+    // 2. Validação de status
     if (profile.status !== "active") {
       return { ...base, profile, error: "user_inactive" };
     }
 
     const isAdmin = profile.global_role === "vitti_admin";
 
-    // ── 3. Admin não precisa de client_users nem de permissões ─────
+    // 3. Admin não precisa de client_users nem de permissões
     if (isAdmin) {
       return { ...base, profile, isAdmin: true };
     }
 
-    // ── 4. Cliente vinculado via profile.id ─────────────────────────
+    // 4. Cliente vinculado: client_users.profile_id = profile.id
     let client: Client | null = null;
 
     const { data: clientUserRow } = await admin
       .from("client_users")
-      .select("client_id")
-      .eq("user_id", profile.id)
+      .select("id, client_id")
+      .eq("profile_id", profile.id)
       .maybeSingle();
 
     if (clientUserRow?.client_id) {
@@ -107,27 +107,30 @@ export async function loadUserContext(userId: string): Promise<UserContext> {
       }
     }
 
-    // ── 5. Permissões via profile.id ────────────────────────────────
+    // 5. Permissões: user_permissions.client_user_id = client_users.id
     let permissions: string[] = [];
+    const clientUserId = clientUserRow?.id ? String(clientUserRow.id) : null;
 
-    const { data: userPermRows } = await admin
-      .from("user_permissions")
-      .select("permission_id")
-      .eq("user_id", profile.id);
+    if (clientUserId) {
+      const { data: userPermRows } = await admin
+        .from("user_permissions")
+        .select("permission_id")
+        .eq("client_user_id", clientUserId);
 
-    const permIds = (userPermRows ?? [])
-      .map((r: Record<string, unknown>) => r.permission_id)
-      .filter(Boolean) as string[];
+      const permIds = (userPermRows ?? [])
+        .map((r: Record<string, unknown>) => r.permission_id)
+        .filter(Boolean) as string[];
 
-    if (permIds.length > 0) {
-      const { data: permRows } = await admin
-        .from("permissions")
-        .select("name")
-        .in("id", permIds);
+      if (permIds.length > 0) {
+        const { data: permRows } = await admin
+          .from("permissions")
+          .select("key")
+          .in("id", permIds);
 
-      permissions = (permRows ?? [])
-        .map((r: Record<string, unknown>) => String(r.name ?? ""))
-        .filter(Boolean);
+        permissions = (permRows ?? [])
+          .map((r: Record<string, unknown>) => String(r.key ?? ""))
+          .filter(Boolean);
+      }
     }
 
     return { ...base, profile, client, permissions, isAdmin: false };

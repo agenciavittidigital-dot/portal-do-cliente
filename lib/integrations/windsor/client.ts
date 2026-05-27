@@ -38,6 +38,14 @@ export const WINDSOR_SYNC_FIELDS = [
   "engagements",
   "video_views_25",
   "video_views_75",
+  // Conversões Meta Ads: campos achatados (nomes técnicos validados na Windsor)
+  "actions_onsite_conversion_lead_grouped",
+  "actions_onsite_conversion_messaging_conversation_started_7d",
+  "actions_offsite_conversion_fb_pixel_purchase",
+  "action_values_offsite_conversion_fb_pixel_purchase",
+  // Arrays brutos (fallback — Windsor pode retornar via actions em vez de campos achatados)
+  "actions",
+  "action_values",
 ] as const;
 
 // Verifica se WINDSOR_API_KEY está presente no servidor

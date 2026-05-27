@@ -5,6 +5,7 @@ import { WindsorAccountMapping } from "@/components/admin/WindsorAccountMapping"
 import { WindsorSyncPanel } from "@/components/admin/WindsorSyncPanel";
 import { WindsorFieldsTestPanel } from "@/components/admin/WindsorFieldsTestPanel";
 import { WindsorConversionTestPanel } from "@/components/admin/WindsorConversionTestPanel";
+import { WindsorMetaRawProbePanel } from "@/components/admin/WindsorMetaRawProbePanel";
 import { WindsorGoogleAdsPanel } from "@/components/admin/WindsorGoogleAdsPanel";
 import { getWindsorStatus } from "@/lib/integrations/windsor/client";
 import { loadActiveClients } from "@/lib/data/dashboards";
@@ -74,6 +75,9 @@ export default async function AdminPage() {
 
           {/* Windsor — diagnóstico de campos de conversão */}
           <WindsorConversionTestPanel />
+
+          {/* Windsor — probe de dados brutos Meta Ads, excluindo demos */}
+          <WindsorMetaRawProbePanel />
 
           {/* Google Ads — mapeamento e sincronização */}
           <WindsorGoogleAdsPanel clients={clients} />

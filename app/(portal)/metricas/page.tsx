@@ -13,8 +13,6 @@ export default async function MetricasPage({
     period?: string;
     startDate?: string;
     endDate?: string;
-    view?: string;
-    analysis?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -23,8 +21,6 @@ export default async function MetricasPage({
   const period = params.period ?? "last_7_days";
   const startDate = params.startDate ?? "";
   const endDate = params.endDate ?? "";
-  const view = params.view ?? "campaign";
-  const analysis = params.analysis ?? "all";
 
   const { start: perfStart, end: perfEnd } = computeDateRange(period, startDate, endDate);
   // ── Auth ──────────────────────────────────────────────────────
@@ -38,8 +34,6 @@ export default async function MetricasPage({
 
   const filterProps = {
     initialPeriod: period,
-    initialView: view,
-    initialAnalysis: analysis,
     initialStartDate: startDate,
     initialEndDate: endDate,
   };

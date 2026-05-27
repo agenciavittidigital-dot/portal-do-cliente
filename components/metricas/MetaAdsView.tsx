@@ -2,27 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, ChevronDown, Filter, Layers } from "lucide-react";
+import { Calendar, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BlockMetric, BlockWithMetrics, PerformanceData, PerformanceSummary } from "@/types";
 import { MetaAdsChart } from "./MetaAdsChart";
 import { MetaAdsTable } from "./MetaAdsTable";
 
-// ── Opções dos filtros ────────────────────────────────────────────────────────
-
-const VIEW_OPTIONS = [
-  { value: "campaign", label: "Campanha" },
-  { value: "adset", label: "Conjunto de anúncios" },
-  { value: "ad", label: "Anúncio" },
-];
-
-const ANALYSIS_OPTIONS = [
-  { value: "all", label: "Todos" },
-  { value: "ads", label: "Anúncios" },
-  { value: "creatives", label: "Criativos" },
-  { value: "audiences", label: "Públicos" },
-  { value: "placements", label: "Posicionamentos" },
-];
+// ── Opções do filtro de período ───────────────────────────────────────────────
 
 const PERIOD_OPTIONS = [
   { value: "today", label: "Hoje" },
@@ -90,14 +76,6 @@ function formatValue(value: number, format: string | null): string {
   }
 }
 
-// URL update sem refetch (view, analysis)
-function updateUrlParams(params: Record<string, string>) {
-  if (typeof window === "undefined") return;
-  const url = new URL(window.location.href);
-  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-  window.history.replaceState({}, "", url.toString());
-}
-
 function formatDateBR(iso: string): string {
   const [y, m, d] = iso.split("-");
   return `${d}/${m}/${y}`;
@@ -109,74 +87,6 @@ function resolvePeriodLabel(period: string, start: string, end: string): string 
     return "Personalizado";
   }
   return PERIOD_OPTIONS.find((o) => o.value === period)?.label ?? "Período";
-}
-
-// ── Dropdown genérico (view / analysis) ──────────────────────────────────────
-
-function FilterDropdown({
-  icon: Icon,
-  options,
-  value,
-  onChange,
-}: {
-  icon: React.ElementType;
-  options: { value: string; label: string }[];
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  const currentLabel = options.find((o) => o.value === value)?.label ?? options[0]?.label ?? "";
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen((prev) => !prev)}
-        className={cn(
-          "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-light transition-all duration-150 select-none",
-          open
-            ? "border-vitti-blue/30 text-vitti-light/80 bg-vitti-blue/[0.08]"
-            : "border-white/[0.07] text-white/30 hover:border-white/[0.15] hover:text-white/50"
-        )}
-      >
-        <Icon size={9} className="shrink-0" />
-        <span className="max-w-[130px] truncate">{currentLabel}</span>
-        <ChevronDown
-          size={8}
-          className={cn("shrink-0 transition-transform duration-150", open && "rotate-180")}
-        />
-      </button>
-
-      {open && (
-        <div className="absolute top-full mt-2 right-0 z-50 min-w-[180px] rounded-xl border border-white/[0.07] bg-vitti-dark shadow-2xl shadow-black/80 overflow-hidden">
-          {options.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => { onChange(opt.value); setOpen(false); }}
-              className={cn(
-                "w-full text-left px-4 py-2.5 text-[11px] font-light transition-colors",
-                value === opt.value
-                  ? "text-vitti-light bg-vitti-blue/[0.14]"
-                  : "text-white/35 hover:text-white/65 hover:bg-white/[0.04]"
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 }
 
 // ── Filtro de período (com refetch via router) ────────────────────────────────
@@ -376,8 +286,6 @@ interface MetaAdsViewProps {
   blocks: BlockWithMetrics[];
   performance?: PerformanceData | null;
   initialPeriod?: string;
-  initialView?: string;
-  initialAnalysis?: string;
   initialStartDate?: string;
   initialEndDate?: string;
 }
@@ -386,28 +294,14 @@ export function MetaAdsView({
   blocks,
   performance,
   initialPeriod = "last_7_days",
-  initialView = "campaign",
-  initialAnalysis = "all",
   initialStartDate = "",
   initialEndDate = "",
 }: MetaAdsViewProps) {
   const router = useRouter();
 
-  const [view, setView] = useState(initialView);
-  const [analysis, setAnalysis] = useState(initialAnalysis);
   const [period, setPeriod] = useState(initialPeriod);
   const [customStart, setCustomStart] = useState(initialStartDate);
   const [customEnd, setCustomEnd] = useState(initialEndDate);
-
-  function handleViewChange(v: string) {
-    setView(v);
-    updateUrlParams({ view: v });
-  }
-
-  function handleAnalysisChange(v: string) {
-    setAnalysis(v);
-    updateUrlParams({ analysis: v });
-  }
 
   // Mudança de período: usa router.replace para acionar refetch no servidor
   function handlePeriodChange(p: string, start: string, end: string) {
@@ -458,8 +352,6 @@ export function MetaAdsView({
           </h3>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <FilterDropdown icon={Layers} options={VIEW_OPTIONS} value={view} onChange={handleViewChange} />
-          <FilterDropdown icon={Filter} options={ANALYSIS_OPTIONS} value={analysis} onChange={handleAnalysisChange} />
           <PeriodFilter
             period={period}
             customStart={customStart}

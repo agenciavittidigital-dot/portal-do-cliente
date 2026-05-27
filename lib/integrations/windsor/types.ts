@@ -34,6 +34,14 @@ export interface WindsorRawRecord {
   video_views_25?: number | string | null;
   video_views_75?: number | string | null;
   frequency?: number | string | null;
+  // Campos de conversão achatados — nomes técnicos validados na Windsor
+  actions_onsite_conversion_lead_grouped?: number | string | null;
+  actions_onsite_conversion_messaging_conversation_started_7d?: number | string | null;
+  actions_offsite_conversion_fb_pixel_purchase?: number | string | null;
+  action_values_offsite_conversion_fb_pixel_purchase?: number | string | null;
+  // Campos de conversão estruturados (fallback — Meta Ads arrays brutos)
+  actions?: Array<Record<string, unknown>> | null;
+  action_values?: Array<Record<string, unknown>> | null;
   // Campos adicionais que Windsor pode retornar sem mapeamento prévio
   [key: string]: unknown;
 }
