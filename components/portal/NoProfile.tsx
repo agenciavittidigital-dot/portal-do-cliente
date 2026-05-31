@@ -38,13 +38,13 @@ export function NoProfile({ error = "profile_not_found" }: NoProfileProps) {
 
   return (
     <div className="flex flex-col items-center justify-center h-full gap-6 text-center px-8">
-      <div className="w-14 h-14 rounded-full bg-white/[0.03] border border-white/8 flex items-center justify-center">
-        <Icon size={22} className="text-white/15" />
+      <div className="w-14 h-14 rounded-full bg-vitti-gray/[0.08] border border-vitti-gray/[0.14] flex items-center justify-center">
+        <Icon size={22} className="text-vitti-blue/25" />
       </div>
 
       <div className="space-y-2 max-w-xs">
-        <h3 className="text-sm font-light text-white/50">{title}</h3>
-        <p className="text-[12px] text-white/20 font-light leading-relaxed">
+        <h3 className="text-sm font-light text-vitti-blue/70">{title}</h3>
+        <p className="text-[12px] text-vitti-blue/45 font-light leading-relaxed">
           {body}
         </p>
       </div>
@@ -53,7 +53,7 @@ export function NoProfile({ error = "profile_not_found" }: NoProfileProps) {
         {showReload && (
           <button
             onClick={() => window.location.reload()}
-            className="flex items-center gap-2 text-xs font-light text-white/30 hover:text-white/60 transition-colors"
+            className="flex items-center gap-2 text-xs font-light text-vitti-blue/55 hover:text-vitti-blue transition-colors"
           >
             <RefreshCcw size={13} />
             Tentar novamente
@@ -62,7 +62,7 @@ export function NoProfile({ error = "profile_not_found" }: NoProfileProps) {
         <form action={signOut}>
           <button
             type="submit"
-            className="text-[11px] font-light text-white/20 hover:text-red-400/60 transition-colors underline underline-offset-4 decoration-white/10"
+            className="text-[11px] font-light text-vitti-blue/40 hover:text-red-500/70 transition-colors underline underline-offset-4 decoration-vitti-blue/10"
           >
             Sair da conta
           </button>

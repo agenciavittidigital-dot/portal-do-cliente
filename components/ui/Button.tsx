@@ -10,9 +10,9 @@ const variantStyles = {
   primary:
     "bg-vitti-blue hover:bg-vitti-blue/90 text-white border-transparent shadow-lg shadow-vitti-blue/10",
   secondary:
-    "bg-white/5 hover:bg-white/10 text-white/80 border-white/10",
+    "bg-black/5 hover:bg-black/[0.08] text-[#111111]/70 border-black/10",
   ghost:
-    "bg-transparent hover:bg-white/5 text-white/50 hover:text-white border-transparent",
+    "bg-transparent hover:bg-black/5 text-[#5F6368] hover:text-[#111111] border-transparent",
   danger:
     "bg-red-500/10 hover:bg-red-500/20 text-red-400 border-red-500/20",
 };

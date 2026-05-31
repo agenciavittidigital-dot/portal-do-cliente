@@ -20,7 +20,7 @@ export default async function PortalLayout({
 
   if (hasError) {
     return (
-      <div className="flex h-screen bg-vitti-black overflow-hidden">
+      <div className="flex h-screen bg-vitti-surface overflow-hidden">
         <Sidebar permissions={[]} isAdmin={false} />
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
           <Topbar
@@ -37,7 +37,7 @@ export default async function PortalLayout({
   }
 
   return (
-    <div className="flex h-screen bg-vitti-black overflow-hidden">
+    <div className="flex h-screen bg-vitti-surface overflow-hidden">
       <Sidebar
         permissions={ctx.permissions}
         isAdmin={ctx.isAdmin}
@@ -48,7 +48,7 @@ export default async function PortalLayout({
           userName={ctx.profile?.name ?? null}
           clientName={ctx.client?.name ?? null}
         />
-        <main className="flex-1 overflow-y-auto p-6 lg:p-8">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6 lg:p-8 bg-white">{children}</main>
       </div>
     </div>
   );

@@ -10,7 +10,9 @@ export function Card({ className, children }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-white/5 bg-vitti-dark/40 p-5 backdrop-blur-sm",
+        "rounded-xl border p-5",
+        "bg-vitti-gray/[0.08] border-vitti-gray/[0.14]",
+        "backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)]",
         className
       )}
     >
@@ -27,7 +29,7 @@ export function CardTitle({ className, children }: CardProps) {
   return (
     <h3
       className={cn(
-        "text-xs font-light text-white/50 tracking-widest uppercase",
+        "text-xs font-light text-vitti-blue/60 tracking-widest uppercase",
         className
       )}
     >

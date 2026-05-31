@@ -7,11 +7,11 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<NonNullable<BadgeProps["variant"]>, string> = {
-  default: "bg-white/5 text-white/40 border-white/8",
-  success: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  warning: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  danger: "bg-red-500/10 text-red-400 border-red-500/20",
-  info: "bg-vitti-blue/10 text-vitti-light border-vitti-blue/20",
+  default: "bg-black/[0.05] text-[#5F6368] border-black/[0.08]",
+  success: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+  warning: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+  danger: "bg-red-500/10 text-red-500 border-red-500/20",
+  info: "bg-vitti-blue/10 text-vitti-blue border-vitti-blue/20",
 };
 
 export function Badge({

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -96,16 +97,21 @@ export function Sidebar({ permissions, isAdmin }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex flex-col h-full bg-vitti-dark border-r border-white/5 transition-all duration-300 shrink-0",
+        "flex flex-col h-full bg-gradient-to-b from-[#171F38] to-[#455CAB] border-r border-white/[0.07] transition-all duration-300 shrink-0",
         collapsed ? "w-[60px]" : "w-56"
       )}
     >
       {/* Logo */}
-      <div className="flex items-center h-16 px-4 border-b border-white/5 shrink-0">
+      <div className="flex items-center h-16 px-4 border-b border-white/[0.07] shrink-0">
         {!collapsed && (
-          <span className="text-white font-semibold text-base tracking-wide select-none">
-            vitti<span className="text-vitti-light">.</span>
-          </span>
+          <Image
+            src="/assets/vitti-logo-white2.png.png"
+            alt="Vitti"
+            width={48}
+            height={16}
+            className="object-contain select-none"
+            priority
+          />
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
@@ -145,8 +151,8 @@ export function Sidebar({ permissions, isAdmin }: SidebarProps) {
                   "flex items-center gap-3 rounded-lg text-sm font-light transition-all duration-150 group",
                   collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5",
                   isActive
-                    ? "bg-vitti-blue/15 text-vitti-light border border-vitti-blue/20"
-                    : "text-white/40 hover:text-white/80 hover:bg-white/5 border border-transparent"
+                    ? "bg-white/10 text-white border border-white/[0.12]"
+                    : "text-white/45 hover:text-white/85 hover:bg-white/[0.06] border border-transparent"
                 )}
               >
                 <Icon
@@ -154,8 +160,8 @@ export function Sidebar({ permissions, isAdmin }: SidebarProps) {
                   className={cn(
                     "shrink-0 transition-colors",
                     isActive
-                      ? "text-vitti-light"
-                      : "text-white/30 group-hover:text-white/60"
+                      ? "text-white"
+                      : "text-white/35 group-hover:text-white/65"
                   )}
                 />
                 {!collapsed && (
@@ -184,7 +190,7 @@ export function Sidebar({ permissions, isAdmin }: SidebarProps) {
       </nav>
 
       {/* Bottom actions */}
-      <div className="px-2 py-3 border-t border-white/5 space-y-0.5 shrink-0">
+      <div className="px-2 py-3 border-t border-white/[0.07] space-y-0.5 shrink-0">
         {isAdmin && (
           <Link
             href="/admin"
@@ -192,8 +198,8 @@ export function Sidebar({ permissions, isAdmin }: SidebarProps) {
             className={cn(
               "flex items-center gap-3 rounded-lg text-sm font-light transition-all border",
               pathname === "/admin" || pathname.startsWith("/admin/")
-                ? "bg-vitti-blue/15 text-vitti-light border-vitti-blue/20"
-                : "text-white/30 hover:text-white/60 hover:bg-white/5 border-transparent",
+                ? "bg-white/10 text-white border-white/[0.12]"
+                : "text-white/40 hover:text-white/75 hover:bg-white/[0.06] border-transparent",
               collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"
             )}
           >

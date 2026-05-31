@@ -3,9 +3,13 @@
 @theme {
   --color-vitti-black: #000000;
   --color-vitti-dark: #171F38;
+  --color-vitti-gray: #4B4B4C;
   --color-vitti-blue: #455CAB;
   --color-vitti-light: #638ACC;
   --color-vitti-white: #FFFFFF;
+  --color-vitti-surface: #F7F7F8;
+  --color-vitti-fg: #111111;
+  --color-vitti-fg-muted: #5F6368;
 }
 
 @theme inline {
@@ -13,8 +17,8 @@
 }
 
 :root {
-  --background: #000000;
-  --foreground: #ffffff;
+  --background: #F7F7F8;
+  --foreground: #111111;
 }
 
 body {
