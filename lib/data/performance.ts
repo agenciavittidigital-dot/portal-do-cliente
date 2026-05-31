@@ -191,6 +191,84 @@ export async function loadPerformanceData(
   }
 }
 
+// ── Criativos Meta Ads (agrupados por campanha, com thumbnail) ────────────────
+
+export interface CreativeRow {
+  campaignId: string;
+  campaignName: string | null;
+  thumbnail_url: string | null;
+  spend: number;
+  leads: number;
+  messages_started: number;
+  cost_per_lead: number | null;
+  cost_per_message: number | null;
+}
+
+export async function loadCreativesData(
+  clientId: string,
+  startDate: string,
+  endDate: string
+): Promise<CreativeRow[]> {
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("performance_daily")
+      .select("campaign_id, campaign_name, thumbnail_url, spend, leads, messages_started")
+      .eq("client_id", clientId)
+      .eq("channel", "meta_ads")
+      .gte("date", startDate)
+      .lte("date", endDate)
+      .not("account_name", "ilike", "%demo%")
+      .not("campaign_id", "ilike", "%demo%");
+
+    if (error || !data?.length) return [];
+
+    const byId = new Map<
+      string,
+      { campaignName: string | null; thumbnail_url: string | null; spend: number; leads: number; messages_started: number }
+    >();
+
+    for (const row of data) {
+      const r = row as Record<string, unknown>;
+      const id = String(r.campaign_id ?? "unknown");
+      const spend = Number(r.spend) || 0;
+      const leads = Number(r.leads) || 0;
+      const messages_started = Number(r.messages_started) || 0;
+      const thumb = r.thumbnail_url ? String(r.thumbnail_url) : null;
+
+      const existing = byId.get(id);
+      if (existing) {
+        existing.spend += spend;
+        existing.leads += leads;
+        existing.messages_started += messages_started;
+        if (!existing.thumbnail_url && thumb) existing.thumbnail_url = thumb;
+      } else {
+        const name = r.campaign_name;
+        byId.set(id, {
+          campaignName: typeof name === "string" && name ? name : null,
+          thumbnail_url: thumb,
+          spend,
+          leads,
+          messages_started,
+        });
+      }
+    }
+
+    return [...byId.entries()].map(([campaignId, c]) => ({
+      campaignId,
+      campaignName: c.campaignName,
+      thumbnail_url: c.thumbnail_url,
+      spend: c.spend,
+      leads: c.leads,
+      messages_started: c.messages_started,
+      cost_per_lead: c.leads > 0 ? c.spend / c.leads : null,
+      cost_per_message: c.messages_started > 0 ? c.spend / c.messages_started : null,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 // ── Loader de campanhas Google Ads ────────────────────────────────────────────
 
 export interface GoogleAdsCampaignRow {

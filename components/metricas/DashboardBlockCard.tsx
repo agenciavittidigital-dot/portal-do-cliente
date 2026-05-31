@@ -33,15 +33,15 @@ function isChartBlock(type: string): boolean {
 
 function ChartIcon({ type }: { type: string }) {
   if (type.includes("line") || type.includes("area")) {
-    return <LineChart size={20} className="text-white/8" />;
+    return <LineChart size={20} className="text-vitti-blue/20" />;
   }
   if (type.includes("pie")) {
-    return <PieChart size={20} className="text-white/8" />;
+    return <PieChart size={20} className="text-vitti-blue/20" />;
   }
   if (type === "table") {
-    return <Table2 size={20} className="text-white/8" />;
+    return <Table2 size={20} className="text-vitti-blue/20" />;
   }
-  return <BarChart3 size={20} className="text-white/8" />;
+  return <BarChart3 size={20} className="text-vitti-blue/20" />;
 }
 
 function unitPlaceholder(unit: string | null): string {
@@ -60,14 +60,14 @@ export function DashboardBlockCard({ block, metrics }: Props) {
     : ("default" as const);
 
   return (
-    <div className="rounded-xl border border-white/5 bg-vitti-dark/40 p-5 backdrop-blur-sm flex flex-col gap-4">
+    <div className="rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] p-5 flex flex-col gap-4">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-xs font-light text-white/55 tracking-widest uppercase truncate">
+          <h3 className="text-xs font-light text-vitti-blue/70 tracking-widest uppercase truncate">
             {block.title ?? "Bloco"}
           </h3>
-          <p className="text-[11px] text-white/20 mt-0.5 font-light">
+          <p className="text-[11px] text-vitti-blue/45 mt-0.5 font-light">
             {blockTypeLabel(block.block_type)}
           </p>
         </div>
@@ -85,12 +85,12 @@ export function DashboardBlockCard({ block, metrics }: Props) {
           {metrics.map((m) => (
             <div
               key={m.id}
-              className="bg-white/[0.025] rounded-lg p-3 border border-white/5"
+              className="bg-vitti-gray/[0.06] rounded-lg p-3 border border-vitti-gray/[0.14]"
             >
-              <p className="text-[10px] text-white/30 font-light tracking-widest uppercase truncate">
+              <p className="text-[10px] text-vitti-blue/50 font-light tracking-widest uppercase truncate">
                 {m.display_name ?? m.catalog?.name ?? "Métrica"}
               </p>
-              <p className="mt-2 text-lg font-light text-white/15 tabular-nums">
+              <p className="mt-2 text-lg font-light text-vitti-blue/30 tabular-nums">
                 {unitPlaceholder(m.catalog?.unit ?? null)}
               </p>
             </div>
@@ -100,9 +100,9 @@ export function DashboardBlockCard({ block, metrics }: Props) {
 
       {/* Chart placeholder */}
       {isChart && (
-        <div className="h-32 flex flex-col items-center justify-center gap-2 border border-dashed border-white/5 rounded-lg">
+        <div className="h-32 flex flex-col items-center justify-center gap-2 border border-dashed border-vitti-gray/[0.20] rounded-lg">
           <ChartIcon type={block.block_type} />
-          <p className="text-[11px] text-white/15 font-light">
+          <p className="text-[11px] text-vitti-blue/30 font-light">
             {hasMetrics ? "Aguardando sincronização" : "Sem métricas configuradas"}
           </p>
         </div>
@@ -110,9 +110,9 @@ export function DashboardBlockCard({ block, metrics }: Props) {
 
       {/* Table placeholder */}
       {block.block_type === "table" && (
-        <div className="h-24 flex flex-col items-center justify-center gap-2 border border-dashed border-white/5 rounded-lg">
-          <Table2 size={18} className="text-white/8" />
-          <p className="text-[11px] text-white/15 font-light">
+        <div className="h-24 flex flex-col items-center justify-center gap-2 border border-dashed border-vitti-gray/[0.20] rounded-lg">
+          <Table2 size={18} className="text-vitti-blue/20" />
+          <p className="text-[11px] text-vitti-blue/30 font-light">
             {hasMetrics ? "Aguardando sincronização" : "Sem métricas configuradas"}
           </p>
         </div>
@@ -120,9 +120,9 @@ export function DashboardBlockCard({ block, metrics }: Props) {
 
       {/* Generic empty state (no metrics, no chart) */}
       {!hasMetrics && !isChart && block.block_type !== "table" && (
-        <div className="h-24 flex flex-col items-center justify-center gap-2 border border-dashed border-white/5 rounded-lg">
-          <BarChart3 size={18} className="text-white/8" />
-          <p className="text-[11px] text-white/15 font-light">
+        <div className="h-24 flex flex-col items-center justify-center gap-2 border border-dashed border-vitti-gray/[0.20] rounded-lg">
+          <BarChart3 size={18} className="text-vitti-blue/20" />
+          <p className="text-[11px] text-vitti-blue/30 font-light">
             Aguardando configuração
           </p>
         </div>

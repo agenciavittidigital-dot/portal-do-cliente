@@ -56,12 +56,12 @@ export function MetaAdsTable({ rows }: MetaAdsTableProps) {
   const sorted = isEmpty ? [] : [...rows].sort((a, b) => b.date.localeCompare(a.date));
 
   return (
-    <div className="rounded-xl border border-white/5 bg-white/[0.01] overflow-x-auto">
-      <div className="grid grid-cols-9 border-b border-white/[0.06] px-4 py-2.5 bg-white/[0.02] min-w-[720px]">
+    <div className="rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] overflow-x-auto">
+      <div className="grid grid-cols-9 border-b border-vitti-gray/[0.14] px-4 py-2.5 bg-vitti-gray/[0.04] min-w-[720px]">
         {COLS.map((col) => (
           <p
             key={col}
-            className="text-[9px] text-white/20 tracking-[0.12em] uppercase font-light"
+            className="text-[9px] text-vitti-blue/50 tracking-[0.12em] uppercase font-light"
           >
             {col}
           </p>
@@ -74,13 +74,13 @@ export function MetaAdsTable({ rows }: MetaAdsTableProps) {
               key={i}
               className={cn(
                 "grid grid-cols-9 px-4 py-3 gap-x-2 min-w-[720px]",
-                i < SKELETON_WIDTHS.length - 1 && "border-b border-white/[0.03]"
+                i < SKELETON_WIDTHS.length - 1 && "border-b border-vitti-gray/[0.10]"
               )}
             >
               {widths.map((w, j) => (
                 <div
                   key={j}
-                  className="h-1.5 rounded-full bg-white/[0.05]"
+                  className="h-1.5 rounded-full bg-vitti-blue/[0.07]"
                   style={{ width: `${w}%` }}
                 />
               ))}
@@ -91,18 +91,18 @@ export function MetaAdsTable({ rows }: MetaAdsTableProps) {
               key={row.date}
               className={cn(
                 "grid grid-cols-9 px-4 py-3 gap-x-2 min-w-[720px] text-[11px] font-light tabular-nums items-center",
-                i < sorted.length - 1 && "border-b border-white/[0.03]"
+                i < sorted.length - 1 && "border-b border-vitti-gray/[0.10]"
               )}
             >
-              <span className="text-white/40">{fmtDate(row.date)}</span>
-              <span className="text-white/60">{fmtCurrency(row.spend)}</span>
-              <span className="text-white/50">{fmtInt(row.impressions)}</span>
-              <span className="text-white/50">{fmtInt(row.clicks)}</span>
-              <span className="text-white/50">{fmtPct(row.ctr)}</span>
-              <span className="text-white/50">{fmtCurrency(row.cpc)}</span>
-              <span className="text-white/50">{fmtInt(row.leads)}</span>
-              <span className="text-white/50">{fmtInt(row.messages_started)}</span>
-              <span className="text-white/50">{fmtInt(row.purchases)}</span>
+              <span className="text-vitti-blue/60">{fmtDate(row.date)}</span>
+              <span className="text-vitti-blue">{fmtCurrency(row.spend)}</span>
+              <span className="text-vitti-blue/70">{fmtInt(row.impressions)}</span>
+              <span className="text-vitti-blue/70">{fmtInt(row.clicks)}</span>
+              <span className="text-vitti-blue/70">{fmtPct(row.ctr)}</span>
+              <span className="text-vitti-blue/70">{fmtCurrency(row.cpc)}</span>
+              <span className="text-vitti-blue/70">{fmtInt(row.leads)}</span>
+              <span className="text-vitti-blue/70">{fmtInt(row.messages_started)}</span>
+              <span className="text-vitti-blue/70">{fmtInt(row.purchases)}</span>
             </div>
           ))}
     </div>

@@ -124,15 +124,15 @@ function KpiCard({
   const trend = trendKey ? computeTrend(rows, trendKey) : null;
 
   return (
-    <div className="flex flex-col gap-1.5 px-4 py-4 rounded-xl border border-white/[0.06] bg-white/[0.01]">
-      <p className="text-[10px] font-light text-white/30 uppercase tracking-widest">
+    <div className="flex flex-col gap-1.5 px-4 py-4 rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
+      <p className="text-[10px] font-light text-vitti-blue/50 uppercase tracking-widest">
         {label}
       </p>
       {pending ? (
-        <p className="text-xs font-light text-white/20 italic mt-1">Aguardando dados</p>
+        <p className="text-xs font-light text-vitti-blue/45 italic mt-1">Aguardando dados</p>
       ) : value !== null ? (
         <>
-          <p className="text-xl font-light text-white/85 leading-none mt-0.5">{value}</p>
+          <p className="text-xl font-light text-vitti-blue leading-none mt-0.5">{value}</p>
           {sparkKey && rows.length >= 2 && (
             <Sparkline rows={rows} dataKey={String(sparkKey)} color={sparkColor} />
           )}
@@ -140,7 +140,7 @@ function KpiCard({
             <div
               className={cn(
                 "flex items-center gap-1 text-[9px] font-light mt-0.5",
-                trend.up ? "text-emerald-400/70" : "text-rose-400/60"
+                trend.up ? "text-emerald-600/70" : "text-rose-500/60"
               )}
             >
               {trend.up ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
@@ -150,7 +150,7 @@ function KpiCard({
           )}
         </>
       ) : (
-        <p className="text-xs font-light text-white/20 italic mt-1">—</p>
+        <p className="text-xs font-light text-vitti-blue/35 italic mt-1">—</p>
       )}
     </div>
   );
@@ -179,13 +179,13 @@ function ChartTooltip({
   };
 
   return (
-    <div className="rounded-xl border border-white/[0.08] bg-[#111827] shadow-2xl shadow-black/80 px-4 py-3 space-y-2 min-w-[170px]">
-      <p className="text-[9px] text-white/30 tracking-[0.15em] uppercase font-light">
+    <div className="rounded-xl border border-vitti-gray/[0.14] bg-white shadow-xl shadow-black/[0.08] px-4 py-3 space-y-2 min-w-[170px]">
+      <p className="text-[9px] text-vitti-blue/45 tracking-[0.15em] uppercase font-light">
         {dateLabel}
       </p>
       {payload.map((entry) => (
         <div key={entry.name} className="flex items-center justify-between gap-4">
-          <span className="text-[10px] text-white/40 font-light">
+          <span className="text-[10px] text-vitti-blue/60 font-light">
             {labelMap[entry.name] ?? entry.name}
           </span>
           <span
@@ -213,8 +213,8 @@ function EvolutionChart({
 }) {
   if (rows.length === 0) {
     return (
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.01] flex items-center justify-center h-52">
-        <p className="text-[10px] text-white/[0.10] font-light">
+      <div className="rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] flex items-center justify-center h-52">
+        <p className="text-[10px] text-vitti-blue/30 font-light">
           Aguardando sincronização
         </p>
       </div>
@@ -224,12 +224,12 @@ function EvolutionChart({
   const showDots = rows.length <= 2;
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.01] overflow-hidden px-2 pt-5 pb-2">
+    <div className="rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] overflow-hidden px-2 pt-5 pb-2">
       <div className="flex items-center justify-between px-2 mb-4">
-        <p className="text-[9px] text-white/[0.20] tracking-[0.15em] uppercase font-light">
+        <p className="text-[9px] text-vitti-blue/45 tracking-[0.15em] uppercase font-light">
           Evolução diária
         </p>
-        <div className="flex items-center gap-4 text-[9px] font-light text-white/25">
+        <div className="flex items-center gap-4 text-[9px] font-light text-vitti-blue/45">
           <span className="flex items-center gap-1.5">
             <span className="w-3 h-1.5 rounded-sm bg-vitti-blue/60 inline-block" />
             Investimento
@@ -240,7 +240,7 @@ function EvolutionChart({
           </span>
           {hasConversions && (
             <span className="flex items-center gap-1.5">
-              <span className="w-3 h-px bg-emerald-400 inline-block" />
+              <span className="w-3 h-px bg-emerald-500 inline-block" />
               Conversões
             </span>
           )}
@@ -248,11 +248,11 @@ function EvolutionChart({
       </div>
       <ResponsiveContainer width="100%" height={220}>
         <ComposedChart data={rows} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
-          <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.03)" />
+          <CartesianGrid vertical={false} stroke="rgba(0,0,0,0.06)" />
           <XAxis
             dataKey="date"
             tickFormatter={fmtAxisDate}
-            tick={{ fill: "rgba(255,255,255,0.2)", fontSize: 9, fontWeight: 300 }}
+            tick={{ fill: "rgba(0,0,0,0.35)", fontSize: 9, fontWeight: 300 }}
             axisLine={false}
             tickLine={false}
             dy={4}
@@ -260,7 +260,7 @@ function EvolutionChart({
           <YAxis
             yAxisId="left"
             tickFormatter={fmtAxisSpend}
-            tick={{ fill: "rgba(255,255,255,0.15)", fontSize: 8, fontWeight: 300 }}
+            tick={{ fill: "rgba(0,0,0,0.25)", fontSize: 8, fontWeight: 300 }}
             axisLine={false}
             tickLine={false}
             width={44}
@@ -268,14 +268,14 @@ function EvolutionChart({
           <YAxis
             yAxisId="right"
             orientation="right"
-            tick={{ fill: "rgba(255,255,255,0.15)", fontSize: 8, fontWeight: 300 }}
+            tick={{ fill: "rgba(0,0,0,0.25)", fontSize: 8, fontWeight: 300 }}
             axisLine={false}
             tickLine={false}
             width={28}
           />
           <Tooltip
             content={<ChartTooltip />}
-            cursor={{ fill: "rgba(255,255,255,0.02)" }}
+            cursor={{ fill: "rgba(0,0,0,0.03)" }}
           />
           <Bar
             yAxisId="left"
@@ -326,20 +326,20 @@ function CampaignTable({ campaigns }: { campaigns: GoogleAdsCampaignRow[] }) {
   ];
 
   return (
-    <div className="border border-white/[0.06] rounded-xl overflow-hidden">
-      <div className="px-5 py-3.5 border-b border-white/[0.04] bg-white/[0.01]">
-        <p className="text-[9px] text-white/[0.20] tracking-[0.15em] uppercase font-light">
+    <div className="border border-vitti-gray/[0.14] rounded-xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.04)] bg-vitti-gray/[0.08] backdrop-blur-md">
+      <div className="px-5 py-3.5 border-b border-vitti-gray/[0.14] bg-vitti-gray/[0.04]">
+        <p className="text-[9px] text-vitti-blue/50 tracking-[0.15em] uppercase font-light">
           Campanhas
         </p>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs font-light">
           <thead>
-            <tr className="border-b border-white/[0.04]">
+            <tr className="border-b border-vitti-gray/[0.12]">
               {HEADERS.map((h) => (
                 <th
                   key={h}
-                  className="text-left px-4 py-2.5 text-[10px] text-white/25 font-light whitespace-nowrap"
+                  className="text-left px-4 py-2.5 text-[10px] text-vitti-blue/50 font-light whitespace-nowrap"
                 >
                   {h}
                 </th>
@@ -351,32 +351,32 @@ function CampaignTable({ campaigns }: { campaigns: GoogleAdsCampaignRow[] }) {
               <tr
                 key={c.campaignId}
                 className={cn(
-                  "hover:bg-white/[0.02] transition-colors",
-                  i < campaigns.length - 1 && "border-b border-white/[0.03]"
+                  "hover:bg-vitti-blue/[0.03] transition-colors",
+                  i < campaigns.length - 1 && "border-b border-vitti-gray/[0.10]"
                 )}
               >
-                <td className="px-4 py-3 text-white/60 max-w-[200px] truncate">
+                <td className="px-4 py-3 text-vitti-blue/70 max-w-[200px] truncate">
                   {c.campaignName ?? c.campaignId}
                 </td>
-                <td className="px-4 py-3 text-white/70 tabular-nums whitespace-nowrap">
+                <td className="px-4 py-3 text-vitti-blue tabular-nums whitespace-nowrap">
                   {fmtCurrency(c.spend)}
                 </td>
-                <td className="px-4 py-3 text-white/50 tabular-nums whitespace-nowrap">
+                <td className="px-4 py-3 text-vitti-blue/70 tabular-nums whitespace-nowrap">
                   {fmtNum(c.impressions)}
                 </td>
-                <td className="px-4 py-3 text-white/50 tabular-nums whitespace-nowrap">
+                <td className="px-4 py-3 text-vitti-blue/70 tabular-nums whitespace-nowrap">
                   {fmtNum(c.clicks)}
                 </td>
-                <td className="px-4 py-3 text-white/50 tabular-nums whitespace-nowrap">
+                <td className="px-4 py-3 text-vitti-blue/70 tabular-nums whitespace-nowrap">
                   {c.ctr !== null ? fmtPct(c.ctr) : "—"}
                 </td>
-                <td className="px-4 py-3 text-white/50 tabular-nums whitespace-nowrap">
+                <td className="px-4 py-3 text-vitti-blue/70 tabular-nums whitespace-nowrap">
                   {c.cpc !== null ? fmtCurrency(c.cpc) : "—"}
                 </td>
-                <td className="px-4 py-3 text-white/50 tabular-nums whitespace-nowrap">
+                <td className="px-4 py-3 text-vitti-blue/70 tabular-nums whitespace-nowrap">
                   {c.leads > 0 ? fmtNum(c.leads) : "—"}
                 </td>
-                <td className="px-4 py-3 text-white/50 tabular-nums whitespace-nowrap">
+                <td className="px-4 py-3 text-vitti-blue/70 tabular-nums whitespace-nowrap">
                   {c.costPerLead !== null ? fmtCurrency(c.costPerLead) : "—"}
                 </td>
               </tr>
@@ -398,15 +398,15 @@ interface Props {
 export function GoogleAdsView({ performance, campaigns = [] }: Props) {
   if (!performance) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-white/5">
-        <div className="w-10 h-10 rounded-full bg-white/[0.03] border border-white/8 flex items-center justify-center">
-          <span className="text-white/15 text-sm font-light">G</span>
+      <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-vitti-gray/[0.20]">
+        <div className="w-10 h-10 rounded-full bg-vitti-gray/[0.08] border border-vitti-gray/[0.14] flex items-center justify-center">
+          <span className="text-vitti-blue/40 text-sm font-light">G</span>
         </div>
         <div className="text-center space-y-1.5">
-          <p className="text-sm font-light text-white/40">
+          <p className="text-sm font-light text-vitti-blue/60">
             Nenhum dado Google Ads disponível
           </p>
-          <p className="text-xs text-white/20 font-light max-w-xs leading-relaxed">
+          <p className="text-xs text-vitti-blue/45 font-light max-w-xs leading-relaxed">
             Mapeie uma conta Google Ads em Admin → Integrações e sincronize os dados.
           </p>
         </div>

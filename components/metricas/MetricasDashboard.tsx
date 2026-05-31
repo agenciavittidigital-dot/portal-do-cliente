@@ -1,25 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { Target, Search, Globe, Users, BarChart3 } from "lucide-react";
+import Image from "next/image";
+import { BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardBlockCard } from "./DashboardBlockCard";
 import { MetaAdsView } from "./MetaAdsView";
 import { GoogleAdsView } from "./GoogleAdsView";
 import type { DashboardWithBlocks, PerformanceData, PlatformKey } from "@/types";
-import type { GoogleAdsCampaignRow } from "@/lib/data/performance";
+import type { GoogleAdsCampaignRow, CreativeRow } from "@/lib/data/performance";
 
 interface PlatformDef {
   key: PlatformKey;
   label: string;
-  Icon: React.ElementType;
+  logoSrc: string;
 }
 
 const PLATFORMS: PlatformDef[] = [
-  { key: "meta_ads", label: "Meta Ads", Icon: Target },
-  { key: "google_ads", label: "Google Ads", Icon: Search },
-  { key: "seo", label: "SEO", Icon: Globe },
-  { key: "social_media", label: "Social Media", Icon: Users },
+  { key: "meta_ads", label: "Meta Ads", logoSrc: "/assets/meta-logo.png" },
+  { key: "google_ads", label: "Google Ads", logoSrc: "/assets/google-ads-logo.png" },
 ];
 
 interface Props {
@@ -27,6 +26,7 @@ interface Props {
   performance?: PerformanceData | null;
   performanceGoogleAds?: PerformanceData | null;
   googleAdsCampaigns?: GoogleAdsCampaignRow[];
+  creativesMetaAds?: CreativeRow[] | null;
   initialPeriod?: string;
   initialStartDate?: string;
   initialEndDate?: string;
@@ -37,26 +37,25 @@ export function MetricasDashboard({
   performance,
   performanceGoogleAds,
   googleAdsCampaigns,
+  creativesMetaAds,
   initialPeriod,
   initialStartDate,
   initialEndDate,
 }: Props) {
-  // Inicia no default_channel do primeiro dashboard (ex: "meta_ads")
   const initialChannel = (dashboards[0]?.dashboard.platform ?? "meta_ads") as PlatformKey;
   const [selected, setSelected] = useState<PlatformKey>(initialChannel);
 
-  // ── Nenhum dashboard configurado para este cliente ────────────
   if (dashboards.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-white/5">
-        <div className="w-10 h-10 rounded-full bg-white/[0.03] border border-white/8 flex items-center justify-center">
-          <BarChart3 size={16} className="text-white/15" />
+      <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-vitti-gray/[0.20]">
+        <div className="w-10 h-10 rounded-full bg-vitti-gray/[0.08] border border-vitti-gray/[0.14] flex items-center justify-center">
+          <BarChart3 size={16} className="text-vitti-blue/30" />
         </div>
         <div className="text-center space-y-1.5">
-          <p className="text-sm font-light text-white/40">
+          <p className="text-sm font-light text-vitti-blue/60">
             Nenhum dashboard configurado
           </p>
-          <p className="text-xs text-white/20 font-light max-w-xs leading-relaxed">
+          <p className="text-xs text-vitti-blue/45 font-light max-w-xs leading-relaxed">
             Configure os blocos no painel Admin para este cliente.
           </p>
         </div>
@@ -64,45 +63,35 @@ export function MetricasDashboard({
     );
   }
 
-  // ── Blocos do canal selecionado (filtro client-side por block.channel) ─
-  // A estrutura real tem um dashboard por cliente; cada bloco tem channel.
   const blocksForChannel = dashboards
     .flatMap((d) => d.blocks)
     .filter(({ block }) => block.channel === selected);
-
-  // Canais configurados = união de available_channels de todos os dashboards
-  const configuredPlatforms = new Set(
-    dashboards.flatMap((d) => d.dashboard.available_channels)
-  );
 
   return (
     <div className="space-y-6">
       {/* ── Seletor de plataforma ─────────────────────────────── */}
       <div className="flex gap-2 flex-wrap">
-        {PLATFORMS.map(({ key, label, Icon }) => {
-          const isConfigured = configuredPlatforms.has(key);
+        {PLATFORMS.map(({ key, label, logoSrc }) => {
           const isActive = selected === key;
           return (
             <button
               key={key}
               onClick={() => setSelected(key)}
               className={cn(
-                "relative flex items-center gap-2 px-4 py-2 rounded-full text-xs font-light border transition-all duration-150",
+                "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold border transition-all duration-150",
                 isActive
-                  ? "bg-vitti-blue/15 border-vitti-blue/25 text-vitti-light"
-                  : "border-white/8 text-white/30 hover:text-white/60 hover:border-white/15"
+                  ? "bg-[#171f38] border-[#638acc] hover:bg-[#1e2a47]"
+                  : "bg-[#f1f1f1] border-[#455cab] hover:bg-[#e8e8e8]"
               )}
             >
-              <Icon size={12} />
-              {label}
-              {isConfigured && (
-                <span
-                  className={cn(
-                    "w-1.5 h-1.5 rounded-full shrink-0",
-                    isActive ? "bg-vitti-light/60" : "bg-white/20"
-                  )}
-                />
-              )}
+              <Image
+                src={logoSrc}
+                alt={label}
+                width={18}
+                height={18}
+                className="shrink-0 object-contain"
+              />
+              <span className="text-[#455cab]">{label}</span>
             </button>
           );
         })}
@@ -116,6 +105,7 @@ export function MetricasDashboard({
           <MetaAdsView
             blocks={blocksForChannel}
             performance={performance}
+            creatives={creativesMetaAds}
             initialPeriod={initialPeriod}
             initialStartDate={initialStartDate}
             initialEndDate={initialEndDate}
@@ -142,13 +132,13 @@ export function MetricasDashboard({
 
 function NoDashboard({ label }: { label: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-white/5">
-      <div className="w-10 h-10 rounded-full bg-white/[0.03] border border-white/8 flex items-center justify-center">
-        <BarChart3 size={16} className="text-white/15" />
+    <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-vitti-gray/[0.20]">
+      <div className="w-10 h-10 rounded-full bg-vitti-gray/[0.08] border border-vitti-gray/[0.14] flex items-center justify-center">
+        <BarChart3 size={16} className="text-vitti-blue/30" />
       </div>
       <div className="text-center space-y-1.5">
-        <p className="text-sm font-light text-white/40">{label}</p>
-        <p className="text-xs text-white/20 font-light max-w-xs leading-relaxed">
+        <p className="text-sm font-light text-vitti-blue/60">{label}</p>
+        <p className="text-xs text-vitti-blue/45 font-light max-w-xs leading-relaxed">
           Dashboard para este canal ainda não foi configurado.
           <br />
           A equipe Vitti irá configurá-lo em breve.

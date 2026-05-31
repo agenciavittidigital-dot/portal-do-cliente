@@ -37,13 +37,13 @@ function CustomTooltip({
   const dateLabel = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : label;
 
   return (
-    <div className="rounded-xl border border-white/[0.08] bg-[#111827] shadow-2xl shadow-black/80 px-4 py-3 space-y-2 min-w-[160px]">
-      <p className="text-[9px] text-white/30 tracking-[0.15em] uppercase font-light">
+    <div className="rounded-xl border border-vitti-gray/[0.14] bg-white shadow-xl shadow-black/[0.08] px-4 py-3 space-y-2 min-w-[160px]">
+      <p className="text-[9px] text-vitti-blue/45 tracking-[0.15em] uppercase font-light">
         {dateLabel}
       </p>
       {payload.map((entry) => (
         <div key={entry.name} className="flex items-center justify-between gap-4">
-          <span className="text-[10px] text-white/40 font-light">
+          <span className="text-[10px] text-vitti-blue/60 font-light">
             {entry.name === "spend"
               ? "Investimento"
               : entry.name === "clicks"
@@ -75,9 +75,9 @@ interface MetaAdsChartProps {
 export function MetaAdsChart({ rows }: MetaAdsChartProps) {
   if (rows.length === 0) {
     return (
-      <div className="h-full min-h-[200px] rounded-xl border border-white/[0.06] bg-white/[0.01] flex flex-col items-center justify-center gap-2">
-        <BarChart3 size={16} className="text-white/[0.07]" />
-        <p className="text-[10px] text-white/[0.10] font-light">Aguardando sincronização</p>
+      <div className="h-full min-h-[200px] rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] flex flex-col items-center justify-center gap-2">
+        <BarChart3 size={16} className="text-vitti-blue/20" />
+        <p className="text-[10px] text-vitti-blue/30 font-light">Aguardando sincronização</p>
       </div>
     );
   }
@@ -85,14 +85,14 @@ export function MetaAdsChart({ rows }: MetaAdsChartProps) {
   const showDots = rows.length <= 2;
 
   return (
-    <div className="h-full min-h-[200px] rounded-xl border border-white/[0.06] bg-white/[0.01] overflow-hidden px-2 pt-3 pb-1">
+    <div className="h-full min-h-[200px] rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] overflow-hidden px-2 pt-3 pb-1">
       <ResponsiveContainer width="100%" height={196}>
         <ComposedChart data={rows} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
-          <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.03)" />
+          <CartesianGrid vertical={false} stroke="rgba(0,0,0,0.06)" />
           <XAxis
             dataKey="date"
             tickFormatter={fmtAxisDate}
-            tick={{ fill: "rgba(255,255,255,0.2)", fontSize: 9, fontWeight: 300 }}
+            tick={{ fill: "rgba(0,0,0,0.35)", fontSize: 9, fontWeight: 300 }}
             axisLine={false}
             tickLine={false}
             dy={4}
@@ -100,7 +100,7 @@ export function MetaAdsChart({ rows }: MetaAdsChartProps) {
           <YAxis
             yAxisId="left"
             tickFormatter={fmtSpend}
-            tick={{ fill: "rgba(255,255,255,0.15)", fontSize: 8, fontWeight: 300 }}
+            tick={{ fill: "rgba(0,0,0,0.25)", fontSize: 8, fontWeight: 300 }}
             axisLine={false}
             tickLine={false}
             width={44}
@@ -108,14 +108,14 @@ export function MetaAdsChart({ rows }: MetaAdsChartProps) {
           <YAxis
             yAxisId="right"
             orientation="right"
-            tick={{ fill: "rgba(255,255,255,0.15)", fontSize: 8, fontWeight: 300 }}
+            tick={{ fill: "rgba(0,0,0,0.25)", fontSize: 8, fontWeight: 300 }}
             axisLine={false}
             tickLine={false}
             width={28}
           />
           <Tooltip
             content={<CustomTooltip />}
-            cursor={{ fill: "rgba(255,255,255,0.02)" }}
+            cursor={{ fill: "rgba(0,0,0,0.03)" }}
           />
           <Bar
             yAxisId="left"
@@ -128,9 +128,9 @@ export function MetaAdsChart({ rows }: MetaAdsChartProps) {
           <Line
             yAxisId="right"
             dataKey="clicks"
-            stroke="rgba(255,255,255,0.35)"
+            stroke="rgba(0,0,0,0.35)"
             strokeWidth={1.5}
-            dot={showDots ? { r: 3, fill: "rgba(255,255,255,0.35)", strokeWidth: 0 } : false}
+            dot={showDots ? { r: 3, fill: "rgba(0,0,0,0.35)", strokeWidth: 0 } : false}
             activeDot={{ r: 4, strokeWidth: 0 }}
           />
           <Line

@@ -2,11 +2,24 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, ChevronDown } from "lucide-react";
+import { Calendar, ChevronDown, BarChart3, Film, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { BlockMetric, BlockWithMetrics, PerformanceData, PerformanceSummary } from "@/types";
-import { MetaAdsChart } from "./MetaAdsChart";
-import { MetaAdsTable } from "./MetaAdsTable";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import type {
+  BlockWithMetrics,
+  PerformanceData,
+  PerformanceRow,
+  PerformanceSummary,
+} from "@/types";
+import type { CreativeRow } from "@/lib/data/performance";
 
 // ── Opções do filtro de período ───────────────────────────────────────────────
 
@@ -21,42 +34,35 @@ const PERIOD_OPTIONS = [
   { value: "custom", label: "Personalizado" },
 ];
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Definições das métricas disponíveis no gráfico de evolução ───────────────
 
-function findBlock(blocks: BlockWithMetrics[], fragment: string): BlockWithMetrics | undefined {
-  const lower = fragment.toLowerCase();
-  return blocks.find((b) => b.block.title?.toLowerCase().includes(lower));
+interface EvoMetricDef {
+  label: string;
+  color: string;
+  format: "currency_brl" | "integer" | "decimal" | "percentage";
+  axis: "left" | "right";
 }
 
-function kpiGridCols(count: number): string {
-  if (count >= 4) return "grid-cols-2 md:grid-cols-4";
-  if (count === 3) return "grid-cols-3";
-  if (count === 2) return "grid-cols-2";
-  return "grid-cols-1";
-}
+const EVOLUTION_METRIC_DEFS: Record<string, EvoMetricDef> = {
+  spend:            { label: "Investimento",    color: "#28b52e", format: "currency_brl", axis: "left"  },
+  impressions:      { label: "Impressões",      color: "#fdce21", format: "integer",      axis: "right" },
+  reach:            { label: "Alcance",         color: "#7b27fa", format: "integer",      axis: "right" },
+  clicks:           { label: "Cliques",         color: "#0b72fb", format: "integer",      axis: "right" },
+  messages_started: { label: "Mensagens",       color: "#0b72fb", format: "integer",      axis: "right" },
+  leads:            { label: "Leads",           color: "#28b52e", format: "integer",      axis: "right" },
+  frequency:        { label: "Frequência",      color: "#455cab", format: "decimal",      axis: "right" },
+  ctr:              { label: "CTR",             color: "#638acc", format: "percentage",   axis: "right" },
+  cpc:              { label: "CPC",             color: "#fb251d", format: "currency_brl", axis: "left"  },
+  cpm:              { label: "CPM",             color: "#171f38", format: "currency_brl", axis: "left"  },
+  purchases:        { label: "Compras",         color: "#28b52e", format: "integer",      axis: "right" },
+  purchase_value:   { label: "Valor de compra", color: "#455cab", format: "currency_brl", axis: "left"  },
+  cost_per_lead:    { label: "CPL",             color: "#fb251d", format: "currency_brl", axis: "left"  },
+};
 
-// Resolve o valor de performance para um metric usando a seguinte prioridade:
-// 1. junction.source_field (override específico do bloco)
-// 2. catalog.default_source_field (mapeamento padrão no catálogo)
-// 3. catalog.key (fallback)
-function resolveMetricValue(
-  metric: BlockMetric,
-  performance: PerformanceSummary | null
-): number | null {
-  if (!performance) return null;
-  const key =
-    metric.source_field ??
-    metric.catalog?.default_source_field ??
-    metric.catalog?.key ??
-    null;
-  if (!key) return null;
-  const val = performance[key];
-  return typeof val === "number" ? val : null;
-}
+// ── Formatação ────────────────────────────────────────────────────────────────
 
-function formatValue(value: number, format: string | null): string {
+function formatValue(value: number, format: string): string {
   switch (format) {
-    case "currency":
     case "currency_brl":
       return new Intl.NumberFormat("pt-BR", {
         style: "currency",
@@ -66,14 +72,23 @@ function formatValue(value: number, format: string | null): string {
       }).format(value);
     case "percentage":
       return `${value.toFixed(2)}%`;
-    case "integer":
-      return new Intl.NumberFormat("pt-BR").format(Math.round(value));
     case "decimal":
       return value.toFixed(2);
+    case "integer":
+      return new Intl.NumberFormat("pt-BR").format(Math.round(value));
     default:
-      if (value < 10) return value.toFixed(2);
       return new Intl.NumberFormat("pt-BR").format(Math.round(value));
   }
+}
+
+function fmtSummaryVal(
+  summary: PerformanceSummary | null,
+  key: string,
+  format: string
+): string {
+  const raw = summary?.[key];
+  if (typeof raw !== "number") return "—";
+  return formatValue(raw, format);
 }
 
 function formatDateBR(iso: string): string {
@@ -89,7 +104,7 @@ function resolvePeriodLabel(period: string, start: string, end: string): string 
   return PERIOD_OPTIONS.find((o) => o.value === period)?.label ?? "Período";
 }
 
-// ── Filtro de período (com refetch via router) ────────────────────────────────
+// ── Filtro de período ─────────────────────────────────────────────────────────
 
 function PeriodFilter({
   period,
@@ -120,12 +135,7 @@ function PeriodFilter({
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((prev) => !prev)}
-        className={cn(
-          "flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-light transition-all duration-150 select-none",
-          open
-            ? "border-vitti-blue/30 text-vitti-light/80 bg-vitti-blue/[0.08]"
-            : "border-white/[0.07] text-white/30 hover:border-white/[0.15] hover:text-white/50"
-        )}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#638acc] bg-[#4a589a] text-[10px] font-light text-white select-none hover:bg-[#3f4d87] transition-colors"
       >
         <Calendar size={9} className="shrink-0" />
         <span className="max-w-[160px] truncate">{label}</span>
@@ -136,7 +146,7 @@ function PeriodFilter({
       </button>
 
       {open && (
-        <div className="absolute top-full mt-2 right-0 z-50 min-w-[210px] rounded-xl border border-white/[0.07] bg-vitti-dark shadow-2xl shadow-black/80 overflow-hidden">
+        <div className="absolute top-full mt-2 right-0 z-50 min-w-[210px] rounded-xl border border-vitti-gray/[0.14] bg-white shadow-xl shadow-black/[0.08] overflow-hidden">
           {PERIOD_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -151,8 +161,8 @@ function PeriodFilter({
               className={cn(
                 "w-full text-left px-4 py-2.5 text-[11px] font-light transition-colors",
                 period === opt.value
-                  ? "text-vitti-light bg-vitti-blue/[0.14]"
-                  : "text-white/35 hover:text-white/65 hover:bg-white/[0.04]"
+                  ? "text-vitti-blue bg-vitti-blue/[0.10]"
+                  : "text-vitti-blue/60 hover:text-vitti-blue hover:bg-vitti-blue/[0.06]"
               )}
             >
               {opt.label}
@@ -160,8 +170,8 @@ function PeriodFilter({
           ))}
 
           {period === "custom" && (
-            <div className="border-t border-white/[0.05] px-4 py-3 space-y-2 bg-white/[0.01]">
-              <p className="text-[9px] text-white/20 tracking-[0.1em] uppercase font-light">
+            <div className="border-t border-vitti-gray/[0.14] px-4 py-3 space-y-2 bg-vitti-gray/[0.04]">
+              <p className="text-[9px] text-vitti-blue/40 tracking-[0.1em] uppercase font-light">
                 Período personalizado
               </p>
               <input
@@ -169,19 +179,19 @@ function PeriodFilter({
                 value={customStart}
                 max={customEnd || undefined}
                 onChange={(e) => onChange("custom", e.target.value, customEnd)}
-                className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] text-white/50 font-light focus:outline-none focus:border-vitti-blue/40 transition-colors [color-scheme:dark]"
+                className="w-full bg-vitti-gray/[0.06] border border-vitti-gray/[0.14] rounded-lg px-3 py-2 text-[11px] text-vitti-blue/60 font-light focus:outline-none focus:border-vitti-blue/40 transition-colors [color-scheme:light]"
               />
               <input
                 type="date"
                 value={customEnd}
                 min={customStart || undefined}
                 onChange={(e) => onChange("custom", customStart, e.target.value)}
-                className="w-full bg-white/[0.05] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] text-white/50 font-light focus:outline-none focus:border-vitti-blue/40 transition-colors [color-scheme:dark]"
+                className="w-full bg-vitti-gray/[0.06] border border-vitti-gray/[0.14] rounded-lg px-3 py-2 text-[11px] text-vitti-blue/60 font-light focus:outline-none focus:border-vitti-blue/40 transition-colors [color-scheme:light]"
               />
               {customStart && customEnd && (
                 <button
                   onClick={() => setOpen(false)}
-                  className="w-full py-2 rounded-lg bg-vitti-blue/[0.15] border border-vitti-blue/20 text-[11px] text-vitti-light/70 font-light hover:bg-vitti-blue/[0.22] transition-colors"
+                  className="w-full py-2 rounded-lg bg-vitti-blue/[0.15] border border-vitti-blue/20 text-[11px] text-vitti-blue font-light hover:bg-vitti-blue/[0.22] transition-colors"
                 >
                   Aplicar
                 </button>
@@ -194,88 +204,498 @@ function PeriodFilter({
   );
 }
 
-// ── KPI cards ─────────────────────────────────────────────────────────────────
+// ── Sparkline (mini gráficos dos 5 cards superiores) ─────────────────────────
 
-function KpiCard({
-  metric,
-  performance,
+function Sparkline({
+  data,
+  dataKey,
+  color,
 }: {
-  metric: BlockMetric;
-  performance: PerformanceSummary | null | undefined;
+  data: PerformanceRow[];
+  dataKey: keyof PerformanceRow;
+  color: string;
 }) {
-  const name = metric.display_name ?? metric.catalog?.name ?? "Métrica";
-  const value = resolveMetricValue(metric, performance ?? null);
-  const format = metric.catalog?.format ?? null;
+  if (data.length < 2) return <div className="h-10" />;
+  const gradientId = `sg_${color.replace("#", "")}`;
+  return (
+    <ResponsiveContainer width="100%" height={40}>
+      <AreaChart data={data} margin={{ top: 4, right: 0, left: 0, bottom: 4 }}>
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity={0.28} />
+            <stop offset="100%" stopColor={color} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <Area
+          type="monotone"
+          dataKey={dataKey as string}
+          stroke={color}
+          strokeWidth={1.5}
+          fill={`url(#${gradientId})`}
+          dot={false}
+          isAnimationActive={false}
+        />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+
+// ── KPI card fixo (5 cards superiores) ───────────────────────────────────────
+
+interface KpiDef {
+  key: keyof PerformanceRow;
+  label: string;
+  format: string;
+  sparkColor: string;
+}
+
+function FixedKpiCard({
+  kpi,
+  summary,
+  rows,
+}: {
+  kpi: KpiDef;
+  summary: PerformanceSummary | null;
+  rows: PerformanceRow[];
+}) {
+  const raw = summary?.[kpi.key as string];
+  const value = typeof raw === "number" ? raw : null;
   const hasData = value !== null;
 
   return (
-    <div className="bg-white/[0.02] rounded-xl border border-white/5 p-4 flex flex-col gap-2">
-      <p className="text-[9px] text-white/25 tracking-[0.15em] uppercase font-light truncate">
-        {name}
+    <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] pt-4 px-4 pb-0 flex flex-col gap-1 min-w-0 overflow-hidden">
+      <p className="text-[11px] text-[#171f38] font-light tracking-wide truncate">
+        {kpi.label}
       </p>
       <p
         className={cn(
-          "text-2xl font-light tabular-nums leading-none mt-1",
-          hasData ? "text-white/85" : "text-white/20"
+          "text-xl font-bold tabular-nums leading-none mt-0.5",
+          hasData ? "text-[#455cab]" : "text-[#455cab]/30"
         )}
       >
-        {hasData ? formatValue(value!, format) : "—"}
+        {hasData ? formatValue(value!, kpi.format) : "—"}
       </p>
-      <span
-        className={cn(
-          "text-[9px] font-light",
-          hasData ? "text-emerald-400/50" : "text-amber-400/40"
-        )}
-      >
-        {hasData ? "Atualizado" : "Aguardando dados"}
-      </span>
+      <div className="-mx-4 mt-2">
+        <Sparkline data={rows} dataKey={kpi.key} color={kpi.sparkColor} />
+      </div>
     </div>
   );
 }
 
-function KpiCardSm({
-  metric,
-  performance,
+// ── Funil de resultados (SVG) ─────────────────────────────────────────────────
+
+function FunnelChart({
+  summary,
+  isLeads,
 }: {
-  metric: BlockMetric;
-  performance: PerformanceSummary | null | undefined;
+  summary: PerformanceSummary | null;
+  isLeads: boolean;
 }) {
-  const name = metric.display_name ?? metric.catalog?.name ?? "Métrica";
-  const value = resolveMetricValue(metric, performance ?? null);
-  const format = metric.catalog?.format ?? null;
-  const hasData = value !== null;
+  const convKey = isLeads ? "leads" : "messages_started";
+  const convLabel = isLeads ? "Leads" : "Mensagens";
+
+  function fmt(key: string): string {
+    const raw = summary?.[key];
+    if (typeof raw !== "number") return "—";
+    return new Intl.NumberFormat("pt-BR").format(Math.round(raw));
+  }
+
+  const stages = [
+    { key: "impressions", label: "Impressões", color: "#2d5f92" },
+    { key: "reach",       label: "Alcance",    color: "#4a88be" },
+    { key: "clicks",      label: "Cliques",    color: "#7470b6" },
+    { key: convKey,       label: convLabel,    color: "#8aacd8" },
+  ];
+
+  // viewBox: 200 units wide. 5 boundary levels define the 4 trapezoids.
+  // Top (level 0) is nearly full width; bottom (level 4) stays wide enough for readability.
+  const W = 200;
+  const SH = 58; // height per stage in SVG units
+  const levels: [number, number][] = [
+    [1,  199], // top of stage 1
+    [18, 182], // boundary 1→2
+    [33, 167], // boundary 2→3
+    [47, 153], // boundary 3→4
+    [59, 141], // bottom of stage 4
+  ];
+  const totalH = SH * stages.length;
+  const cx = W / 2;
 
   return (
-    <div className="bg-white/[0.02] rounded-lg border border-white/5 p-3 flex flex-col gap-1.5">
-      <p className="text-[9px] text-white/20 tracking-[0.15em] uppercase font-light truncate">
-        {name}
-      </p>
-      <p
-        className={cn(
-          "text-xl font-light tabular-nums leading-none",
-          hasData ? "text-white/80" : "text-white/[0.14]"
-        )}
-      >
-        {hasData ? formatValue(value!, format) : "—"}
-      </p>
-      <span
-        className={cn(
-          "text-[8px] font-light",
-          hasData ? "text-emerald-400/40" : "text-amber-400/30"
-        )}
-      >
-        {hasData ? "Atualizado" : "Aguardando dados"}
-      </span>
+    <svg
+      width="100%"
+      viewBox={`0 0 ${W} ${totalH}`}
+      preserveAspectRatio="xMidYMid meet"
+      style={{ display: "block" }}
+    >
+      {stages.map((stage, i) => {
+        const y = i * SH;
+        const [lTop, rTop] = levels[i];
+        const [lBot, rBot] = levels[i + 1];
+        const d = `M ${lTop} ${y} L ${rTop} ${y} L ${rBot} ${y + SH} L ${lBot} ${y + SH} Z`;
+        const cy = y + SH / 2;
+        const valStr = fmt(stage.key);
+        // pill width: 6.8 units per char, minimum 32
+        const pillW = Math.max(valStr.length * 6.8, 32);
+
+        return (
+          <g key={stage.key}>
+            {/* trapezoid — stroke matches card bg to create clean stage separator */}
+            <path d={d} fill={stage.color} stroke="#f1f1f1" strokeWidth="1.5" />
+            {/* metric name */}
+            <text
+              x={cx} y={cy - 11}
+              textAnchor="middle" dominantBaseline="middle"
+              fill="rgba(255,255,255,0.82)"
+              fontSize="7" fontWeight="300" letterSpacing="1.5"
+            >
+              {stage.label.toUpperCase()}
+            </text>
+            {/* value pill */}
+            <rect
+              x={cx - pillW / 2} y={cy + 1}
+              width={pillW} height={14}
+              rx={4}
+              fill="rgba(255,255,255,0.52)"
+            />
+            <text
+              x={cx} y={cy + 8}
+              textAnchor="middle" dominantBaseline="middle"
+              fill="#455cab"
+              fontSize="10" fontWeight="700"
+            >
+              {valStr}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// ── Card KPI pequeno (coluna lateral) ─────────────────────────────────────────
+
+function SmallKpiCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border bg-[#f1f1f1] border-[#dfdedf] px-3 py-2.5 flex flex-col gap-0.5">
+      <p className="text-[9px] text-[#171f38] font-light tracking-wide truncate">{label}</p>
+      <p className="text-sm font-bold text-[#455cab] tabular-nums leading-tight">{value}</p>
     </div>
   );
 }
 
-// ── Placeholder de métricas vazias ────────────────────────────────────────────
+// ── Gráfico de evolução — tooltip e chart dinâmicos ──────────────────────────
 
-function EmptyMetrics() {
+function EvolutionTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: Array<{ name: string; value: number; color: string }>;
+  label?: string;
+}) {
+  if (!active || !payload?.length) return null;
+  const parts = String(label ?? "").split("-");
+  const dl =
+    parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : String(label ?? "");
   return (
-    <div className="h-20 flex items-center justify-center rounded-xl border border-dashed border-white/[0.04]">
-      <p className="text-[10px] text-white/[0.10] font-light">Sem métricas configuradas</p>
+    <div className="rounded-xl border border-[#dfdedf] bg-white shadow-lg px-3 py-2.5 space-y-1.5 min-w-[148px]">
+      <p className="text-[9px] text-[#171f38]/50 font-light">{dl}</p>
+      {payload.map((p) => {
+        const def = EVOLUTION_METRIC_DEFS[p.name];
+        return (
+          <div key={p.name} className="flex items-center justify-between gap-3">
+            <span className="text-[9px] text-[#171f38]/60 font-light">
+              {def?.label ?? p.name}
+            </span>
+            <span className="text-[10px] font-bold tabular-nums" style={{ color: p.color }}>
+              {formatValue(Number(p.value), def?.format ?? "integer")}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function EvolutionChart({
+  rows,
+  metricKeys,
+}: {
+  rows: PerformanceRow[];
+  metricKeys: string[];
+}) {
+  // Cores fixas por posição: 1 série → roxo, 2 → +vermelho, 3 → +verde
+  const PALETTE = ["#7b27fa", "#fb251d", "#28b52e"];
+
+  const activeMetrics = metricKeys
+    .filter((k) => k in EVOLUTION_METRIC_DEFS)
+    .map((k, i) => ({
+      key: k,
+      def: EVOLUTION_METRIC_DEFS[k],
+      color: PALETTE[i] ?? PALETTE[0],
+    }));
+
+  if (rows.length === 0 || activeMetrics.length === 0) {
+    return (
+      <div className="flex-1 min-h-[160px] flex flex-col items-center justify-center gap-2">
+        <BarChart3 size={16} className="text-[#171f38]/20" />
+        <p className="text-[10px] text-[#171f38]/30 font-light">
+          Aguardando sincronização
+        </p>
+      </div>
+    );
+  }
+
+  const hasLeft = activeMetrics.some((m) => m.def.axis === "left");
+  const hasRight = activeMetrics.some((m) => m.def.axis === "right");
+  const useDualAxis = hasLeft && hasRight;
+
+  const getAxisId = (key: string): "left" | "right" => {
+    if (!useDualAxis) return "left";
+    return EVOLUTION_METRIC_DEFS[key]?.axis ?? "right";
+  };
+
+  const fmtDate = (iso: string) => {
+    const p = iso.split("-");
+    return `${p[2]}/${p[1]}`;
+  };
+
+  const fmtCurrency = (v: number) =>
+    v >= 1000 ? `R$${(v / 1000).toFixed(0)}k` : `R$${Math.round(v)}`;
+
+  const fmtCount = (v: number) =>
+    v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(Math.round(v));
+
+  const fmtLeftTick = fmtCurrency;
+
+  const firstRight = activeMetrics.find((m) => getAxisId(m.key) === "right");
+  const fmtRightTick = (v: number) => {
+    if (firstRight?.def.format === "percentage") return `${v.toFixed(1)}%`;
+    if (firstRight?.def.format === "decimal") return v.toFixed(2);
+    return fmtCount(v);
+  };
+
+  const firstAny = activeMetrics[0];
+  const fmtSingleTick = (v: number) => {
+    if (firstAny?.def.format === "currency_brl") return fmtCurrency(v);
+    if (firstAny?.def.format === "percentage") return `${v.toFixed(1)}%`;
+    if (firstAny?.def.format === "decimal") return v.toFixed(2);
+    return fmtCount(v);
+  };
+
+  return (
+    <div className="flex flex-col flex-1 min-h-0">
+      {/* Legenda dinâmica */}
+      <div className="flex flex-wrap gap-4 mb-3">
+        {activeMetrics.map(({ key, def, color }) => (
+          <div key={key} className="flex items-center gap-1.5">
+            <div className="w-3 h-[2px] rounded" style={{ backgroundColor: color }} />
+            <span className="text-[9px] text-[#171f38]/55 font-light">{def.label}</span>
+          </div>
+        ))}
+      </div>
+      <div className="flex-1 min-h-[160px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart
+          data={rows}
+          margin={{ top: 4, right: useDualAxis ? 8 : 4, bottom: 4, left: 0 }}
+        >
+          <defs>
+            {activeMetrics.map(({ key, color }) => (
+              <linearGradient key={key} id={`evoGrad_${key}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={color} stopOpacity={0.18} />
+                <stop offset="100%" stopColor={color} stopOpacity={0} />
+              </linearGradient>
+            ))}
+          </defs>
+          <CartesianGrid vertical={false} stroke="rgba(0,0,0,0.05)" />
+          <XAxis
+            dataKey="date"
+            tickFormatter={fmtDate}
+            tick={{ fill: "rgba(0,0,0,0.3)", fontSize: 8, fontWeight: 300 }}
+            axisLine={false}
+            tickLine={false}
+            dy={4}
+          />
+          <YAxis
+            yAxisId="left"
+            tickFormatter={useDualAxis ? fmtLeftTick : fmtSingleTick}
+            tick={{ fill: "rgba(0,0,0,0.22)", fontSize: 7, fontWeight: 300 }}
+            axisLine={false}
+            tickLine={false}
+            width={38}
+          />
+          {useDualAxis && (
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              tickFormatter={fmtRightTick}
+              tick={{ fill: "rgba(0,0,0,0.22)", fontSize: 7, fontWeight: 300 }}
+              axisLine={false}
+              tickLine={false}
+              width={26}
+            />
+          )}
+          <Tooltip
+            content={<EvolutionTooltip />}
+            cursor={{ stroke: "rgba(0,0,0,0.06)", strokeWidth: 1 }}
+          />
+          {activeMetrics.map(({ key, color }) => (
+            <Area
+              key={key}
+              yAxisId={getAxisId(key)}
+              type="monotone"
+              dataKey={key}
+              stroke={color}
+              strokeWidth={1.5}
+              fill={`url(#evoGrad_${key})`}
+              dot={false}
+              activeDot={{ r: 3, strokeWidth: 0 }}
+              isAnimationActive={false}
+            />
+          ))}
+        </AreaChart>
+      </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+// ── Cards de gênero e faixa etária (estado vazio elegante) ────────────────────
+
+function DonutCard({ title, className }: { title: string; className?: string }) {
+  return (
+    <div className={cn("rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex flex-col", className)}>
+      <h5 className="text-[11px] font-light text-[#455cab] tracking-wide mb-2">
+        {title}
+      </h5>
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-[9px] text-[#171f38]/30 font-light text-center leading-relaxed">
+          Sem dados
+          <br />
+          no período
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Melhores anúncios ─────────────────────────────────────────────────────────
+
+function HoverMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[7px] text-white/45 font-light tracking-wide">{label}</span>
+      <span className="text-[10px] text-white font-bold tabular-nums leading-none">{value}</span>
+    </div>
+  );
+}
+
+function CreativeThumb({ url, name }: { url: string | null; name: string | null }) {
+  if (!url) {
+    return (
+      <div className="w-full h-44 bg-[#e4e8f2] flex items-center justify-center px-3">
+        <p className="text-[9px] text-[#455cab]/50 font-light text-center leading-relaxed line-clamp-3">
+          {name ?? "Criativo"}
+        </p>
+      </div>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={url} alt={name ?? ""} className="w-full h-44 object-cover" />
+  );
+}
+
+function BestAdsSection({
+  creatives,
+  isLeads,
+}: {
+  creatives: CreativeRow[];
+  isLeads: boolean;
+}) {
+  const resultLabel = isLeads ? "Leads" : "Mensagens";
+
+  const sorted = [...creatives]
+    .filter((c) => c.spend > 0)
+    .sort((a, b) => {
+      const aRes = isLeads ? a.leads : a.messages_started;
+      const bRes = isLeads ? b.leads : b.messages_started;
+      if (bRes !== aRes) return bRes - aRes;
+      return b.spend - a.spend;
+    });
+
+  if (sorted.length === 0) {
+    return (
+      <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex flex-col min-h-[268px]">
+        <h4 className="text-[11px] font-light text-[#455cab] tracking-wide mb-auto">
+          Melhores anúncios
+        </h4>
+        <div className="flex-1 flex flex-col items-center justify-center gap-2">
+          <Film size={16} className="text-[#455cab]/20" />
+          <p className="text-[10px] text-[#171f38]/30 font-light text-center leading-relaxed">
+            Aguardando sincronização
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex flex-col gap-3">
+      <h4 className="text-[11px] font-light text-[#455cab] tracking-wide">
+        Melhores anúncios
+      </h4>
+      <div className="flex gap-3 overflow-x-auto pb-1 -mb-1">
+        {sorted.map((c) => {
+          const resultVal = isLeads ? c.leads : c.messages_started;
+          const costVal = isLeads ? c.cost_per_lead : c.cost_per_message;
+          return (
+            <div
+              key={c.campaignId}
+              className="relative group shrink-0 w-40 rounded-xl border border-[#dfdedf] bg-white overflow-hidden"
+            >
+              <CreativeThumb url={c.thumbnail_url} name={c.campaignName} />
+              <div className="px-2.5 py-2 bg-white">
+                <p className="text-[8px] text-[#171f38]/55 font-light truncate leading-tight">
+                  {c.campaignName ?? "—"}
+                </p>
+              </div>
+              {/* Overlay de hover */}
+              <div className="absolute inset-0 bg-[#0f1626]/[0.88] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-center px-3.5 gap-3">
+                <HoverMetric label="Investimento" value={formatValue(c.spend, "currency_brl")} />
+                <HoverMetric label={resultLabel} value={formatValue(resultVal, "integer")} />
+                <HoverMetric
+                  label={`Custo / ${resultLabel}`}
+                  value={costVal != null ? formatValue(costVal, "currency_brl") : "—"}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Mapa de calor por região (estado vazio elegante) ──────────────────────────
+
+function RegionHeatmapPlaceholder() {
+  return (
+    <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex flex-col">
+      <h4 className="text-[11px] font-light text-[#455cab] tracking-wide">
+        Mapa de calor por região
+      </h4>
+      <div className="flex-1 flex flex-col items-center justify-center gap-2 min-h-[200px]">
+        <MapPin size={16} className="text-[#455cab]/20" />
+        <p className="text-[10px] text-[#171f38]/30 font-light text-center leading-relaxed">
+          Dados regionais
+          <br />
+          em breve
+        </p>
+      </div>
     </div>
   );
 }
@@ -285,6 +705,7 @@ function EmptyMetrics() {
 interface MetaAdsViewProps {
   blocks: BlockWithMetrics[];
   performance?: PerformanceData | null;
+  creatives?: CreativeRow[] | null;
   initialPeriod?: string;
   initialStartDate?: string;
   initialEndDate?: string;
@@ -293,6 +714,7 @@ interface MetaAdsViewProps {
 export function MetaAdsView({
   blocks,
   performance,
+  creatives,
   initialPeriod = "last_7_days",
   initialStartDate = "",
   initialEndDate = "",
@@ -303,7 +725,6 @@ export function MetaAdsView({
   const [customStart, setCustomStart] = useState(initialStartDate);
   const [customEnd, setCustomEnd] = useState(initialEndDate);
 
-  // Mudança de período: usa router.replace para acionar refetch no servidor
   function handlePeriodChange(p: string, start: string, end: string) {
     setPeriod(p);
     setCustomStart(start);
@@ -326,32 +747,52 @@ export function MetaAdsView({
   const summary = performance?.summary ?? null;
   const rows = performance?.rows ?? [];
 
-  const overviewBlock =
-    findBlock(blocks, "visão geral") ?? findBlock(blocks, "visao geral");
-  const performanceBlock = findBlock(blocks, "performance");
-  const conversionsBlock =
-    findBlock(blocks, "conversões") ?? findBlock(blocks, "conversoes");
-
-  const mainIds = new Set<string>(
-    [overviewBlock?.block.id, performanceBlock?.block.id, conversionsBlock?.block.id].filter(
-      (id): id is string => Boolean(id)
-    )
+  // Lógica de conversão: Leads ou Mensagens (baseado em block.settings, sem mudança de schema)
+  const isLeads = blocks.some(
+    (b) =>
+      (b.block.settings as Record<string, unknown> | null)?.conversion_metric === "leads"
   );
-  const otherBlocks = blocks.filter((b) => !mainIds.has(b.block.id));
+
+  // Lê métricas do gráfico de evolução configuradas no Admin (salvas em block.settings)
+  const configuredEvolutionKeys = (() => {
+    for (const { block } of blocks) {
+      const s = block.settings as Record<string, unknown> | null;
+      const keys = s?.evolution_metrics;
+      if (Array.isArray(keys) && keys.length > 0) {
+        return (keys as unknown[]).filter(
+          (k): k is string => typeof k === "string" && k in EVOLUTION_METRIC_DEFS
+        );
+      }
+    }
+    return null;
+  })();
+
+  const evolutionMetricKeys: string[] = configuredEvolutionKeys ?? [
+    "spend",
+    isLeads ? "leads" : "messages_started",
+  ];
+
+  const KPIS: KpiDef[] = [
+    { key: "spend", label: "Investimento", format: "currency_brl", sparkColor: "#fb251d" },
+    {
+      key: isLeads ? "leads" : "messages_started",
+      label: isLeads ? "Leads" : "Mensagens",
+      format: "integer",
+      sparkColor: "#28b52e",
+    },
+    { key: "clicks", label: "Cliques", format: "integer", sparkColor: "#0b72fb" },
+    { key: "reach", label: "Alcance", format: "integer", sparkColor: "#7b27fa" },
+    { key: "impressions", label: "Impressões", format: "integer", sparkColor: "#fdce21" },
+  ];
 
   return (
-    <div className="space-y-7">
-      {/* ── Header + filtros ────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <p className="text-[9px] text-vitti-light/50 tracking-[0.25em] uppercase font-light mb-1">
-            Meta Ads
-          </p>
-          <h3 className="text-sm font-light text-white/70 tracking-wide">
+    <div className="space-y-5">
+      {/* ── Header + 5 cards: grupo compacto ────────────────────── */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <h3 className="text-sm font-light text-[#455cab] tracking-wide">
             Visão geral de performance
           </h3>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
           <PeriodFilter
             period={period}
             customStart={customStart}
@@ -359,108 +800,87 @@ export function MetaAdsView({
             onChange={handlePeriodChange}
           />
         </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+          {KPIS.map((kpi) => (
+            <FixedKpiCard
+              key={kpi.key as string}
+              kpi={kpi}
+              summary={summary}
+              rows={rows}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* ── Alcance e entrega ───────────────────────────────────── */}
-      {overviewBlock && (
-        <section>
-          <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase font-light mb-3">
-            Alcance e entrega
-          </p>
-          {overviewBlock.metrics.length > 0 ? (
-            <div className={cn("grid gap-3", kpiGridCols(overviewBlock.metrics.length))}>
-              {overviewBlock.metrics.map((m) => (
-                <KpiCard key={m.id} metric={m} performance={summary} />
-              ))}
-            </div>
-          ) : (
-            <EmptyMetrics />
-          )}
-        </section>
-      )}
-
-      {/* ── Performance + gráfico ───────────────────────────────── */}
-      {performanceBlock && (
-        <section>
-          <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase font-light mb-3">
-            Performance
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="flex flex-col gap-3">
-              {performanceBlock.metrics.length > 0 ? (
-                performanceBlock.metrics.map((m) => (
-                  <KpiCardSm key={m.id} metric={m} performance={summary} />
-                ))
-              ) : (
-                <div className="h-32 flex items-center justify-center rounded-xl border border-dashed border-white/[0.04]">
-                  <p className="text-[10px] text-white/[0.10] font-light">Sem métricas</p>
-                </div>
-              )}
-            </div>
-            <div className="md:col-span-2">
-              <MetaAdsChart rows={rows} />
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── Conversões ──────────────────────────────────────────── */}
-      {conversionsBlock && (
-        <section>
-          <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase font-light mb-3">
-            Conversões
-          </p>
-          {conversionsBlock.metrics.length > 0 ? (
-            <div className={cn("grid gap-3", kpiGridCols(conversionsBlock.metrics.length))}>
-              {conversionsBlock.metrics.map((m) => (
-                <KpiCard key={m.id} metric={m} performance={summary} />
-              ))}
-            </div>
-          ) : (
-            <EmptyMetrics />
-          )}
-        </section>
-      )}
-
       {/* ── Divisor ─────────────────────────────────────────────── */}
-      <div className="border-t border-white/[0.04]" />
+      <div className="border-t border-vitti-gray/[0.14]" />
 
-      {/* ── Análise detalhada ───────────────────────────────────── */}
-      {otherBlocks.length > 0 && (
-        <section>
-          <p className="text-[9px] text-white/[0.12] tracking-[0.2em] uppercase font-light mb-3">
-            Análise detalhada
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {otherBlocks.map(({ block, metrics }) => (
-              <div key={block.id} className="rounded-xl border border-white/[0.04] bg-white/[0.01] p-4">
-                <p className="text-[9px] text-white/[0.15] tracking-[0.15em] uppercase font-light mb-3">
-                  {block.title ?? "Bloco"}
-                </p>
-                {metrics.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    {metrics.map((m) => (
-                      <KpiCardSm key={m.id} metric={m} performance={summary} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="h-14 flex items-center justify-center border border-dashed border-white/[0.04] rounded-lg">
-                    <p className="text-[10px] text-white/[0.08] font-light">Em breve</p>
-                  </div>
-                )}
-              </div>
-            ))}
+      {/* ── Área inferior: 4 colunas ─────────────────────────────
+          Desktop (xl): funil | cards | gráfico | donuts
+          items-stretch alinha a base de todos os blocos
+          Mobile: empilhado
+      ─────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(270px,1.25fr)_minmax(128px,0.6fr)_minmax(400px,2.5fr)_minmax(200px,1fr)] gap-3 items-stretch">
+
+        {/* Coluna 1 — Funil de resultados */}
+        <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex flex-col">
+          <h4 className="text-[13px] font-semibold text-[#455cab] tracking-wide mb-5 text-center">
+            Funil de resultados
+          </h4>
+          <div className="flex-1 flex items-center justify-center">
+            <FunnelChart summary={summary} isLeads={isLeads} />
           </div>
-        </section>
-      )}
+        </div>
 
-      {/* ── Dados por dia ───────────────────────────────────────── */}
-      <section>
-        <p className="text-[9px] text-white/[0.12] tracking-[0.2em] uppercase font-light mb-3">
-          Dados por dia
-        </p>
-        <MetaAdsTable rows={rows} />
-      </section>
+        {/* Coluna 2 — KPI cards pequenos */}
+        <div className="flex flex-col justify-between gap-2">
+          <SmallKpiCard
+            label="Frequência"
+            value={fmtSummaryVal(summary, "frequency", "decimal")}
+          />
+          <SmallKpiCard
+            label="CTR"
+            value={fmtSummaryVal(summary, "ctr", "percentage")}
+          />
+          <SmallKpiCard
+            label="CPM"
+            value={fmtSummaryVal(summary, "cpm", "currency_brl")}
+          />
+          <SmallKpiCard
+            label="CPC"
+            value={fmtSummaryVal(summary, "cpc", "currency_brl")}
+          />
+          <SmallKpiCard
+            label={isLeads ? "CPL" : "CP Mensagem"}
+            value={fmtSummaryVal(
+              summary,
+              isLeads ? "cost_per_lead" : "cost_per_message",
+              "currency_brl"
+            )}
+          />
+        </div>
+
+        {/* Coluna 3 — Gráfico de evolução */}
+        <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex flex-col">
+          <h4 className="text-[11px] font-light text-[#455cab] tracking-wide mb-1">
+            Evolução no período
+          </h4>
+          <EvolutionChart rows={rows} metricKeys={evolutionMetricKeys} />
+        </div>
+
+        {/* Coluna 4 — Gênero e Faixa etária */}
+        <div className="flex flex-col gap-3">
+          <DonutCard title="Percentual de Gênero" className="flex-1" />
+          <DonutCard title="Faixa etária" className="flex-1" />
+        </div>
+      </div>
+
+      {/* ── Seção: Melhores anúncios + Mapa de calor por região ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_minmax(200px,0.42fr)] gap-3">
+        <BestAdsSection creatives={creatives ?? []} isLeads={isLeads} />
+        <RegionHeatmapPlaceholder />
+      </div>
     </div>
   );
 }
