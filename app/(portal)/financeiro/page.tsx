@@ -116,10 +116,10 @@ export default async function FinanceiroPage({
     <div className="space-y-6 max-w-4xl">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-light text-white/90 tracking-wide">
+        <h2 className="text-xl font-light text-vitti-blue tracking-wide">
           Financeiro
         </h2>
-        <p className="text-sm text-white/25 mt-0.5 font-light">
+        <p className="text-sm text-vitti-blue/50 mt-0.5 font-light">
           Central financeira do seu contrato
         </p>
       </div>
@@ -129,18 +129,18 @@ export default async function FinanceiroPage({
         <Card>
           <CardContent className="py-5">
             <div className="flex items-center gap-3">
-              <CreditCard size={14} className="text-vitti-light/40 shrink-0" />
+              <CreditCard size={14} className="text-vitti-light/60 shrink-0" />
               <div className="flex-1">
-                <p className="text-sm font-light text-white/60">
+                <p className="text-sm font-light text-vitti-blue">
                   Você está autenticado como administrador Vitti.
                 </p>
-                <p className="text-xs text-white/25 font-light mt-0.5">
+                <p className="text-xs text-vitti-blue/55 font-light mt-0.5">
                   Selecione um cliente em Admin → Financeiro e clique em &ldquo;Ver como cliente&rdquo;.
                 </p>
               </div>
               <Link
                 href="/admin/financeiro"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-vitti-blue/30 text-[11px] font-light text-vitti-light/70 hover:border-vitti-blue/50 hover:text-vitti-light transition-all shrink-0"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-vitti-blue/30 text-[11px] font-light text-vitti-blue/70 hover:border-vitti-blue/50 hover:text-vitti-blue transition-all shrink-0"
               >
                 <ExternalLink size={11} />
                 Admin Financeiro
@@ -153,12 +153,12 @@ export default async function FinanceiroPage({
       {/* Banner admin em modo preview */}
       {isAdmin && adminPreview && (
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-vitti-blue/20 bg-vitti-blue/5">
-          <span className="text-[10px] font-light text-vitti-light/50">
+          <span className="text-[10px] font-light text-vitti-blue/60">
             Visualização do cliente — modo admin
           </span>
           <Link
             href="/admin/financeiro"
-            className="ml-auto inline-flex items-center gap-1 text-[10px] font-light text-vitti-light/50 hover:text-vitti-light/80 transition-colors"
+            className="ml-auto inline-flex items-center gap-1 text-[10px] font-light text-vitti-blue/60 hover:text-vitti-blue transition-colors"
           >
             <ArrowLeft size={9} />
             Voltar ao Admin
@@ -170,11 +170,11 @@ export default async function FinanceiroPage({
       {!isAdmin && !clientFound && (
         <Card>
           <CardContent className="py-8 text-center">
-            <CreditCard size={20} className="text-white/10 mx-auto mb-3" />
-            <p className="text-sm font-light text-white/30">
+            <CreditCard size={20} className="text-vitti-blue/20 mx-auto mb-3" />
+            <p className="text-sm font-light text-vitti-blue/55">
               Nenhum cliente vinculado à sua conta.
             </p>
-            <p className="text-xs text-white/15 font-light mt-1">
+            <p className="text-xs text-vitti-blue/40 font-light mt-1">
               Entre em contato com a Vitti Digital.
             </p>
           </CardContent>
@@ -187,7 +187,7 @@ export default async function FinanceiroPage({
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FileText size={13} className="text-vitti-light/30" />
+                <FileText size={13} className="text-vitti-light/60" />
                 <CardTitle>Notas Fiscais</CardTitle>
               </div>
               <Badge
@@ -199,8 +199,8 @@ export default async function FinanceiroPage({
           <CardContent>
             {invoices.length === 0 ? (
               <div className="py-8 text-center">
-                <FileText size={20} className="text-white/10 mx-auto mb-3" />
-                <p className="text-sm font-light text-white/25">
+                <FileText size={20} className="text-vitti-blue/20 mx-auto mb-3" />
+                <p className="text-sm font-light text-vitti-blue/50">
                   Nenhuma nota fiscal registrada ainda.
                 </p>
               </div>
@@ -211,21 +211,21 @@ export default async function FinanceiroPage({
                   return (
                     <div
                       key={nf.id}
-                      className="flex items-center justify-between p-3.5 rounded-lg border border-white/5 hover:border-white/8 hover:bg-white/[0.02] transition-all"
+                      className="flex items-center justify-between p-3.5 rounded-lg border border-vitti-gray/[0.14] hover:border-vitti-gray/[0.25] hover:bg-vitti-gray/[0.05] transition-all"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <FileText size={14} className="text-vitti-light/25 shrink-0" />
+                        <FileText size={14} className="text-vitti-light/50 shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-sm font-light text-white/70 truncate">
+                          <p className="text-sm font-light text-vitti-blue truncate">
                             {nf.title}
                           </p>
-                          <p className="text-[11px] text-white/25 font-light mt-0.5">
+                          <p className="text-[11px] text-vitti-blue/55 font-light mt-0.5">
                             {formatReferenceMonth(nf.referenceMonth)}
                             {nf.issuedAt ? ` · ${formatDate(nf.issuedAt)}` : ""}
                             {nf.invoiceNumber ? ` · NF ${nf.invoiceNumber}` : ""}
                           </p>
                           {nf.description && (
-                            <p className="text-[10px] text-white/20 font-light mt-0.5 truncate max-w-xs">
+                            <p className="text-[10px] text-vitti-blue/45 font-light mt-0.5 truncate max-w-xs">
                               {nf.description}
                             </p>
                           )}
@@ -233,7 +233,7 @@ export default async function FinanceiroPage({
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0 ml-4">
-                        <span className="text-sm font-light text-white/40">
+                        <span className="text-sm font-light text-vitti-blue/70">
                           {formatCurrency(nf.amount)}
                         </span>
                         <Badge
@@ -246,12 +246,12 @@ export default async function FinanceiroPage({
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label="Baixar nota fiscal"
-                            className="p-1.5 text-white/25 hover:text-vitti-light/60 transition-colors"
+                            className="p-1.5 text-vitti-blue/45 hover:text-vitti-blue/70 transition-colors"
                           >
                             <Download size={13} />
                           </a>
                         ) : (
-                          <span className="p-1.5 text-white/10">
+                          <span className="p-1.5 text-vitti-blue/20">
                             <Download size={13} />
                           </span>
                         )}
@@ -270,14 +270,14 @@ export default async function FinanceiroPage({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Barcode size={13} className="text-vitti-light/30" />
+              <Barcode size={13} className="text-vitti-light/60" />
               <CardTitle>Pagamentos & Boletos</CardTitle>
             </div>
             <Badge label="Em breve" variant="default" />
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-[11px] text-white/20 font-light text-center py-4">
+          <p className="text-[11px] text-vitti-blue/45 font-light text-center py-4">
             Emissão de boletos e acompanhamento de pagamentos em desenvolvimento.
           </p>
         </CardContent>
@@ -288,24 +288,24 @@ export default async function FinanceiroPage({
         <Card className="opacity-50">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Clock size={13} className="text-vitti-light/25" />
+              <Clock size={13} className="text-vitti-light/50" />
               <CardTitle>Histórico de Pagamentos</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-[11px] text-white/15 font-light">Em breve</p>
+            <p className="text-[11px] text-vitti-blue/40 font-light">Em breve</p>
           </CardContent>
         </Card>
 
         <Card className="opacity-50">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Bell size={13} className="text-vitti-light/25" />
+              <Bell size={13} className="text-vitti-light/50" />
               <CardTitle>Alertas Financeiros</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-[11px] text-white/15 font-light">Em breve</p>
+            <p className="text-[11px] text-vitti-blue/40 font-light">Em breve</p>
           </CardContent>
         </Card>
       </div>

@@ -52,13 +52,11 @@ export default async function CallsPage({
     isAdmin = ctx.isAdmin;
 
     if (isAdmin) {
-      // Admin: só usa clientId da URL — cliente comum nunca entra aqui
       if (urlClientId) {
         adminPreview = true;
         calls = await listPublishedCalls(urlClientId);
       }
     } else {
-      // Cliente comum: ignora qualquer clientId da URL, usa sempre o vínculo do usuário
       const clientId = ctx.client?.id ?? (await resolveClientForUser(user.id));
       if (clientId) {
         calls = await listPublishedCalls(clientId);
@@ -71,26 +69,26 @@ export default async function CallsPage({
       {/* Header */}
       <div>
         <div className="flex items-center gap-3">
-          <h2 className="text-xl font-light text-white/90 tracking-wide">Calls</h2>
+          <h2 className="text-xl font-light text-vitti-blue tracking-wide">Calls</h2>
           {calls.length > 0 && (
             <Badge label={`${calls.length}`} variant="default" />
           )}
         </div>
-        <p className="text-sm text-white/25 mt-0.5 font-light">
+        <p className="text-sm text-vitti-blue/50 mt-0.5 font-light">
           Reuniões e gravações com a equipe Vitti
         </p>
       </div>
 
       {/* Admin sem clientId na URL */}
       {isAdmin && !adminPreview && (
-        <div className="border border-white/[0.06] rounded-xl px-5 py-6 bg-white/[0.01] flex flex-col items-center gap-3 text-center">
-          <Video size={24} className="text-white/[0.10]" />
-          <p className="text-sm font-light text-white/40">
+        <div className="rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] px-5 py-6 flex flex-col items-center gap-3 text-center">
+          <Video size={24} className="text-vitti-blue/25" />
+          <p className="text-sm font-light text-vitti-blue/50">
             Selecione um cliente no Admin para visualizar as calls.
           </p>
           <Link
             href="/admin/calls"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-vitti-blue/30 text-[11px] font-light text-vitti-light/70 hover:border-vitti-blue/50 hover:text-vitti-light transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-vitti-blue/30 text-[11px] font-light text-vitti-blue/70 hover:border-vitti-blue/50 hover:text-vitti-blue transition-all"
           >
             <ArrowLeft size={11} />
             Ir para Admin — Calls
@@ -101,12 +99,12 @@ export default async function CallsPage({
       {/* Banner de visualização admin */}
       {isAdmin && adminPreview && (
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-vitti-blue/20 bg-vitti-blue/5">
-          <span className="text-[10px] font-light text-vitti-light/50">
+          <span className="text-[10px] font-light text-vitti-blue/60">
             Visualização do cliente — modo admin
           </span>
           <Link
             href="/admin/calls"
-            className="ml-auto inline-flex items-center gap-1 text-[10px] font-light text-vitti-light/50 hover:text-vitti-light/80 transition-colors"
+            className="ml-auto inline-flex items-center gap-1 text-[10px] font-light text-vitti-blue/60 hover:text-vitti-blue transition-colors"
           >
             <ArrowLeft size={9} />
             Voltar ao Admin
@@ -118,9 +116,9 @@ export default async function CallsPage({
       {(!isAdmin || adminPreview) && (
         <>
           {calls.length === 0 ? (
-            <div className="border border-dashed border-white/[0.06] rounded-xl flex flex-col items-center justify-center py-16 gap-3">
-              <Video size={28} className="text-white/[0.07]" />
-              <p className="text-[11px] text-white/20 font-light">Nenhuma call disponível no momento.</p>
+            <div className="border border-dashed border-vitti-gray/[0.20] rounded-xl flex flex-col items-center justify-center py-16 gap-3">
+              <Video size={28} className="text-vitti-blue/20" />
+              <p className="text-[11px] text-vitti-blue/40 font-light">Nenhuma call disponível no momento.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -129,27 +127,27 @@ export default async function CallsPage({
                 return (
                   <div
                     key={call.id}
-                    className="border border-white/[0.06] rounded-xl p-5 bg-white/[0.01] hover:bg-white/[0.02] transition-colors"
+                    className="rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] p-5 hover:border-vitti-gray/[0.25] hover:shadow-md transition-all"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0 mt-0.5">
-                          <Phone size={13} className="text-vitti-light/40" />
+                        <div className="w-8 h-8 rounded-lg bg-vitti-gray/[0.10] border border-vitti-gray/[0.14] flex items-center justify-center shrink-0 mt-0.5">
+                          <Phone size={13} className="text-vitti-light/60" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-light text-white/80 truncate">{call.title}</p>
+                          <p className="text-sm font-light text-vitti-blue truncate">{call.title}</p>
                           <div className="flex items-center gap-3 mt-1 flex-wrap">
-                            <span className="text-[10px] text-white/30 font-light">
+                            <span className="text-[10px] text-vitti-blue/50 font-light">
                               {TYPE_LABELS[call.callType] ?? call.callType}
                             </span>
-                            <span className="text-[10px] text-white/15">·</span>
-                            <span className="text-[10px] text-white/30 font-light">
+                            <span className="text-[10px] text-vitti-blue/30">·</span>
+                            <span className="text-[10px] text-vitti-blue/50 font-light">
                               {formatDate(call.callDate)}
                             </span>
                             {duration && (
                               <>
-                                <span className="text-[10px] text-white/15">·</span>
-                                <span className="inline-flex items-center gap-1 text-[10px] text-white/30 font-light">
+                                <span className="text-[10px] text-vitti-blue/30">·</span>
+                                <span className="inline-flex items-center gap-1 text-[10px] text-vitti-blue/50 font-light">
                                   <Clock size={9} />
                                   {duration}
                                 </span>
@@ -164,7 +162,7 @@ export default async function CallsPage({
                           href={call.recordingUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-light border border-white/[0.08] rounded-lg text-white/50 hover:text-white/80 hover:border-white/[0.15] transition-all shrink-0"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-light border border-vitti-gray/[0.20] rounded-lg text-vitti-blue/60 hover:text-vitti-blue hover:border-vitti-blue/30 transition-all shrink-0"
                         >
                           <ExternalLink size={11} />
                           Gravação
@@ -175,16 +173,16 @@ export default async function CallsPage({
                     {(call.description || call.summary) && (
                       <div className="mt-3 pl-11 space-y-2">
                         {call.description && (
-                          <p className="text-[11px] text-white/35 font-light leading-relaxed">
+                          <p className="text-[11px] text-vitti-blue/60 font-light leading-relaxed">
                             {call.description}
                           </p>
                         )}
                         {call.summary && (
-                          <div className="border-l border-white/[0.07] pl-3">
-                            <p className="text-[9px] text-white/20 font-light uppercase tracking-widest mb-1">
+                          <div className="border-l border-vitti-gray/[0.20] pl-3">
+                            <p className="text-[9px] text-vitti-blue/40 font-light uppercase tracking-widest mb-1">
                               Resumo
                             </p>
-                            <p className="text-[11px] text-white/40 font-light leading-relaxed whitespace-pre-line">
+                            <p className="text-[11px] text-vitti-blue/65 font-light leading-relaxed whitespace-pre-line">
                               {call.summary}
                             </p>
                           </div>

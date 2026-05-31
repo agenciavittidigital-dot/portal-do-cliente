@@ -77,24 +77,24 @@ function PlatformCard({
   ];
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.01] p-5">
+    <div className="rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] p-5">
       <div className="flex items-center gap-2 mb-5">
-        <div className="w-7 h-7 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0">
+        <div className="w-7 h-7 rounded-lg bg-vitti-gray/[0.10] border border-vitti-gray/[0.14] flex items-center justify-center shrink-0">
           {icon}
         </div>
-        <span className="text-xs font-light text-white/50">{label}</span>
+        <span className="text-xs font-light text-vitti-blue/60">{label}</span>
       </div>
       {summary === null ? (
-        <p className="text-xs font-light text-white/20 italic">Sem dados no período</p>
+        <p className="text-xs font-light text-vitti-blue/40 italic">Sem dados no período</p>
       ) : (
         <div className="space-y-3">
           {rows.map((row) => (
             <div key={row.label} className="flex items-baseline justify-between gap-2">
-              <span className="text-[10px] font-light text-white/25 shrink-0">{row.label}</span>
+              <span className="text-[10px] font-light text-vitti-blue/50 shrink-0">{row.label}</span>
               {row.value !== null ? (
-                <span className="text-sm font-light text-white/65 tabular-nums">{row.value}</span>
+                <span className="text-sm font-light text-vitti-blue tabular-nums">{row.value}</span>
               ) : (
-                <span className="text-xs font-light text-white/18 italic">—</span>
+                <span className="text-xs font-light text-vitti-blue/35 italic">—</span>
               )}
             </div>
           ))}
@@ -123,35 +123,35 @@ function RecentCard({
 }) {
   return (
     <Link href={href} className="group block h-full">
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.01] p-5 hover:border-white/[0.12] hover:bg-white/[0.03] transition-all h-full">
+      <div className="rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] p-5 hover:border-vitti-gray/[0.25] hover:shadow-md transition-all h-full">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0">
+            <div className="w-6 h-6 rounded-md bg-vitti-gray/[0.10] border border-vitti-gray/[0.14] flex items-center justify-center shrink-0">
               {icon}
             </div>
-            <span className="text-[10px] font-light text-white/25 uppercase tracking-widest">
+            <span className="text-[10px] font-light text-vitti-blue/45 uppercase tracking-widest">
               {label}
             </span>
           </div>
           <ArrowRight
             size={11}
-            className="text-white/15 group-hover:text-white/40 transition-colors shrink-0"
+            className="text-vitti-blue/25 group-hover:text-vitti-blue/60 transition-colors shrink-0"
           />
         </div>
         {title ? (
           <div className="space-y-1.5">
-            <p className="text-sm font-light text-white/60 line-clamp-2 leading-snug">
+            <p className="text-sm font-light text-vitti-blue line-clamp-2 leading-snug">
               {title}
             </p>
             {subtitle && (
-              <p className="text-[10px] font-light text-white/25">{subtitle}</p>
+              <p className="text-[10px] font-light text-vitti-blue/50">{subtitle}</p>
             )}
             {extra && (
-              <p className="text-xs font-light text-white/40 tabular-nums">{extra}</p>
+              <p className="text-xs font-light text-vitti-blue/70 tabular-nums">{extra}</p>
             )}
           </div>
         ) : (
-          <p className="text-xs font-light text-white/20 italic">Nenhum registrado</p>
+          <p className="text-xs font-light text-vitti-blue/40 italic">Nenhum registrado</p>
         )}
       </div>
     </Link>
@@ -171,16 +171,16 @@ function QuickLink({
 }) {
   return (
     <Link href={href} className="group">
-      <div className="flex items-center justify-between px-4 py-3.5 rounded-xl border border-white/[0.06] bg-white/[0.01] hover:border-vitti-blue/20 hover:bg-vitti-dark/60 transition-all">
+      <div className="flex items-center justify-between px-4 py-3.5 rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-vitti-blue/25 hover:bg-vitti-blue/[0.06] transition-all">
         <div className="flex items-center gap-2.5">
           {icon}
-          <span className="text-xs font-light text-white/45 group-hover:text-white/70 transition-colors">
+          <span className="text-xs font-light text-vitti-blue/70 group-hover:text-vitti-blue transition-colors">
             {label}
           </span>
         </div>
         <ArrowRight
           size={11}
-          className="text-white/15 group-hover:text-vitti-light/50 transition-colors"
+          className="text-vitti-blue/25 group-hover:text-vitti-blue/60 transition-colors"
         />
       </div>
     </Link>
@@ -218,7 +218,6 @@ export default async function DashboardPage({
       }
     }
   } else {
-    // Cliente comum: ignora qualquer clientId da URL
     targetClientId = ctx?.client?.id ?? null;
     targetClientName = ctx?.client?.name ?? null;
   }
@@ -228,30 +227,30 @@ export default async function DashboardPage({
     return (
       <div className="space-y-6 max-w-6xl">
         <div>
-          <h2 className="text-xl font-light text-white/90 tracking-wide">Admin Vitti</h2>
-          <p className="text-sm text-white/25 mt-0.5 font-light">Painel administrativo</p>
+          <h2 className="text-xl font-light text-vitti-blue tracking-wide">Admin Vitti</h2>
+          <p className="text-sm text-vitti-blue/50 mt-0.5 font-light">Painel administrativo</p>
         </div>
-        <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-white/5">
-          <div className="w-12 h-12 rounded-full bg-white/[0.03] border border-white/[0.08] flex items-center justify-center">
-            <Users size={18} className="text-white/15" />
+        <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-vitti-gray/[0.20]">
+          <div className="w-12 h-12 rounded-full bg-vitti-gray/[0.08] border border-vitti-gray/[0.14] flex items-center justify-center">
+            <Users size={18} className="text-vitti-blue/25" />
           </div>
           <div className="text-center space-y-1.5">
-            <p className="text-sm font-light text-white/40">Nenhum cliente selecionado</p>
-            <p className="text-xs text-white/20 font-light max-w-xs leading-relaxed">
+            <p className="text-sm font-light text-vitti-blue/60">Nenhum cliente selecionado</p>
+            <p className="text-xs text-vitti-blue/40 font-light max-w-xs leading-relaxed">
               Acesse Métricas e selecione um cliente para visualizar a visão geral.
             </p>
           </div>
           <div className="flex gap-3 mt-2">
             <Link
               href="/metricas"
-              className="flex items-center gap-2 text-xs font-light px-4 py-2 rounded-full border border-white/[0.08] text-white/40 hover:text-white/70 hover:border-white/[0.15] transition-all"
+              className="flex items-center gap-2 text-xs font-light px-4 py-2 rounded-full border border-vitti-gray/[0.20] text-vitti-blue/60 hover:text-vitti-blue hover:border-vitti-blue/30 transition-all"
             >
               <BarChart3 size={12} />
               Ir para Métricas
             </Link>
             <Link
               href="/admin"
-              className="flex items-center gap-2 text-xs font-light px-4 py-2 rounded-full border border-white/[0.08] text-white/40 hover:text-white/70 hover:border-white/[0.15] transition-all"
+              className="flex items-center gap-2 text-xs font-light px-4 py-2 rounded-full border border-vitti-gray/[0.20] text-vitti-blue/60 hover:text-vitti-blue hover:border-vitti-blue/30 transition-all"
             >
               <ArrowRight size={12} />
               Ir para Admin
@@ -287,7 +286,6 @@ export default async function DashboardPage({
   const latestReport = reportList[0] ?? null;
   const latestCall = callList[0] ?? null;
 
-  // Query params para preview mode (admin → links incluem clientId)
   const qp =
     isAdmin && targetClientId
       ? `?clientId=${encodeURIComponent(targetClientId)}`
@@ -301,16 +299,16 @@ export default async function DashboardPage({
     return (
       <div className="space-y-6 max-w-6xl">
         <div>
-          <h2 className="text-xl font-light text-white/90 tracking-wide">
+          <h2 className="text-xl font-light text-vitti-blue tracking-wide">
             Olá{userName}
           </h2>
-          <p className="text-sm text-white/25 mt-0.5 font-light">Visão geral</p>
+          <p className="text-sm text-vitti-blue/50 mt-0.5 font-light">Visão geral</p>
         </div>
-        <div className="flex flex-col items-center justify-center py-20 gap-3 rounded-xl border border-dashed border-white/5">
-          <p className="text-sm font-light text-white/30">
+        <div className="flex flex-col items-center justify-center py-20 gap-3 rounded-xl border border-dashed border-vitti-gray/[0.20]">
+          <p className="text-sm font-light text-vitti-blue/50">
             Nenhum cliente vinculado à sua conta.
           </p>
-          <p className="text-xs text-white/20 font-light">
+          <p className="text-xs text-vitti-blue/35 font-light">
             Contate a equipe Vitti para vinculação.
           </p>
         </div>
@@ -323,28 +321,28 @@ export default async function DashboardPage({
     <div className="space-y-8 max-w-6xl">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-light text-white/90 tracking-wide">
+        <h2 className="text-xl font-light text-vitti-blue tracking-wide">
           Olá, {greeting}
         </h2>
-        <p className="text-sm text-white/25 mt-0.5 font-light">
+        <p className="text-sm text-vitti-blue/50 mt-0.5 font-light">
           Visão geral · últimos 30 dias
         </p>
       </div>
 
       {/* Performance por plataforma */}
       <section>
-        <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase font-light mb-3">
+        <p className="text-[9px] text-vitti-blue/40 tracking-[0.2em] uppercase font-light mb-3">
           Performance
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <PlatformCard
             label="Meta Ads"
-            icon={<Target size={12} className="text-vitti-light/40" />}
+            icon={<Target size={12} className="text-vitti-light/60" />}
             summary={metaAds}
           />
           <PlatformCard
             label="Google Ads"
-            icon={<Search size={12} className="text-vitti-light/40" />}
+            icon={<Search size={12} className="text-vitti-light/60" />}
             summary={googleAds}
           />
         </div>
@@ -352,13 +350,13 @@ export default async function DashboardPage({
 
       {/* Itens recentes */}
       <section>
-        <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase font-light mb-3">
+        <p className="text-[9px] text-vitti-blue/40 tracking-[0.2em] uppercase font-light mb-3">
           Recentes
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <RecentCard
             label="Última NF"
-            icon={<CreditCard size={11} className="text-vitti-light/30" />}
+            icon={<CreditCard size={11} className="text-vitti-light/50" />}
             title={latestInvoice?.title ?? null}
             subtitle={latestInvoice ? fmtMonth(latestInvoice.referenceMonth) : null}
             extra={
@@ -370,14 +368,14 @@ export default async function DashboardPage({
           />
           <RecentCard
             label="Último Relatório"
-            icon={<FileText size={11} className="text-vitti-light/30" />}
+            icon={<FileText size={11} className="text-vitti-light/50" />}
             title={latestReport?.title ?? null}
             subtitle={latestReport?.period ?? null}
             href={`/relatorios${qp}`}
           />
           <RecentCard
             label="Última Call"
-            icon={<Phone size={11} className="text-vitti-light/30" />}
+            icon={<Phone size={11} className="text-vitti-light/50" />}
             title={latestCall?.title ?? null}
             subtitle={latestCall ? fmtDate(latestCall.callDate) : null}
             href={`/calls${qp}`}
@@ -387,29 +385,29 @@ export default async function DashboardPage({
 
       {/* Atalhos rápidos */}
       <section>
-        <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase font-light mb-3">
+        <p className="text-[9px] text-vitti-blue/40 tracking-[0.2em] uppercase font-light mb-3">
           Acessar
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <QuickLink
             label="Métricas"
             href={`/metricas${qp}`}
-            icon={<BarChart3 size={14} className="text-vitti-light/40" />}
+            icon={<BarChart3 size={14} className="text-vitti-light/60" />}
           />
           <QuickLink
             label="Financeiro"
             href={`/financeiro${qp}`}
-            icon={<CreditCard size={14} className="text-vitti-light/40" />}
+            icon={<CreditCard size={14} className="text-vitti-light/60" />}
           />
           <QuickLink
             label="Relatórios"
             href={`/relatorios${qp}`}
-            icon={<FileText size={14} className="text-vitti-light/40" />}
+            icon={<FileText size={14} className="text-vitti-light/60" />}
           />
           <QuickLink
             label="Calls"
             href={`/calls${qp}`}
-            icon={<Phone size={14} className="text-vitti-light/40" />}
+            icon={<Phone size={14} className="text-vitti-light/60" />}
           />
         </div>
       </section>

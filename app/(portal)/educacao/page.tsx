@@ -6,10 +6,10 @@ export default function EducacaoPage() {
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
-        <h2 className="text-xl font-light text-white/90 tracking-wide">
+        <h2 className="text-xl font-light text-vitti-blue tracking-wide">
           Educação
         </h2>
-        <p className="text-sm text-white/25 mt-0.5 font-light">
+        <p className="text-sm text-vitti-blue/50 mt-0.5 font-light">
           Conteúdos e materiais exclusivos para você
         </p>
       </div>
@@ -18,16 +18,16 @@ export default function EducacaoPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <GraduationCap size={13} className="text-vitti-light/30" />
+              <GraduationCap size={13} className="text-vitti-light/60" />
               <CardTitle>Biblioteca de Conteúdos</CardTitle>
             </div>
             <Badge label="Em breve" variant="info" />
           </div>
         </CardHeader>
         <CardContent>
-          <div className="h-52 flex flex-col items-center justify-center gap-2 border border-dashed border-white/5 rounded-lg">
-            <GraduationCap size={32} className="text-white/8" />
-            <p className="text-white/15 text-xs font-light">
+          <div className="h-52 flex flex-col items-center justify-center gap-2 border border-dashed border-vitti-gray/[0.20] rounded-lg">
+            <GraduationCap size={32} className="text-vitti-blue/15" />
+            <p className="text-vitti-blue/35 text-xs font-light">
               Módulo de educação em desenvolvimento
             </p>
           </div>
