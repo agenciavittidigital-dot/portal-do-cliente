@@ -79,7 +79,7 @@ export function BackToAdmin() {
   return (
     <Link
       href="/admin"
-      className="inline-flex items-center gap-1.5 text-[10px] font-light text-white/30 hover:text-white/60 transition-colors"
+      className="inline-flex items-center gap-1.5 text-[10px] font-light text-[#5F6368]/60 hover:text-[#111111]/75 transition-colors"
     >
       <ArrowLeft size={11} />
       Admin
@@ -104,7 +104,7 @@ function UserRow({
     : null;
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-white/[0.05] bg-white/[0.02] hover:border-white/[0.10] hover:bg-white/[0.03] transition-all group">
+    <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-black/[0.06] bg-black/[0.02] hover:border-black/[0.10] hover:bg-black/[0.03] transition-all group">
       {/* Avatar */}
       <div className="w-8 h-8 rounded-full bg-vitti-medium/20 border border-vitti-medium/20 flex items-center justify-center shrink-0">
         <span className="text-[10px] font-light text-vitti-light/60">{ini}</span>
@@ -113,14 +113,14 @@ function UserRow({
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[12px] font-light text-white/80 truncate">
+          <span className="text-[12px] font-light text-[#111111]/90 truncate">
             {user.name ?? "Sem nome"}
           </span>
           <span
             className={`text-[8px] font-light px-1.5 py-0.5 rounded border ${
               isAdmin
                 ? "border-vitti-medium/30 text-vitti-light/60 bg-vitti-medium/10"
-                : "border-white/[0.08] text-white/30 bg-white/[0.02]"
+                : "border-black/[0.08] text-[#5F6368]/60 bg-black/[0.02]"
             }`}
           >
             {GLOBAL_ROLE_LABELS[user.globalRole]}
@@ -132,7 +132,7 @@ function UserRow({
           )}
         </div>
         <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-          <span className="text-[10px] font-light text-white/30 truncate">
+          <span className="text-[10px] font-light text-[#5F6368]/60 truncate">
             {user.email ?? "—"}
           </span>
           {user.clientName && (
@@ -142,7 +142,7 @@ function UserRow({
             </span>
           )}
           {user.permissionCount > 0 && (
-            <span className="text-[9px] font-light text-white/20 shrink-0">
+            <span className="text-[9px] font-light text-[#5F6368]/50 shrink-0">
               {user.permissionCount} permiss{user.permissionCount === 1 ? "ão" : "ões"}
             </span>
           )}
@@ -151,7 +151,7 @@ function UserRow({
 
       <button
         onClick={() => onEdit(user.id)}
-        className="shrink-0 flex items-center gap-1 text-[9px] font-light text-white/20 hover:text-vitti-light/70 transition-colors px-2 py-1 rounded-lg hover:bg-white/[0.04]"
+        className="shrink-0 flex items-center gap-1 text-[9px] font-light text-[#5F6368]/50 hover:text-vitti-light/70 transition-colors px-2 py-1 rounded-lg hover:bg-black/[0.04]"
       >
         Editar
         <ChevronRight size={10} />
@@ -206,7 +206,7 @@ function SaveButton({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="text-[9px] font-light text-white/30 block mb-1.5">{label}</label>
+      <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1.5">{label}</label>
       {children}
     </div>
   );
@@ -232,7 +232,7 @@ function TextInput({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       disabled={disabled}
-      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-white/70 placeholder-white/20 focus:outline-none focus:border-vitti-medium/40 transition-colors disabled:opacity-50"
+      className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-[#111111]/80 placeholder-[#5F6368]/40 focus:outline-none focus:border-vitti-medium/40 transition-colors disabled:opacity-50"
     />
   );
 }
@@ -316,20 +316,20 @@ function CreateUserModal({
         onClick={!success ? onClose : undefined}
       />
 
-      <div className="relative w-full max-w-md h-full bg-[#0d1117] border-l border-white/[0.06] overflow-y-auto flex flex-col">
+      <div className="relative w-full max-w-md h-full bg-[#0d1117] border-l border-black/[0.07] overflow-y-auto flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-white/[0.06] bg-[#0d1117]">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-black/[0.07] bg-[#0d1117]">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-full bg-emerald-400/10 border border-emerald-400/15 flex items-center justify-center">
               <UserPlus size={11} className="text-emerald-400/50" />
             </div>
-            <p className="text-[11px] font-light text-white/70">Novo usuário cliente</p>
+            <p className="text-[11px] font-light text-[#111111]/80">Novo usuário cliente</p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-white/[0.04] transition-colors"
+            className="p-1.5 rounded-lg hover:bg-black/[0.04] transition-colors"
           >
-            <X size={13} className="text-white/30" />
+            <X size={13} className="text-[#5F6368]/60" />
           </button>
         </div>
 
@@ -340,11 +340,11 @@ function CreateUserModal({
             <div className="space-y-5">
               <div className="flex items-center gap-2">
                 <CheckCircle2 size={14} className="text-emerald-400/70" />
-                <p className="text-sm font-light text-white/70">Usuário criado com sucesso</p>
+                <p className="text-sm font-light text-[#111111]/80">Usuário criado com sucesso</p>
               </div>
 
               {createdEmail && (
-                <p className="text-[10px] font-light text-white/30">{createdEmail}</p>
+                <p className="text-[10px] font-light text-[#5F6368]/60">{createdEmail}</p>
               )}
 
               {tempPassword ? (
@@ -357,35 +357,35 @@ function CreateUserModal({
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2.5">
-                    <code className="flex-1 text-[13px] font-mono text-white/80 tracking-widest select-all">
+                  <div className="flex items-center gap-2 rounded-lg border border-black/[0.08] bg-black/[0.03] px-3 py-2.5">
+                    <code className="flex-1 text-[13px] font-mono text-[#111111]/90 tracking-widest select-all">
                       {tempPassword}
                     </code>
                     <button
                       onClick={copyPassword}
-                      className="shrink-0 p-1.5 rounded-md hover:bg-white/[0.06] transition-colors"
+                      className="shrink-0 p-1.5 rounded-md hover:bg-black/[0.06] transition-colors"
                     >
                       {copied ? (
                         <Check size={13} className="text-emerald-400/70" />
                       ) : (
-                        <Copy size={13} className="text-white/30 hover:text-white/60" />
+                        <Copy size={13} className="text-[#5F6368]/60 hover:text-[#111111]/75" />
                       )}
                     </button>
                   </div>
 
-                  <p className="text-[9px] font-light text-white/20">
-                    Login: <span className="font-mono text-white/35">{createdEmail}</span>
+                  <p className="text-[9px] font-light text-[#5F6368]/50">
+                    Login: <span className="font-mono text-[#5F6368]/65">{createdEmail}</span>
                   </p>
                 </div>
               ) : (
-                <p className="text-[10px] font-light text-white/30">
+                <p className="text-[10px] font-light text-[#5F6368]/60">
                   O usuário já possuía cadastro — vínculo com o cliente criado com sucesso.
                 </p>
               )}
 
               <button
                 onClick={onClose}
-                className="w-full text-[10px] font-light py-2.5 rounded-xl border border-white/[0.08] text-white/40 hover:text-white/70 hover:border-white/[0.15] transition-all mt-4"
+                className="w-full text-[10px] font-light py-2.5 rounded-xl border border-black/[0.08] text-[#5F6368]/70 hover:text-[#111111]/85 hover:border-black/[0.15] transition-all mt-4"
               >
                 Fechar
               </button>
@@ -417,7 +417,7 @@ function CreateUserModal({
                   value={clientId}
                   onChange={(e) => setClientId(e.target.value)}
                   disabled={submitting}
-                  className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-white/70 focus:outline-none focus:border-vitti-medium/40 transition-colors appearance-none disabled:opacity-50"
+                  className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-[#111111]/80 focus:outline-none focus:border-vitti-medium/40 transition-colors appearance-none disabled:opacity-50"
                 >
                   <option value="">— selecione um cliente —</option>
                   {allClients.map((c) => (
@@ -439,17 +439,17 @@ function CreateUserModal({
                       className={`text-left px-3 py-2.5 rounded-lg border transition-all disabled:opacity-50 ${
                         role === r
                           ? "border-vitti-medium/35 bg-vitti-medium/[0.08]"
-                          : "border-white/[0.06] bg-white/[0.01] hover:border-white/[0.12]"
+                          : "border-black/[0.07] bg-black/[0.02] hover:border-black/[0.10]"
                       }`}
                     >
                       <p
                         className={`text-[9px] font-light leading-snug ${
-                          role === r ? "text-vitti-light/80" : "text-white/40"
+                          role === r ? "text-vitti-light/80" : "text-[#5F6368]/70"
                         }`}
                       >
                         {CLIENT_ROLE_LABELS[r]}
                       </p>
-                      <p className="text-[8px] font-light text-white/20 mt-0.5">
+                      <p className="text-[8px] font-light text-[#5F6368]/50 mt-0.5">
                         {CLIENT_ROLE_DESCRIPTIONS[r]}
                       </p>
                     </button>
@@ -469,7 +469,7 @@ function CreateUserModal({
                           ? s === "active"
                             ? "border-emerald-400/30 text-emerald-400/70 bg-emerald-400/5"
                             : "border-red-400/25 text-red-400/60 bg-red-400/5"
-                          : "border-white/[0.08] text-white/25 hover:border-white/20"
+                          : "border-black/[0.08] text-[#5F6368]/55 hover:border-white/20"
                       }`}
                     >
                       {s === "active" ? "Ativo" : "Inativo"}
@@ -480,11 +480,11 @@ function CreateUserModal({
 
               {/* Permissões do preset */}
               {role !== "custom" && ROLE_PRESETS[role].length > 0 && (
-                <div className="rounded-lg border border-white/[0.05] bg-white/[0.01] px-3 py-2.5">
-                  <p className="text-[9px] font-light text-white/25 mb-1.5">
+                <div className="rounded-lg border border-black/[0.06] bg-black/[0.02] px-3 py-2.5">
+                  <p className="text-[9px] font-light text-[#5F6368]/55 mb-1.5">
                     Permissões aplicadas automaticamente ({CLIENT_ROLE_LABELS[role]}):
                   </p>
-                  <p className="text-[8px] font-mono text-white/20 leading-relaxed">
+                  <p className="text-[8px] font-mono text-[#5F6368]/50 leading-relaxed">
                     {ROLE_PRESETS[role].join(", ")}
                   </p>
                 </div>
@@ -518,7 +518,7 @@ function CreateUserModal({
                 )}
               </button>
 
-              <p className="text-[8px] font-light text-white/15 text-center leading-relaxed">
+              <p className="text-[8px] font-light text-[#5F6368]/35 text-center leading-relaxed">
                 Uma senha temporária será gerada. O cliente pode alterá-la após o primeiro acesso.
               </p>
             </div>
@@ -693,29 +693,29 @@ function EditModal({
     >
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
-      <div className="relative w-full max-w-md h-full bg-[#0d1117] border-l border-white/[0.06] overflow-y-auto flex flex-col">
+      <div className="relative w-full max-w-md h-full bg-[#0d1117] border-l border-black/[0.07] overflow-y-auto flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-white/[0.06] bg-[#0d1117]">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-black/[0.07] bg-[#0d1117]">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-full bg-vitti-medium/15 border border-vitti-medium/20 flex items-center justify-center">
               <User size={11} className="text-vitti-light/50" />
             </div>
             <div>
-              <p className="text-[11px] font-light text-white/70">Editar usuário</p>
+              <p className="text-[11px] font-light text-[#111111]/80">Editar usuário</p>
               {detail && (
-                <p className="text-[9px] font-light text-white/25">{detail.email ?? detail.id}</p>
+                <p className="text-[9px] font-light text-[#5F6368]/55">{detail.email ?? detail.id}</p>
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/[0.04] transition-colors">
-            <X size={13} className="text-white/30" />
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-black/[0.04] transition-colors">
+            <X size={13} className="text-[#5F6368]/60" />
           </button>
         </div>
 
         {/* Body */}
         <div className="flex-1 px-5 py-4 space-y-6">
           {loading && (
-            <div className="flex items-center gap-2 text-[11px] font-light text-white/30">
+            <div className="flex items-center gap-2 text-[11px] font-light text-[#5F6368]/60">
               <Loader2 size={12} className="animate-spin" />
               Carregando…
             </div>
@@ -732,18 +732,18 @@ function EditModal({
                 <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase">Perfil</p>
 
                 <div>
-                  <label className="text-[9px] font-light text-white/30 block mb-1">Nome</label>
+                  <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1">Nome</label>
                   <input
                     type="text"
                     value={profileName}
                     onChange={(e) => setProfileName(e.target.value)}
                     placeholder="Nome do usuário"
-                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-white/70 placeholder-white/20 focus:outline-none focus:border-vitti-medium/40 transition-colors"
+                    className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-[#111111]/80 placeholder-[#5F6368]/40 focus:outline-none focus:border-vitti-medium/40 transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[9px] font-light text-white/30 block mb-1.5">Status</label>
+                  <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1.5">Status</label>
                   <div className="flex gap-2">
                     {(["active", "inactive"] as const).map((s) => (
                       <button
@@ -754,7 +754,7 @@ function EditModal({
                             ? s === "active"
                               ? "border-emerald-400/30 text-emerald-400/70 bg-emerald-400/5"
                               : "border-red-400/25 text-red-400/60 bg-red-400/5"
-                            : "border-white/[0.08] text-white/25 hover:border-white/20"
+                            : "border-black/[0.08] text-[#5F6368]/55 hover:border-white/20"
                         }`}
                       >
                         {s === "active" ? "Ativo" : "Inativo"}
@@ -764,7 +764,7 @@ function EditModal({
                 </div>
 
                 <div>
-                  <label className="text-[9px] font-light text-white/30 block mb-1.5">
+                  <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1.5">
                     Tipo de acesso
                   </label>
                   <div className="flex gap-2">
@@ -775,7 +775,7 @@ function EditModal({
                         className={`text-[9px] font-light px-3 py-1.5 rounded-full border transition-all ${
                           profileRole === r
                             ? "border-vitti-medium/40 text-vitti-light/70 bg-vitti-medium/10"
-                            : "border-white/[0.08] text-white/25 hover:border-white/20"
+                            : "border-black/[0.08] text-[#5F6368]/55 hover:border-white/20"
                         }`}
                       >
                         {GLOBAL_ROLE_LABELS[r]}
@@ -785,10 +785,10 @@ function EditModal({
                 </div>
 
                 <div>
-                  <label className="text-[9px] font-light text-white/20 block mb-1">
+                  <label className="text-[9px] font-light text-[#5F6368]/50 block mb-1">
                     Email (somente leitura)
                   </label>
-                  <p className="text-[10px] font-light text-white/25 px-3 py-2 bg-white/[0.02] rounded-lg border border-white/[0.05]">
+                  <p className="text-[10px] font-light text-[#5F6368]/55 px-3 py-2 bg-black/[0.02] rounded-lg border border-black/[0.06]">
                     {detail.email ?? "—"}
                   </p>
                 </div>
@@ -800,19 +800,19 @@ function EditModal({
 
               {/* ── Cliente e função (somente client_user) ── */}
               {isClientUser && (
-                <section className="space-y-3 border-t border-white/[0.04] pt-5">
+                <section className="space-y-3 border-t border-black/[0.05] pt-5">
                   <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase">
                     Cliente e função
                   </p>
 
                   <div>
-                    <label className="text-[9px] font-light text-white/30 block mb-1.5">
+                    <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1.5">
                       Cliente vinculado
                     </label>
                     <select
                       value={selectedClientId}
                       onChange={(e) => setSelectedClientId(e.target.value)}
-                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-white/70 focus:outline-none focus:border-vitti-medium/40 transition-colors appearance-none"
+                      className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-[#111111]/80 focus:outline-none focus:border-vitti-medium/40 transition-colors appearance-none"
                     >
                       <option value="">— sem vínculo —</option>
                       {allClients.map((c) => (
@@ -826,7 +826,7 @@ function EditModal({
 
                   {selectedClientId && (
                     <div className="space-y-2">
-                      <label className="text-[9px] font-light text-white/30 block">
+                      <label className="text-[9px] font-light text-[#5F6368]/60 block">
                         Função no cliente
                       </label>
                       <div className="grid grid-cols-2 gap-1.5">
@@ -837,15 +837,15 @@ function EditModal({
                             className={`text-left px-3 py-2.5 rounded-lg border transition-all ${
                               clientUserRole === role
                                 ? "border-vitti-medium/35 bg-vitti-medium/[0.08]"
-                                : "border-white/[0.06] bg-white/[0.01] hover:border-white/[0.12]"
+                                : "border-black/[0.07] bg-black/[0.02] hover:border-black/[0.10]"
                             }`}
                           >
                             <p className={`text-[9px] font-light leading-snug ${
-                              clientUserRole === role ? "text-vitti-light/80" : "text-white/40"
+                              clientUserRole === role ? "text-vitti-light/80" : "text-[#5F6368]/70"
                             }`}>
                               {CLIENT_ROLE_LABELS[role]}
                             </p>
-                            <p className="text-[8px] font-light text-white/20 mt-0.5">
+                            <p className="text-[8px] font-light text-[#5F6368]/50 mt-0.5">
                               {CLIENT_ROLE_DESCRIPTIONS[role]}
                             </p>
                           </button>
@@ -875,18 +875,18 @@ function EditModal({
 
               {/* ── Permissões (somente client_user) ── */}
               {isClientUser && (
-                <section className="space-y-3 border-t border-white/[0.04] pt-5">
+                <section className="space-y-3 border-t border-black/[0.05] pt-5">
                   <div className="flex items-center justify-between">
                     <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase">
                       Permissões
                     </p>
-                    <span className="text-[9px] text-white/20 font-light">
+                    <span className="text-[9px] text-[#5F6368]/50 font-light">
                       {selectedPermIds.size} selecionada{selectedPermIds.size !== 1 ? "s" : ""}
                     </span>
                   </div>
 
                   {allPermissions.length === 0 ? (
-                    <p className="text-[10px] font-light text-white/20">
+                    <p className="text-[10px] font-light text-[#5F6368]/50">
                       Nenhuma permissão cadastrada. Verifique o seed no banco.
                     </p>
                   ) : (
@@ -900,21 +900,21 @@ function EditModal({
                             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg border text-left transition-all ${
                               checked
                                 ? "border-vitti-medium/25 bg-vitti-medium/[0.06]"
-                                : "border-white/[0.05] bg-white/[0.01] hover:border-white/[0.10]"
+                                : "border-black/[0.06] bg-black/[0.02] hover:border-black/[0.10]"
                             }`}
                           >
                             <div
                               className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-all ${
                                 checked
                                   ? "border-vitti-medium/60 bg-vitti-medium/30"
-                                  : "border-white/[0.15]"
+                                  : "border-black/[0.15]"
                               }`}
                             >
                               {checked && <div className="w-1.5 h-1.5 rounded-sm bg-vitti-light/70" />}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-[10px] font-light text-white/60">{perm.name}</p>
-                              <p className="text-[8px] font-mono text-white/20">{perm.key}</p>
+                              <p className="text-[10px] font-light text-[#111111]/70">{perm.name}</p>
+                              <p className="text-[8px] font-mono text-[#5F6368]/50">{perm.key}</p>
                             </div>
                           </button>
                         );
@@ -930,7 +930,7 @@ function EditModal({
 
               {!isClientUser && (
                 <div className="rounded-lg border border-vitti-medium/10 bg-vitti-medium/[0.04] px-3 py-2.5">
-                  <p className="text-[9px] font-light text-white/30 leading-relaxed">
+                  <p className="text-[9px] font-light text-[#5F6368]/60 leading-relaxed">
                     Vitti Admin tem acesso irrestrito ao portal. Cliente vinculado e
                     permissões individuais não se aplicam.
                   </p>
@@ -994,7 +994,7 @@ export function UsersAdminPanel({ initialUsers, allPermissions, allClients, perm
               <p className="text-[9px] font-light text-amber-400/60 leading-relaxed">
                 <span className="text-amber-400/80">Permissões padrão</span> — {permSeedWarning}
               </p>
-              <p className="text-[8px] font-light text-white/20">
+              <p className="text-[8px] font-light text-[#5F6368]/50">
                 O painel continua funcional. Aplique o GRANT manualmente no banco se necessário.
               </p>
             </div>
@@ -1005,17 +1005,17 @@ export function UsersAdminPanel({ initialUsers, allPermissions, allClients, perm
       {/* Toolbar: search + filter + Novo usuário */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[180px]">
-          <Search size={11} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20" />
+          <Search size={11} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5F6368]/50" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar por nome ou email…"
-            className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-8 pr-3 py-2.5 text-[11px] font-light text-white/70 placeholder-white/20 focus:outline-none focus:border-vitti-medium/30 transition-colors"
+            className="w-full bg-black/[0.03] border border-black/[0.07] rounded-xl pl-8 pr-3 py-2.5 text-[11px] font-light text-[#111111]/80 placeholder-[#5F6368]/40 focus:outline-none focus:border-vitti-medium/30 transition-colors"
           />
           {searchQuery && (
             <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2">
-              <X size={10} className="text-white/30 hover:text-white/60" />
+              <X size={10} className="text-[#5F6368]/60 hover:text-[#111111]/75" />
             </button>
           )}
         </div>
@@ -1028,7 +1028,7 @@ export function UsersAdminPanel({ initialUsers, allPermissions, allClients, perm
               className={`text-[9px] font-light px-2.5 py-1.5 rounded-full border transition-all ${
                 statusFilter === s
                   ? "border-vitti-medium/50 text-vitti-light/70 bg-vitti-medium/10"
-                  : "border-white/[0.07] text-white/25 hover:border-white/15"
+                  : "border-black/[0.08] text-[#5F6368]/55 hover:border-white/15"
               }`}
             >
               {s === "all" ? "Todos" : s === "active" ? "Ativos" : "Inativos"}
@@ -1036,7 +1036,7 @@ export function UsersAdminPanel({ initialUsers, allPermissions, allClients, perm
           ))}
         </div>
 
-        <span className="text-[9px] font-light text-white/20">
+        <span className="text-[9px] font-light text-[#5F6368]/50">
           {filtered.length} de {users.length}
         </span>
 
@@ -1052,8 +1052,8 @@ export function UsersAdminPanel({ initialUsers, allPermissions, allClients, perm
       {/* User list */}
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-12">
-          <Users size={24} className="text-white/10" />
-          <p className="text-[11px] font-light text-white/20">
+          <Users size={24} className="text-[#5F6368]/25" />
+          <p className="text-[11px] font-light text-[#5F6368]/50">
             {searchQuery || statusFilter !== "all"
               ? "Nenhum usuário encontrado com esses filtros."
               : "Nenhum usuário cadastrado."}
@@ -1068,11 +1068,11 @@ export function UsersAdminPanel({ initialUsers, allPermissions, allClients, perm
       )}
 
       {/* Nota de segurança */}
-      <div className="rounded-xl border border-white/[0.04] bg-white/[0.01] px-4 py-3">
+      <div className="rounded-xl border border-black/[0.05] bg-black/[0.02] px-4 py-3">
         <div className="flex items-start gap-2.5">
-          <ShieldCheck size={12} className="text-white/20 shrink-0 mt-0.5" />
-          <p className="text-[9px] font-light text-white/25 leading-relaxed">
-            Apenas usuários com <span className="text-white/40">global_role = client_user</span>{" "}
+          <ShieldCheck size={12} className="text-[#5F6368]/50 shrink-0 mt-0.5" />
+          <p className="text-[9px] font-light text-[#5F6368]/55 leading-relaxed">
+            Apenas usuários com <span className="text-[#5F6368]/70">global_role = client_user</span>{" "}
             podem ser criados por esta tela. Vitti Admins são configurados diretamente no banco.
           </p>
         </div>

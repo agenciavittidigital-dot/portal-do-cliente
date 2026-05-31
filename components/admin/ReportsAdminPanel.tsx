@@ -37,7 +37,7 @@ const STATUS_LABELS: Record<ReportStatus, string> = {
 const STATUS_STYLES: Record<ReportStatus, string> = {
   published: "border-emerald-400/30 text-emerald-400/70 bg-emerald-400/5",
   draft:     "border-amber-400/30 text-amber-400/70 bg-amber-400/5",
-  archived:  "border-white/[0.08] text-white/25 bg-white/[0.02]",
+  archived:  "border-black/[0.08] text-[#5F6368]/55 bg-black/[0.02]",
 };
 
 const STATUS_ICONS: Record<ReportStatus, React.ElementType> = {
@@ -70,7 +70,7 @@ export function BackToAdmin() {
   return (
     <Link
       href="/admin"
-      className="inline-flex items-center gap-1.5 text-[10px] font-light text-white/30 hover:text-white/60 transition-colors"
+      className="inline-flex items-center gap-1.5 text-[10px] font-light text-[#5F6368]/60 hover:text-[#111111]/75 transition-colors"
     >
       <ArrowLeft size={11} />
       Admin
@@ -100,28 +100,28 @@ function ReportRow({
   onEdit: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-white/[0.05] bg-white/[0.02] hover:border-white/[0.10] hover:bg-white/[0.03] transition-all">
-      <div className="w-7 h-7 rounded-lg bg-white/[0.02] border border-white/[0.06] flex items-center justify-center shrink-0">
+    <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-black/[0.06] bg-black/[0.02] hover:border-black/[0.10] hover:bg-black/[0.03] transition-all">
+      <div className="w-7 h-7 rounded-lg bg-black/[0.02] border border-black/[0.07] flex items-center justify-center shrink-0">
         <FileText size={12} className="text-vitti-light/30" />
       </div>
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[12px] font-light text-white/80 truncate">{report.title}</span>
+          <span className="text-[12px] font-light text-[#111111]/90 truncate">{report.title}</span>
           <StatusBadge status={report.status} />
         </div>
         <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-          <span className="text-[10px] font-light text-white/40">{report.period}</span>
-          <span className="text-[10px] font-light text-white/20">{formatDate(report.createdAt)}</span>
+          <span className="text-[10px] font-light text-[#5F6368]/70">{report.period}</span>
+          <span className="text-[10px] font-light text-[#5F6368]/50">{formatDate(report.createdAt)}</span>
           {report.fileName && (
-            <span className="text-[10px] font-light text-white/20 truncate max-w-[140px]">
+            <span className="text-[10px] font-light text-[#5F6368]/50 truncate max-w-[140px]">
               {report.fileName}
               {report.fileSize ? ` · ${formatFileSize(report.fileSize)}` : ""}
             </span>
           )}
         </div>
         {report.summary && (
-          <p className="text-[10px] font-light text-white/25 mt-1 truncate max-w-md">
+          <p className="text-[10px] font-light text-[#5F6368]/55 mt-1 truncate max-w-md">
             {report.summary}
           </p>
         )}
@@ -132,14 +132,14 @@ function ReportRow({
           href={`/api/admin/reports/${report.id}/download`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1 text-[9px] font-light text-vitti-light/30 hover:text-vitti-light/70 transition-colors px-2 py-1 rounded-lg hover:bg-white/[0.04]"
+          className="flex items-center gap-1 text-[9px] font-light text-vitti-light/30 hover:text-vitti-light/70 transition-colors px-2 py-1 rounded-lg hover:bg-black/[0.04]"
         >
           <Download size={9} />
           Baixar
         </a>
         <button
           onClick={onEdit}
-          className="flex items-center gap-1.5 text-[9px] font-light text-white/20 hover:text-vitti-light/70 transition-colors px-2 py-1 rounded-lg hover:bg-white/[0.04]"
+          className="flex items-center gap-1.5 text-[9px] font-light text-[#5F6368]/50 hover:text-vitti-light/70 transition-colors px-2 py-1 rounded-lg hover:bg-black/[0.04]"
         >
           <Pencil size={9} />
           Editar
@@ -240,19 +240,19 @@ function ReportModal({
     >
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
-      <div className="relative w-full max-w-md h-full bg-[#0d1117] border-l border-white/[0.06] overflow-y-auto flex flex-col">
+      <div className="relative w-full max-w-md h-full bg-[#0d1117] border-l border-black/[0.07] overflow-y-auto flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-white/[0.06] bg-[#0d1117]">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-black/[0.07] bg-[#0d1117]">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-black/[0.03] border border-black/[0.07] flex items-center justify-center">
               <FileText size={11} className="text-vitti-light/40" />
             </div>
-            <p className="text-[11px] font-light text-white/70">
+            <p className="text-[11px] font-light text-[#111111]/80">
               {isNew ? "Novo Relatório" : "Editar Relatório"}
             </p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/[0.04] transition-colors">
-            <X size={13} className="text-white/30" />
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-black/[0.04] transition-colors">
+            <X size={13} className="text-[#5F6368]/60" />
           </button>
         </div>
 
@@ -264,19 +264,19 @@ function ReportModal({
 
           {/* Título */}
           <div>
-            <label className="text-[9px] font-light text-white/30 block mb-1">Título *</label>
+            <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1">Título *</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Ex: Relatório Mensal — Marketing Digital"
-              className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-white/70 placeholder-white/20 focus:outline-none focus:border-vitti-medium/40 transition-colors"
+              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-[#111111]/80 placeholder-[#5F6368]/40 focus:outline-none focus:border-vitti-medium/40 transition-colors"
             />
           </div>
 
           {/* Período */}
           <div>
-            <label className="text-[9px] font-light text-white/30 block mb-1">
+            <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1">
               Período / Competência *
             </label>
             <input
@@ -284,13 +284,13 @@ function ReportModal({
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
               placeholder="Ex: Maio/2026 ou 01/05 a 31/05/2026"
-              className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-white/70 placeholder-white/20 focus:outline-none focus:border-vitti-medium/40 transition-colors"
+              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-[#111111]/80 placeholder-[#5F6368]/40 focus:outline-none focus:border-vitti-medium/40 transition-colors"
             />
           </div>
 
           {/* Status */}
           <div>
-            <label className="text-[9px] font-light text-white/30 block mb-1.5">Status</label>
+            <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1.5">Status</label>
             <div className="flex gap-2 flex-wrap">
               {(["draft", "published", "archived"] as const).map((s) => {
                 const Icon = STATUS_ICONS[s];
@@ -301,7 +301,7 @@ function ReportModal({
                     className={`inline-flex items-center gap-1.5 text-[9px] font-light px-3 py-1.5 rounded-full border transition-all ${
                       status === s
                         ? STATUS_STYLES[s]
-                        : "border-white/[0.08] text-white/25 hover:border-white/20"
+                        : "border-black/[0.08] text-[#5F6368]/55 hover:border-white/20"
                     }`}
                   >
                     <Icon size={9} />
@@ -325,15 +325,15 @@ function ReportModal({
           {/* Arquivo — somente na criação */}
           {isNew && (
             <div>
-              <label className="text-[9px] font-light text-white/30 block mb-1">
-                Arquivo * <span className="text-white/15">(PDF, PNG ou JPEG · máx 10 MB)</span>
+              <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1">
+                Arquivo * <span className="text-[#5F6368]/35">(PDF, PNG ou JPEG · máx 10 MB)</span>
               </label>
               <div
-                className="relative flex items-center gap-2 border border-dashed border-white/[0.12] rounded-lg px-3 py-2.5 cursor-pointer hover:border-vitti-medium/40 transition-colors"
+                className="relative flex items-center gap-2 border border-dashed border-black/[0.10] rounded-lg px-3 py-2.5 cursor-pointer hover:border-vitti-medium/40 transition-colors"
                 onClick={() => fileInputRef.current?.click()}
               >
-                <Upload size={12} className="text-white/25 shrink-0" />
-                <span className="text-[11px] font-light text-white/30 truncate">
+                <Upload size={12} className="text-[#5F6368]/55 shrink-0" />
+                <span className="text-[11px] font-light text-[#5F6368]/60 truncate">
                   {selectedFile ? selectedFile.name : "Clique para selecionar o arquivo…"}
                 </span>
                 <input
@@ -349,7 +349,7 @@ function ReportModal({
                 />
               </div>
               {selectedFile && (
-                <p className="text-[9px] font-light text-white/25 mt-1">
+                <p className="text-[9px] font-light text-[#5F6368]/55 mt-1">
                   {selectedFile.name} · {formatFileSize(selectedFile.size)}
                 </p>
               )}
@@ -358,12 +358,12 @@ function ReportModal({
 
           {/* Arquivo existente — na edição, info only */}
           {!isNew && report?.fileName && (
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-white/[0.06] bg-white/[0.02]">
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-black/[0.07] bg-black/[0.02]">
               <FileText size={11} className="text-vitti-light/30 shrink-0" />
               <div className="min-w-0">
-                <p className="text-[10px] font-light text-white/40 truncate">{report.fileName}</p>
+                <p className="text-[10px] font-light text-[#5F6368]/70 truncate">{report.fileName}</p>
                 {report.fileSize && (
-                  <p className="text-[9px] font-light text-white/20">{formatFileSize(report.fileSize)}</p>
+                  <p className="text-[9px] font-light text-[#5F6368]/50">{formatFileSize(report.fileSize)}</p>
                 )}
               </div>
               <a
@@ -380,29 +380,29 @@ function ReportModal({
 
           {/* Resumo */}
           <div>
-            <label className="text-[9px] font-light text-white/30 block mb-1">
-              Resumo / Observações <span className="text-white/15">(opcional)</span>
+            <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1">
+              Resumo / Observações <span className="text-[#5F6368]/35">(opcional)</span>
             </label>
             <textarea
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
               placeholder="Descrição do relatório, principais métricas, destaques do período…"
               rows={4}
-              className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-white/70 placeholder-white/20 focus:outline-none focus:border-vitti-medium/40 transition-colors resize-none"
+              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-[#111111]/80 placeholder-[#5F6368]/40 focus:outline-none focus:border-vitti-medium/40 transition-colors resize-none"
             />
           </div>
 
           {/* Descrição interna */}
           <div>
-            <label className="text-[9px] font-light text-white/30 block mb-1">
-              Descrição interna <span className="text-white/15">(opcional)</span>
+            <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1">
+              Descrição interna <span className="text-[#5F6368]/35">(opcional)</span>
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Anotações internas sobre este relatório…"
               rows={3}
-              className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-white/70 placeholder-white/20 focus:outline-none focus:border-vitti-medium/40 transition-colors resize-none"
+              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-[#111111]/80 placeholder-[#5F6368]/40 focus:outline-none focus:border-vitti-medium/40 transition-colors resize-none"
             />
           </div>
 
@@ -513,7 +513,7 @@ export function ReportsAdminPanel({ allClients }: { allClients: AdminClientRow[]
           <select
             value={selectedClientId}
             onChange={(e) => handleClientSelect(e.target.value)}
-            className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2.5 text-[11px] font-light text-white/70 focus:outline-none focus:border-vitti-medium/30 transition-colors appearance-none"
+            className="w-full bg-black/[0.03] border border-black/[0.08] rounded-xl px-3 py-2.5 text-[11px] font-light text-[#111111]/80 focus:outline-none focus:border-vitti-medium/30 transition-colors appearance-none"
           >
             <option value="">Selecionar cliente…</option>
             {allClients.map((c) => (
@@ -539,7 +539,7 @@ export function ReportsAdminPanel({ allClients }: { allClients: AdminClientRow[]
           <Link
             href={`/relatorios?clientId=${encodeURIComponent(selectedClientId)}`}
             target="_blank"
-            className="flex items-center gap-1.5 text-[9px] font-light px-3 py-2 rounded-full border border-white/[0.07] text-white/30 hover:text-white/60 hover:border-white/[0.15] transition-all"
+            className="flex items-center gap-1.5 text-[9px] font-light px-3 py-2 rounded-full border border-black/[0.08] text-[#5F6368]/60 hover:text-[#111111]/75 hover:border-black/[0.15] transition-all"
           >
             <ExternalLink size={10} />
             Ver como cliente
@@ -550,8 +550,8 @@ export function ReportsAdminPanel({ allClients }: { allClients: AdminClientRow[]
       {/* Empty — no client selected */}
       {!selectedClientId && (
         <div className="flex flex-col items-center gap-2 py-16">
-          <FileText size={24} className="text-white/10" />
-          <p className="text-[11px] font-light text-white/20">
+          <FileText size={24} className="text-[#5F6368]/25" />
+          <p className="text-[11px] font-light text-[#5F6368]/50">
             Selecione um cliente para visualizar e gerenciar os relatórios.
           </p>
         </div>
@@ -559,7 +559,7 @@ export function ReportsAdminPanel({ allClients }: { allClients: AdminClientRow[]
 
       {/* Loading */}
       {selectedClientId && loadingReports && (
-        <div className="flex items-center gap-2 py-10 justify-center text-white/30">
+        <div className="flex items-center gap-2 py-10 justify-center text-[#5F6368]/60">
           <Loader2 size={14} className="animate-spin" />
           <span className="text-[11px] font-light">Carregando…</span>
         </div>
@@ -572,7 +572,7 @@ export function ReportsAdminPanel({ allClients }: { allClients: AdminClientRow[]
           <p className="text-[11px] font-light text-red-400/70 flex-1">{fetchError}</p>
           <button
             onClick={() => handleClientSelect(selectedClientId)}
-            className="flex items-center gap-1 text-[9px] font-light text-white/30 hover:text-white/60 transition-colors"
+            className="flex items-center gap-1 text-[9px] font-light text-[#5F6368]/60 hover:text-[#111111]/75 transition-colors"
           >
             <RefreshCw size={9} />
             Tentar novamente
@@ -589,14 +589,14 @@ export function ReportsAdminPanel({ allClients }: { allClients: AdminClientRow[]
               <span className="text-[9px] font-light text-emerald-400/60">
                 {counts.published} publicado{counts.published !== 1 ? "s" : ""}
               </span>
-              <span className="text-white/10 text-[9px]">·</span>
+              <span className="text-[#5F6368]/25 text-[9px]">·</span>
               <span className="text-[9px] font-light text-amber-400/50">
                 {counts.draft} rascunho{counts.draft !== 1 ? "s" : ""}
               </span>
               {counts.archived > 0 && (
                 <>
-                  <span className="text-white/10 text-[9px]">·</span>
-                  <span className="text-[9px] font-light text-white/20">
+                  <span className="text-[#5F6368]/25 text-[9px]">·</span>
+                  <span className="text-[9px] font-light text-[#5F6368]/50">
                     {counts.archived} arquivado{counts.archived !== 1 ? "s" : ""}
                   </span>
                 </>
@@ -607,20 +607,20 @@ export function ReportsAdminPanel({ allClients }: { allClients: AdminClientRow[]
           {/* Search + status filter */}
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-[180px]">
-              <Search size={11} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20" />
+              <Search size={11} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5F6368]/50" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar por título ou período…"
-                className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl pl-8 pr-3 py-2.5 text-[11px] font-light text-white/70 placeholder-white/20 focus:outline-none focus:border-vitti-medium/30 transition-colors"
+                className="w-full bg-black/[0.03] border border-black/[0.07] rounded-xl pl-8 pr-3 py-2.5 text-[11px] font-light text-[#111111]/80 placeholder-[#5F6368]/40 focus:outline-none focus:border-vitti-medium/30 transition-colors"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
                   className="absolute right-3 top-1/2 -translate-y-1/2"
                 >
-                  <X size={10} className="text-white/30 hover:text-white/60" />
+                  <X size={10} className="text-[#5F6368]/60 hover:text-[#111111]/75" />
                 </button>
               )}
             </div>
@@ -633,7 +633,7 @@ export function ReportsAdminPanel({ allClients }: { allClients: AdminClientRow[]
                   className={`text-[9px] font-light px-2.5 py-1.5 rounded-full border transition-all ${
                     statusFilter === s
                       ? "border-vitti-medium/50 text-vitti-light/70 bg-vitti-medium/10"
-                      : "border-white/[0.07] text-white/25 hover:border-white/15"
+                      : "border-black/[0.08] text-[#5F6368]/55 hover:border-white/15"
                   }`}
                 >
                   {s === "all" ? "Todos" : STATUS_LABELS[s as ReportStatus]}
@@ -641,7 +641,7 @@ export function ReportsAdminPanel({ allClients }: { allClients: AdminClientRow[]
               ))}
             </div>
 
-            <span className="text-[9px] font-light text-white/20 ml-auto">
+            <span className="text-[9px] font-light text-[#5F6368]/50 ml-auto">
               {filtered.length} de {reports.length}
             </span>
           </div>
@@ -649,8 +649,8 @@ export function ReportsAdminPanel({ allClients }: { allClients: AdminClientRow[]
           {/* Empty — no reports */}
           {reports.length === 0 && (
             <div className="flex flex-col items-center gap-2 py-12">
-              <FileText size={22} className="text-white/10" />
-              <p className="text-[11px] font-light text-white/20">
+              <FileText size={22} className="text-[#5F6368]/25" />
+              <p className="text-[11px] font-light text-[#5F6368]/50">
                 Nenhum relatório cadastrado para{" "}
                 {selectedClient?.name ?? "este cliente"}.
               </p>
@@ -666,7 +666,7 @@ export function ReportsAdminPanel({ allClients }: { allClients: AdminClientRow[]
           {/* Empty — filtered */}
           {reports.length > 0 && filtered.length === 0 && (
             <div className="flex flex-col items-center gap-2 py-10">
-              <p className="text-[11px] font-light text-white/20">
+              <p className="text-[11px] font-light text-[#5F6368]/50">
                 Nenhum relatório encontrado com esses filtros.
               </p>
             </div>
@@ -688,9 +688,9 @@ export function ReportsAdminPanel({ allClients }: { allClients: AdminClientRow[]
       )}
 
       {/* Info note */}
-      <div className="rounded-xl border border-white/[0.04] bg-white/[0.01] px-4 py-3">
-        <p className="text-[9px] font-light text-white/25 leading-relaxed">
-          <span className="text-white/40">Relatórios por upload</span> — faça upload do arquivo
+      <div className="rounded-xl border border-black/[0.05] bg-black/[0.02] px-4 py-3">
+        <p className="text-[9px] font-light text-[#5F6368]/55 leading-relaxed">
+          <span className="text-[#5F6368]/70">Relatórios por upload</span> — faça upload do arquivo
           (PDF, PNG ou JPEG). Apenas relatórios com status{" "}
           <span className="text-emerald-400/60">Publicado</span> são visíveis no portal do
           cliente. O arquivo fica em storage privado e o download é gerado com link temporário.

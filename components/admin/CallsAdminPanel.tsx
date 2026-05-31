@@ -32,7 +32,7 @@ const STATUS_LABELS: Record<CallStatus, string> = {
 const STATUS_STYLES: Record<CallStatus, string> = {
   published: "border-emerald-400/30 text-emerald-400/70 bg-emerald-400/5",
   draft:     "border-amber-400/30 text-amber-400/70 bg-amber-400/5",
-  archived:  "border-white/[0.08] text-white/25 bg-white/[0.02]",
+  archived:  "border-black/[0.08] text-[#5F6368]/55 bg-black/[0.02]",
 };
 
 const STATUS_ICONS: Record<CallStatus, React.ElementType> = {
@@ -84,7 +84,7 @@ export function BackToAdmin() {
   return (
     <Link
       href="/admin"
-      className="inline-flex items-center gap-1.5 text-[10px] font-light text-white/30 hover:text-white/60 transition-colors"
+      className="inline-flex items-center gap-1.5 text-[10px] font-light text-[#5F6368]/60 hover:text-[#111111]/75 transition-colors"
     >
       <ArrowLeft size={11} />
       Admin
@@ -116,7 +116,7 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg bg-[#0d1117] border border-white/[0.07] rounded-xl shadow-2xl p-6 space-y-5"
+        className="w-full max-w-lg bg-[#0d1117] border border-black/[0.08] rounded-xl shadow-2xl p-6 space-y-5"
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -187,30 +187,30 @@ function CreateModal({
   return (
     <Modal onClose={onClose}>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-light text-white/80 tracking-wide">Nova Call</h3>
-        <button onClick={onClose} className="text-white/25 hover:text-white/60 transition-colors">
+        <h3 className="text-sm font-light text-[#111111]/90 tracking-wide">Nova Call</h3>
+        <button onClick={onClose} className="text-[#5F6368]/55 hover:text-[#111111]/75 transition-colors">
           <X size={14} />
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-[10px] text-white/30 font-light mb-1.5">Título *</label>
+          <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Título *</label>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Ex: Call de Performance — Maio 2025"
-            className="w-full bg-white/[0.03] border border-white/[0.07] rounded-lg px-3 py-2 text-sm text-white/80 placeholder:text-white/15 font-light focus:outline-none focus:border-white/20"
+            className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-[10px] text-white/30 font-light mb-1.5">Tipo *</label>
+            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Tipo *</label>
             <select
               value={callType}
               onChange={(e) => setCallType(e.target.value as CallType)}
-              className="w-full bg-white/[0.03] border border-white/[0.07] rounded-lg px-3 py-2 text-sm text-white/80 font-light focus:outline-none focus:border-white/20"
+              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 font-light focus:outline-none focus:border-white/20"
             >
               {CALL_TYPES.map((t) => (
                 <option key={t} value={t} className="bg-[#0d1117]">
@@ -220,11 +220,11 @@ function CreateModal({
             </select>
           </div>
           <div>
-            <label className="block text-[10px] text-white/30 font-light mb-1.5">Status</label>
+            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Status</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as CallStatus)}
-              className="w-full bg-white/[0.03] border border-white/[0.07] rounded-lg px-3 py-2 text-sm text-white/80 font-light focus:outline-none focus:border-white/20"
+              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 font-light focus:outline-none focus:border-white/20"
             >
               {CALL_STATUSES.map((s) => (
                 <option key={s} value={s} className="bg-[#0d1117]">
@@ -237,57 +237,57 @@ function CreateModal({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-[10px] text-white/30 font-light mb-1.5">Data da call *</label>
+            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Data da call *</label>
             <input
               type="date"
               value={callDate}
               onChange={(e) => setCallDate(e.target.value)}
-              className="w-full bg-white/[0.03] border border-white/[0.07] rounded-lg px-3 py-2 text-sm text-white/80 font-light focus:outline-none focus:border-white/20"
+              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 font-light focus:outline-none focus:border-white/20"
             />
           </div>
           <div>
-            <label className="block text-[10px] text-white/30 font-light mb-1.5">Duração (min)</label>
+            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Duração (min)</label>
             <input
               type="number"
               min="1"
               value={durationMinutes}
               onChange={(e) => setDurationMinutes(e.target.value)}
               placeholder="Ex: 60"
-              className="w-full bg-white/[0.03] border border-white/[0.07] rounded-lg px-3 py-2 text-sm text-white/80 placeholder:text-white/15 font-light focus:outline-none focus:border-white/20"
+              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-[10px] text-white/30 font-light mb-1.5">Link da gravação</label>
+          <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Link da gravação</label>
           <input
             type="url"
             value={recordingUrl}
             onChange={(e) => setRecordingUrl(e.target.value)}
             placeholder="https://..."
-            className="w-full bg-white/[0.03] border border-white/[0.07] rounded-lg px-3 py-2 text-sm text-white/80 placeholder:text-white/15 font-light focus:outline-none focus:border-white/20"
+            className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20"
           />
         </div>
 
         <div>
-          <label className="block text-[10px] text-white/30 font-light mb-1.5">Descrição</label>
+          <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Descrição</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
             placeholder="Breve descrição da call..."
-            className="w-full bg-white/[0.03] border border-white/[0.07] rounded-lg px-3 py-2 text-sm text-white/80 placeholder:text-white/15 font-light focus:outline-none focus:border-white/20 resize-none"
+            className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20 resize-none"
           />
         </div>
 
         <div>
-          <label className="block text-[10px] text-white/30 font-light mb-1.5">Resumo / Notas</label>
+          <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Resumo / Notas</label>
           <textarea
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
             rows={3}
             placeholder="Pontos discutidos, decisões, próximos passos..."
-            className="w-full bg-white/[0.03] border border-white/[0.07] rounded-lg px-3 py-2 text-sm text-white/80 placeholder:text-white/15 font-light focus:outline-none focus:border-white/20 resize-none"
+            className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20 resize-none"
           />
         </div>
 
@@ -302,14 +302,14 @@ function CreateModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-light text-white/40 hover:text-white/70 transition-colors"
+            className="px-4 py-2 text-xs font-light text-[#5F6368]/70 hover:text-[#111111]/85 transition-colors"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="px-4 py-2 text-xs font-light bg-white/[0.06] hover:bg-white/[0.09] border border-white/[0.08] rounded-lg text-white/70 transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 text-xs font-light bg-black/[0.06] hover:bg-white/[0.09] border border-black/[0.08] rounded-lg text-[#111111]/80 transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             {loading ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
             Criar call
@@ -381,29 +381,29 @@ function EditModal({
   return (
     <Modal onClose={onClose}>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-light text-white/80 tracking-wide">Editar Call</h3>
-        <button onClick={onClose} className="text-white/25 hover:text-white/60 transition-colors">
+        <h3 className="text-sm font-light text-[#111111]/90 tracking-wide">Editar Call</h3>
+        <button onClick={onClose} className="text-[#5F6368]/55 hover:text-[#111111]/75 transition-colors">
           <X size={14} />
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-[10px] text-white/30 font-light mb-1.5">Título *</label>
+          <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Título *</label>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-white/[0.03] border border-white/[0.07] rounded-lg px-3 py-2 text-sm text-white/80 placeholder:text-white/15 font-light focus:outline-none focus:border-white/20"
+            className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-[10px] text-white/30 font-light mb-1.5">Tipo *</label>
+            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Tipo *</label>
             <select
               value={callType}
               onChange={(e) => setCallType(e.target.value as CallType)}
-              className="w-full bg-white/[0.03] border border-white/[0.07] rounded-lg px-3 py-2 text-sm text-white/80 font-light focus:outline-none focus:border-white/20"
+              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 font-light focus:outline-none focus:border-white/20"
             >
               {CALL_TYPES.map((t) => (
                 <option key={t} value={t} className="bg-[#0d1117]">
@@ -413,11 +413,11 @@ function EditModal({
             </select>
           </div>
           <div>
-            <label className="block text-[10px] text-white/30 font-light mb-1.5">Status</label>
+            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Status</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as CallStatus)}
-              className="w-full bg-white/[0.03] border border-white/[0.07] rounded-lg px-3 py-2 text-sm text-white/80 font-light focus:outline-none focus:border-white/20"
+              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 font-light focus:outline-none focus:border-white/20"
             >
               {CALL_STATUSES.map((s) => (
                 <option key={s} value={s} className="bg-[#0d1117]">
@@ -430,35 +430,35 @@ function EditModal({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-[10px] text-white/30 font-light mb-1.5">Data da call *</label>
+            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Data da call *</label>
             <input
               type="date"
               value={callDate}
               onChange={(e) => setCallDate(e.target.value)}
-              className="w-full bg-white/[0.03] border border-white/[0.07] rounded-lg px-3 py-2 text-sm text-white/80 font-light focus:outline-none focus:border-white/20"
+              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 font-light focus:outline-none focus:border-white/20"
             />
           </div>
           <div>
-            <label className="block text-[10px] text-white/30 font-light mb-1.5">Duração (min)</label>
+            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Duração (min)</label>
             <input
               type="number"
               min="1"
               value={durationMinutes}
               onChange={(e) => setDurationMinutes(e.target.value)}
               placeholder="Ex: 60"
-              className="w-full bg-white/[0.03] border border-white/[0.07] rounded-lg px-3 py-2 text-sm text-white/80 placeholder:text-white/15 font-light focus:outline-none focus:border-white/20"
+              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-[10px] text-white/30 font-light mb-1.5">Link da gravação</label>
+          <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Link da gravação</label>
           <input
             type="url"
             value={recordingUrl}
             onChange={(e) => setRecordingUrl(e.target.value)}
             placeholder="https://..."
-            className="w-full bg-white/[0.03] border border-white/[0.07] rounded-lg px-3 py-2 text-sm text-white/80 placeholder:text-white/15 font-light focus:outline-none focus:border-white/20"
+            className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20"
           />
           {call.recordingUrl && (
             <a
@@ -474,24 +474,24 @@ function EditModal({
         </div>
 
         <div>
-          <label className="block text-[10px] text-white/30 font-light mb-1.5">Descrição</label>
+          <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Descrição</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
             placeholder="Breve descrição da call..."
-            className="w-full bg-white/[0.03] border border-white/[0.07] rounded-lg px-3 py-2 text-sm text-white/80 placeholder:text-white/15 font-light focus:outline-none focus:border-white/20 resize-none"
+            className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20 resize-none"
           />
         </div>
 
         <div>
-          <label className="block text-[10px] text-white/30 font-light mb-1.5">Resumo / Notas</label>
+          <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Resumo / Notas</label>
           <textarea
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
             rows={3}
             placeholder="Pontos discutidos, decisões, próximos passos..."
-            className="w-full bg-white/[0.03] border border-white/[0.07] rounded-lg px-3 py-2 text-sm text-white/80 placeholder:text-white/15 font-light focus:outline-none focus:border-white/20 resize-none"
+            className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20 resize-none"
           />
         </div>
 
@@ -506,14 +506,14 @@ function EditModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-light text-white/40 hover:text-white/70 transition-colors"
+            className="px-4 py-2 text-xs font-light text-[#5F6368]/70 hover:text-[#111111]/85 transition-colors"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="px-4 py-2 text-xs font-light bg-white/[0.06] hover:bg-white/[0.09] border border-white/[0.08] rounded-lg text-white/70 transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 text-xs font-light bg-black/[0.06] hover:bg-white/[0.09] border border-black/[0.08] rounded-lg text-[#111111]/80 transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             {loading ? <Loader2 size={12} className="animate-spin" /> : <Pencil size={12} />}
             Salvar alterações
@@ -607,7 +607,7 @@ export function CallsAdminPanel({ allClients }: { allClients: AdminClientRow[] }
           <select
             value={selectedClientId}
             onChange={(e) => handleClientChange(e.target.value)}
-            className="bg-white/[0.03] border border-white/[0.07] rounded-lg px-3 py-2 text-sm text-white/70 font-light focus:outline-none focus:border-white/20 min-w-[220px]"
+            className="bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/80 font-light focus:outline-none focus:border-white/20 min-w-[220px]"
           >
             <option value="" className="bg-[#0d1117]">Selecionar cliente...</option>
             {allClients.map((c) => (
@@ -620,7 +620,7 @@ export function CallsAdminPanel({ allClients }: { allClients: AdminClientRow[] }
           {selectedClientId && (
             <button
               onClick={() => loadCalls(selectedClientId)}
-              className="text-white/25 hover:text-white/60 transition-colors"
+              className="text-[#5F6368]/55 hover:text-[#111111]/75 transition-colors"
               title="Recarregar"
             >
               <RefreshCw size={13} />
@@ -631,7 +631,7 @@ export function CallsAdminPanel({ allClients }: { allClients: AdminClientRow[] }
             <Link
               href={`/calls?clientId=${encodeURIComponent(selectedClientId)}`}
               target="_blank"
-              className="inline-flex items-center gap-1.5 text-[9px] font-light px-3 py-2 rounded-full border border-white/[0.07] text-white/30 hover:text-white/60 hover:border-white/[0.15] transition-all"
+              className="inline-flex items-center gap-1.5 text-[9px] font-light px-3 py-2 rounded-full border border-black/[0.08] text-[#5F6368]/60 hover:text-[#111111]/75 hover:border-black/[0.15] transition-all"
             >
               <ExternalLink size={10} />
               Ver como cliente
@@ -641,7 +641,7 @@ export function CallsAdminPanel({ allClients }: { allClients: AdminClientRow[] }
           {selectedClientId && (
             <button
               onClick={() => setShowCreate(true)}
-              className="ml-auto inline-flex items-center gap-2 px-3 py-2 text-xs font-light bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.07] rounded-lg text-white/60 transition-colors"
+              className="ml-auto inline-flex items-center gap-2 px-3 py-2 text-xs font-light bg-black/[0.04] hover:bg-white/[0.07] border border-black/[0.08] rounded-lg text-[#111111]/70 transition-colors"
             >
               <Plus size={12} />
               Nova call
@@ -657,7 +657,7 @@ export function CallsAdminPanel({ allClients }: { allClients: AdminClientRow[] }
                 <span className={`text-xs font-light px-2 py-0.5 rounded border ${STATUS_STYLES[s]}`}>
                   {counts[s]}
                 </span>
-                <span className="text-[10px] text-white/25 font-light">{STATUS_LABELS[s]}</span>
+                <span className="text-[10px] text-[#5F6368]/55 font-light">{STATUS_LABELS[s]}</span>
               </div>
             ))}
           </div>
@@ -666,17 +666,17 @@ export function CallsAdminPanel({ allClients }: { allClients: AdminClientRow[] }
         {/* Search */}
         {selectedClientId && calls.length > 0 && (
           <div className="relative">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20" />
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5F6368]/50" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por título, tipo ou status..."
-              className="w-full bg-white/[0.03] border border-white/[0.07] rounded-lg pl-9 pr-3 py-2 text-sm text-white/70 placeholder:text-white/15 font-light focus:outline-none focus:border-white/20"
+              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg pl-9 pr-3 py-2 text-sm text-[#111111]/80 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/50"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5F6368]/50 hover:text-[#111111]/70"
               >
                 <X size={12} />
               </button>
@@ -687,7 +687,7 @@ export function CallsAdminPanel({ allClients }: { allClients: AdminClientRow[] }
         {/* State: loading */}
         {loading && (
           <div className="flex items-center justify-center py-10">
-            <Loader2 size={18} className="animate-spin text-white/20" />
+            <Loader2 size={18} className="animate-spin text-[#5F6368]/50" />
           </div>
         )}
 
@@ -701,29 +701,29 @@ export function CallsAdminPanel({ allClients }: { allClients: AdminClientRow[] }
 
         {/* State: no client */}
         {!selectedClientId && !loading && (
-          <div className="text-[11px] text-white/20 font-light py-6 text-center">
+          <div className="text-[11px] text-[#5F6368]/50 font-light py-6 text-center">
             Selecione um cliente para ver as calls.
           </div>
         )}
 
         {/* State: empty */}
         {selectedClientId && !loading && !fetchError && calls.length === 0 && (
-          <div className="text-[11px] text-white/20 font-light py-6 text-center">
+          <div className="text-[11px] text-[#5F6368]/50 font-light py-6 text-center">
             Nenhuma call encontrada para este cliente.
           </div>
         )}
 
         {/* Table */}
         {!loading && filtered.length > 0 && (
-          <div className="border border-white/[0.06] rounded-xl overflow-hidden">
+          <div className="border border-black/[0.07] rounded-xl overflow-hidden">
             <table className="w-full text-xs font-light">
               <thead>
-                <tr className="border-b border-white/[0.05] bg-white/[0.02]">
-                  <th className="text-left px-4 py-2.5 text-[10px] text-white/25 font-light">Título</th>
-                  <th className="text-left px-4 py-2.5 text-[10px] text-white/25 font-light">Tipo</th>
-                  <th className="text-left px-4 py-2.5 text-[10px] text-white/25 font-light">Data</th>
-                  <th className="text-left px-4 py-2.5 text-[10px] text-white/25 font-light">Duração</th>
-                  <th className="text-left px-4 py-2.5 text-[10px] text-white/25 font-light">Status</th>
+                <tr className="border-b border-black/[0.06] bg-black/[0.02]">
+                  <th className="text-left px-4 py-2.5 text-[10px] text-[#5F6368]/55 font-light">Título</th>
+                  <th className="text-left px-4 py-2.5 text-[10px] text-[#5F6368]/55 font-light">Tipo</th>
+                  <th className="text-left px-4 py-2.5 text-[10px] text-[#5F6368]/55 font-light">Data</th>
+                  <th className="text-left px-4 py-2.5 text-[10px] text-[#5F6368]/55 font-light">Duração</th>
+                  <th className="text-left px-4 py-2.5 text-[10px] text-[#5F6368]/55 font-light">Status</th>
                   <th className="px-4 py-2.5" />
                 </tr>
               </thead>
@@ -731,11 +731,11 @@ export function CallsAdminPanel({ allClients }: { allClients: AdminClientRow[] }
                 {filtered.map((call, idx) => (
                   <tr
                     key={call.id}
-                    className={`border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors ${
+                    className={`border-b border-black/[0.04] hover:bg-black/[0.02] transition-colors ${
                       idx === filtered.length - 1 ? "border-b-0" : ""
                     }`}
                   >
-                    <td className="px-4 py-3 text-white/70 max-w-[220px]">
+                    <td className="px-4 py-3 text-[#111111]/80 max-w-[220px]">
                       <div className="truncate">{call.title}</div>
                       {call.recordingUrl && (
                         <a
@@ -749,13 +749,13 @@ export function CallsAdminPanel({ allClients }: { allClients: AdminClientRow[] }
                         </a>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-white/40 whitespace-nowrap">
+                    <td className="px-4 py-3 text-[#5F6368]/70 whitespace-nowrap">
                       {TYPE_LABELS[call.callType]}
                     </td>
-                    <td className="px-4 py-3 text-white/40 whitespace-nowrap">
+                    <td className="px-4 py-3 text-[#5F6368]/70 whitespace-nowrap">
                       {formatDate(call.callDate)}
                     </td>
-                    <td className="px-4 py-3 text-white/40 whitespace-nowrap">
+                    <td className="px-4 py-3 text-[#5F6368]/70 whitespace-nowrap">
                       {formatDuration(call.durationMinutes)}
                     </td>
                     <td className="px-4 py-3">
@@ -764,7 +764,7 @@ export function CallsAdminPanel({ allClients }: { allClients: AdminClientRow[] }
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => setEditCall(call)}
-                        className="text-white/20 hover:text-white/60 transition-colors"
+                        className="text-[#5F6368]/50 hover:text-[#111111]/75 transition-colors"
                         title="Editar"
                       >
                         <Pencil size={12} />

@@ -51,7 +51,7 @@ function StatusBadge({ status }: { status: string }) {
         "inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-light tracking-wide border",
         active
           ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-          : "bg-white/[0.04] text-white/30 border-white/[0.08]"
+          : "bg-black/[0.04] text-[#5F6368]/60 border-black/[0.08]"
       )}
     >
       {active ? "Ativo" : "Inativo"}
@@ -117,15 +117,15 @@ function ClientModal({
       />
 
       {/* Card */}
-      <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#0a0f1e] shadow-2xl">
+      <div className="relative z-10 w-full max-w-md rounded-2xl border border-black/[0.08] bg-white shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
-          <h3 className="text-sm font-light text-white/80">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-black/[0.07]">
+          <h3 className="text-sm font-light text-[#111111]/90">
             {mode === "create" ? "Novo cliente" : "Editar cliente"}
           </h3>
           <button
             onClick={onClose}
-            className="text-white/25 hover:text-white/60 transition-colors"
+            className="text-[#5F6368]/55 hover:text-[#111111]/75 transition-colors"
           >
             <X size={14} />
           </button>
@@ -135,7 +135,7 @@ function ClientModal({
         <div className="px-6 py-5 space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-[10px] text-white/30 font-light mb-1.5 tracking-wide uppercase">
+            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5 tracking-wide uppercase">
               Nome *
             </label>
             <input
@@ -149,13 +149,13 @@ function ClientModal({
                 });
               }}
               placeholder="Ex: Berloca Burguer"
-              className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3.5 py-2.5 text-sm font-light text-white/80 placeholder-white/20 focus:outline-none focus:border-vitti-blue/40 transition-colors"
+              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3.5 py-2.5 text-sm font-light text-[#111111]/90 placeholder-[#5F6368]/40 focus:outline-none focus:border-vitti-blue/40 transition-colors"
             />
           </div>
 
           {/* Slug */}
           <div>
-            <label className="block text-[10px] text-white/30 font-light mb-1.5 tracking-wide uppercase">
+            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5 tracking-wide uppercase">
               Slug *
             </label>
             <input
@@ -165,16 +165,16 @@ function ClientModal({
                 onChange({ slug: e.target.value, slugEdited: true })
               }
               placeholder="ex: berloca-burguer"
-              className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3.5 py-2.5 text-sm font-light font-mono text-white/70 placeholder-white/20 focus:outline-none focus:border-vitti-blue/40 transition-colors"
+              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3.5 py-2.5 text-sm font-light font-mono text-[#111111]/80 placeholder-[#5F6368]/40 focus:outline-none focus:border-vitti-blue/40 transition-colors"
             />
-            <p className="text-[9px] text-white/20 font-light mt-1.5">
+            <p className="text-[9px] text-[#5F6368]/50 font-light mt-1.5">
               Gerado automaticamente · apenas letras, números e hífens
             </p>
           </div>
 
           {/* Segment */}
           <div>
-            <label className="block text-[10px] text-white/30 font-light mb-1.5 tracking-wide uppercase">
+            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5 tracking-wide uppercase">
               Segmento
             </label>
             <input
@@ -182,13 +182,13 @@ function ClientModal({
               value={form.segment}
               onChange={(e) => onChange({ segment: e.target.value })}
               placeholder="Ex: Gastronomia, E-commerce…"
-              className="w-full bg-white/[0.03] border border-white/[0.08] rounded-lg px-3.5 py-2.5 text-sm font-light text-white/80 placeholder-white/20 focus:outline-none focus:border-vitti-blue/40 transition-colors"
+              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3.5 py-2.5 text-sm font-light text-[#111111]/90 placeholder-[#5F6368]/40 focus:outline-none focus:border-vitti-blue/40 transition-colors"
             />
           </div>
 
           {/* Status */}
           <div>
-            <label className="block text-[10px] text-white/30 font-light mb-1.5 tracking-wide uppercase">
+            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5 tracking-wide uppercase">
               Status
             </label>
             <div className="flex gap-2">
@@ -201,8 +201,8 @@ function ClientModal({
                     form.status === s
                       ? s === "active"
                         ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                        : "border-white/[0.12] bg-white/[0.05] text-white/50"
-                      : "border-white/[0.06] text-white/20 hover:border-white/[0.10]"
+                        : "border-black/[0.10] bg-black/[0.05] text-[#5F6368]/80"
+                      : "border-black/[0.07] text-[#5F6368]/50 hover:border-black/[0.10]"
                   )}
                 >
                   {s === "active" ? "Ativo" : "Inativo"}
@@ -221,10 +221,10 @@ function ClientModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-white/[0.06]">
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-black/[0.07]">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-[11px] font-light text-white/40 hover:text-white/70 transition-colors"
+            className="px-4 py-2 text-[11px] font-light text-[#5F6368]/70 hover:text-[#111111]/85 transition-colors"
           >
             Cancelar
           </button>
@@ -487,19 +487,19 @@ export function ClientsAdminPanel({
         <div className="relative flex-1 min-w-48">
           <Search
             size={12}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5F6368]/50"
           />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por nome, slug ou segmento…"
-            className="w-full bg-white/[0.03] border border-white/[0.07] rounded-lg pl-8 pr-3 py-2 text-[11px] font-light text-white/70 placeholder-white/20 focus:outline-none focus:border-vitti-blue/30 transition-colors"
+            className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg pl-8 pr-3 py-2 text-[11px] font-light text-[#111111]/80 placeholder-[#5F6368]/40 focus:outline-none focus:border-vitti-blue/30 transition-colors"
           />
         </div>
 
         {/* Status filter */}
-        <div className="flex rounded-lg border border-white/[0.07] overflow-hidden shrink-0">
+        <div className="flex rounded-lg border border-black/[0.08] overflow-hidden shrink-0">
           {(["all", "active", "inactive"] as const).map((f) => (
             <button
               key={f}
@@ -507,9 +507,9 @@ export function ClientsAdminPanel({
               className={cn(
                 "px-3 py-2 text-[10px] font-light transition-colors",
                 statusFilter === f
-                  ? "bg-white/[0.06] text-white/70"
-                  : "text-white/25 hover:text-white/50 hover:bg-white/[0.02]",
-                f !== "all" && "border-l border-white/[0.06]"
+                  ? "bg-black/[0.06] text-[#111111]/80"
+                  : "text-[#5F6368]/55 hover:text-[#111111]/70 hover:bg-black/[0.02]",
+                f !== "all" && "border-l border-black/[0.07]"
               )}
             >
               {f === "all" ? `Todos (${counts.all})` : f === "active" ? `Ativos (${counts.active})` : `Inativos (${counts.inactive})`}
@@ -528,14 +528,14 @@ export function ClientsAdminPanel({
       </div>
 
       {/* ── Table ────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-white/[0.06] overflow-hidden">
+      <div className="rounded-xl border border-black/[0.07] overflow-hidden">
         {/* Header */}
-        <div className="grid grid-cols-[2fr_1fr_1fr_auto_auto_auto_auto] gap-x-4 px-5 py-3 bg-white/[0.02] border-b border-white/[0.05]">
+        <div className="grid grid-cols-[2fr_1fr_1fr_auto_auto_auto_auto] gap-x-4 px-5 py-3 bg-black/[0.02] border-b border-black/[0.06]">
           {(["Cliente", "Segmento", "Status", "Dash.", "Windsor", "Criado", ""] as const).map(
             (h) => (
               <p
                 key={h}
-                className="text-[9px] text-white/20 uppercase tracking-[0.15em] font-light"
+                className="text-[9px] text-[#5F6368]/50 uppercase tracking-[0.15em] font-light"
               >
                 {h}
               </p>
@@ -546,7 +546,7 @@ export function ClientsAdminPanel({
         {/* Rows */}
         {filtered.length === 0 ? (
           <div className="px-5 py-10 text-center">
-            <p className="text-[11px] text-white/20 font-light">
+            <p className="text-[11px] text-[#5F6368]/50 font-light">
               {search || statusFilter !== "all"
                 ? "Nenhum cliente encontrado para o filtro atual."
                 : "Nenhum cliente cadastrado ainda."}
@@ -561,21 +561,21 @@ export function ClientsAdminPanel({
               <div key={client.id}>
                 <div
                   className={cn(
-                    "grid grid-cols-[2fr_1fr_1fr_auto_auto_auto_auto] gap-x-4 px-5 py-3.5 items-center text-[11px] font-light transition-colors hover:bg-white/[0.015]",
-                    i < filtered.length - 1 && "border-b border-white/[0.03]"
+                    "grid grid-cols-[2fr_1fr_1fr_auto_auto_auto_auto] gap-x-4 px-5 py-3.5 items-center text-[11px] font-light transition-colors hover:bg-black/[0.02]",
+                    i < filtered.length - 1 && "border-b border-black/[0.04]"
                   )}
                 >
                   {/* Name + slug */}
                   <div className="min-w-0">
-                    <p className="text-white/70 truncate">{client.name}</p>
-                    <p className="text-[9px] font-mono text-white/25 truncate mt-0.5">
+                    <p className="text-[#111111]/80 truncate">{client.name}</p>
+                    <p className="text-[9px] font-mono text-[#5F6368]/55 truncate mt-0.5">
                       {client.slug}
                     </p>
                   </div>
 
                   {/* Segment */}
-                  <p className="text-white/35 truncate">
-                    {client.segment ?? <span className="text-white/15">—</span>}
+                  <p className="text-[#5F6368]/65 truncate">
+                    {client.segment ?? <span className="text-[#5F6368]/35">—</span>}
                   </p>
 
                   {/* Status */}
@@ -587,7 +587,7 @@ export function ClientsAdminPanel({
                       "tabular-nums text-center w-8",
                       client.publishedDashboards > 0
                         ? "text-emerald-400/70"
-                        : "text-white/20"
+                        : "text-[#5F6368]/50"
                     )}
                   >
                     {client.publishedDashboards}
@@ -599,14 +599,14 @@ export function ClientsAdminPanel({
                       "tabular-nums text-center w-8",
                       client.windsorMappings > 0
                         ? "text-vitti-light/60"
-                        : "text-white/20"
+                        : "text-[#5F6368]/50"
                     )}
                   >
                     {client.windsorMappings}
                   </p>
 
                   {/* Created at */}
-                  <p className="text-white/25 tabular-nums w-24">
+                  <p className="text-[#5F6368]/55 tabular-nums w-24">
                     {fmtDate(client.created_at)}
                   </p>
 
@@ -617,7 +617,7 @@ export function ClientsAdminPanel({
                       onClick={() => openEdit(client)}
                       disabled={!!isLoading}
                       title="Editar"
-                      className="w-7 h-7 flex items-center justify-center rounded-lg border border-white/[0.06] text-white/30 hover:text-white/70 hover:border-white/[0.12] transition-all disabled:opacity-30"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg border border-black/[0.07] text-[#5F6368]/60 hover:text-[#111111]/85 hover:border-black/[0.10] transition-all disabled:opacity-30"
                     >
                       <Pencil size={11} />
                     </button>
@@ -627,7 +627,7 @@ export function ClientsAdminPanel({
                       onClick={() => handleEnsureDashboard(client)}
                       disabled={!!isLoading}
                       title="Garantir dashboard padrão"
-                      className="w-7 h-7 flex items-center justify-center rounded-lg border border-white/[0.06] text-white/30 hover:text-vitti-light/60 hover:border-vitti-blue/20 transition-all disabled:opacity-30"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg border border-black/[0.07] text-[#5F6368]/60 hover:text-vitti-light/60 hover:border-vitti-blue/20 transition-all disabled:opacity-30"
                     >
                       {isLoading === "dashboard" ? (
                         <Loader2 size={11} className="animate-spin" />
@@ -644,8 +644,8 @@ export function ClientsAdminPanel({
                       className={cn(
                         "w-7 h-7 flex items-center justify-center rounded-lg border transition-all disabled:opacity-30",
                         client.status === "active"
-                          ? "border-white/[0.06] text-white/30 hover:text-red-400/70 hover:border-red-400/20"
-                          : "border-white/[0.06] text-white/30 hover:text-emerald-400/70 hover:border-emerald-400/20"
+                          ? "border-black/[0.07] text-[#5F6368]/60 hover:text-red-400/70 hover:border-red-400/20"
+                          : "border-black/[0.07] text-[#5F6368]/60 hover:text-emerald-400/70 hover:border-emerald-400/20"
                       )}
                     >
                       {isLoading === "status" ? (
@@ -661,7 +661,7 @@ export function ClientsAdminPanel({
                 {fb && (
                   <div
                     className={cn(
-                      "px-5 py-2 flex items-center gap-2 text-[10px] font-light border-b border-white/[0.03]",
+                      "px-5 py-2 flex items-center gap-2 text-[10px] font-light border-b border-black/[0.04]",
                       fb.type === "success"
                         ? "bg-emerald-500/[0.04] text-emerald-400/70"
                         : "bg-red-500/[0.04] text-red-400/60"
@@ -703,7 +703,7 @@ export function BackToAdmin() {
   return (
     <a
       href="/admin"
-      className="inline-flex items-center gap-1.5 text-[10px] font-light text-white/30 hover:text-white/60 transition-colors"
+      className="inline-flex items-center gap-1.5 text-[10px] font-light text-[#5F6368]/60 hover:text-[#111111]/75 transition-colors"
     >
       <ChevronLeft size={12} />
       Admin

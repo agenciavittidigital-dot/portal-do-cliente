@@ -44,65 +44,58 @@ export default async function AdminPage() {
     <div className="space-y-8 max-w-5xl">
       <div>
         <div className="flex items-center gap-3">
-          <h2 className="text-xl font-light text-white/90 tracking-wide">Admin</h2>
+          <h2 className="text-xl font-light text-vitti-blue tracking-wide">Admin</h2>
           <Badge label="Vitti Digital" variant="info" />
         </div>
-        <p className="text-sm text-white/25 mt-0.5 font-light">
+        <p className="text-sm text-vitti-blue/50 mt-0.5 font-light">
           Painel administrativo — acesso restrito
         </p>
       </div>
 
       {/* ── Integrações ──────────────────────────────────────────── */}
       <section>
-        <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase font-light mb-3">
+        <p className="text-[9px] text-vitti-blue/40 tracking-[0.2em] uppercase font-light mb-3">
           Integrações
         </p>
         <div className="space-y-3">
-          {/* Windsor AI — painel de preview interativo */}
           <WindsorPreviewPanel
             windsorConfigured={windsorStatus.configured}
             maskedKey={windsorStatus.configured ? windsorStatus.maskedKey : undefined}
           />
 
-          {/* Windsor — mapeamento de contas por cliente */}
           <WindsorAccountMapping clients={clients} />
 
-          {/* Windsor — sincronização manual para performance_daily */}
           <WindsorSyncPanel />
 
-          {/* Windsor — teste de campos avançados */}
           <WindsorFieldsTestPanel />
 
-          {/* Windsor — diagnóstico de campos de conversão */}
           <WindsorConversionTestPanel />
 
-          {/* Windsor — probe de dados brutos Meta Ads, excluindo demos */}
           <WindsorMetaRawProbePanel />
 
-          {/* Google Ads — mapeamento e sincronização */}
           <WindsorGoogleAdsPanel clients={clients} />
 
           {/* Meta Ads — sincronização automática (futura) */}
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.01]">
+          <div className="rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
             <div className="flex items-center justify-between px-5 py-4 gap-4 flex-wrap">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0">
-                  <Target size={14} className="text-vitti-light/30" />
+                <div className="w-9 h-9 rounded-lg bg-vitti-gray/[0.10] border border-vitti-gray/[0.14] flex items-center justify-center shrink-0">
+                  <Target size={14} className="text-vitti-light/60" />
                 </div>
                 <div>
-                  <p className="text-xs font-light text-white/65">Meta Ads</p>
-                  <p className="text-[10px] font-light text-white/25 mt-0.5">
+                  <p className="text-xs font-light text-vitti-blue">Meta Ads</p>
+                  <p className="text-[10px] font-light text-vitti-blue/50 mt-0.5">
                     Via Windsor AI — dados em performance_daily
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[9px] font-light px-2.5 py-1 rounded-full border border-white/[0.08] text-white/25 bg-white/[0.01]">
+                <span className="text-[9px] font-light px-2.5 py-1 rounded-full border border-vitti-gray/[0.20] text-vitti-blue/50 bg-vitti-gray/[0.06]">
                   Sincronização manual
                 </span>
                 <button
                   disabled
-                  className="text-[9px] font-light px-3 py-1.5 rounded-full border border-white/[0.07] text-white/20 cursor-not-allowed select-none"
+                  className="text-[9px] font-light px-3 py-1.5 rounded-full border border-vitti-gray/[0.14] text-vitti-blue/35 cursor-not-allowed select-none"
                 >
                   Sincronizar — Em breve
                 </button>
@@ -114,7 +107,7 @@ export default async function AdminPage() {
 
       {/* ── Módulos ativos ───────────────────────────────────────── */}
       <section>
-        <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase font-light mb-3">
+        <p className="text-[9px] text-vitti-blue/40 tracking-[0.2em] uppercase font-light mb-3">
           Módulos
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -122,18 +115,18 @@ export default async function AdminPage() {
             const Icon = mod.icon;
             return (
               <Link key={mod.label} href={mod.href}>
-                <Card className="hover:border-vitti-blue/20 hover:bg-vitti-dark/60 transition-all cursor-pointer h-full">
+                <Card className="hover:border-vitti-blue/30 hover:bg-vitti-blue/[0.06] transition-all cursor-pointer h-full">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Icon size={15} className="text-vitti-light/50" />
+                        <Icon size={15} className="text-vitti-light/60" />
                         <CardTitle>{mod.label}</CardTitle>
                       </div>
                       <Badge label="Ativo" variant="success" />
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-[11px] text-white/30 font-light leading-relaxed">
+                    <p className="text-[11px] text-vitti-blue/55 font-light leading-relaxed">
                       {mod.description}
                     </p>
                   </CardContent>
@@ -152,14 +145,14 @@ export default async function AdminPage() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Icon size={15} className="text-vitti-light/25" />
+                      <Icon size={15} className="text-vitti-light/40" />
                       <CardTitle>{mod.label}</CardTitle>
                     </div>
                     <Badge label="Em breve" variant="default" />
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-[11px] text-white/20 font-light leading-relaxed">
+                  <p className="text-[11px] text-vitti-blue/45 font-light leading-relaxed">
                     {mod.description}
                   </p>
                 </CardContent>
