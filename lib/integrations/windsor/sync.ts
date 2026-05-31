@@ -46,6 +46,8 @@ interface AggregatedRecord {
   accountName: string;
   campaignName: string | null;
   campaignId: string;
+  adId: string;
+  adName: string | null;
   // Métricas somáveis
   spend: number;
   clicks: number;
@@ -182,6 +184,15 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
       ? `${slugify(accountName)}_${slugify(campaignName)}`
       : slugify(accountName);
 
+    // ad_id: usa o real quando Windsor retorna; fallback para slug derivado de ad_name; senão "unknown"
+    const rawAdId = safeStr(raw.ad_id);
+    const adName = safeStr(raw.ad_name);
+    const adId = rawAdId
+      ? rawAdId
+      : adName
+      ? `adname_${slugify(adName)}`
+      : "unknown";
+
     // Chave espelha exatamente as colunas da constraint do banco
     const key = [
       integ.clientId,
@@ -189,8 +200,8 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
       "meta_ads",
       date,
       campaignId,
-      "unknown", // adset_id
-      "unknown", // ad_id
+      "unknown", // adset_id (sem suporte Windsor por enquanto)
+      adId,
     ].join("::");
 
     // Prioridade: campo achatado Windsor → escalar legado → array fallback
@@ -236,6 +247,8 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
         accountName,
         campaignName,
         campaignId,
+        adId,
+        adName,
         spend: rawSpend,
         clicks: safeNum(raw.clicks),
         impressions: safeNum(raw.impressions),
@@ -264,7 +277,47 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
     return { ...base, success: true };
   }
 
-  // ── 4. Montar payload de upsert ───────────────────────────────────────────
+  // ── 4. Limpar linhas de nível de campanha substituídas por ad-level ─────────
+  //
+  // Quando Windsor retorna ad_id real, novos registros têm chave diferente das linhas
+  // antigas (ad_id="unknown"). Sem cleanup, ambos coexistem e causam dupla contagem.
+  // Deleta somente as linhas "unknown" para (client, integration, date) que agora têm dados
+  // por anúncio real — preserva linhas de outros períodos ou integrações intocadas.
+
+  const hasRealAdIds = [...aggregated.values()].some((r) => r.adId !== "unknown");
+
+  if (hasRealAdIds) {
+    type CleanKey = { clientId: string; integrationId: string; dates: string[] };
+    const cleanByInteg = new Map<string, CleanKey>();
+
+    for (const rec of aggregated.values()) {
+      if (rec.adId === "unknown") continue;
+      const mapKey = `${rec.integration.clientId}::${rec.integration.integrationId}`;
+      const existing = cleanByInteg.get(mapKey);
+      if (existing) {
+        if (!existing.dates.includes(rec.date)) existing.dates.push(rec.date);
+      } else {
+        cleanByInteg.set(mapKey, {
+          clientId: rec.integration.clientId,
+          integrationId: rec.integration.integrationId,
+          dates: [rec.date],
+        });
+      }
+    }
+
+    for (const ck of cleanByInteg.values()) {
+      await admin
+        .from("performance_daily")
+        .delete()
+        .eq("client_id", ck.clientId)
+        .eq("integration_id", ck.integrationId)
+        .eq("channel", "meta_ads")
+        .in("date", ck.dates)
+        .eq("ad_id", "unknown");
+    }
+  }
+
+  // ── 5. Montar payload de upsert ───────────────────────────────────────────
   const syncedAt = new Date().toISOString();
   const rows: Record<string, unknown>[] = [];
 
@@ -293,8 +346,8 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
       campaign_name: rec.campaignName,
       adset_id: "unknown",
       adset_name: null,
-      ad_id: "unknown",
-      ad_name: null,
+      ad_id: rec.adId,
+      ad_name: rec.adName,
       spend: rec.spend,
       clicks: rec.clicks,
       impressions: rec.impressions,
@@ -327,7 +380,7 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
     });
   }
 
-  // ── 5. Upsert usando as colunas exatas da constraint ──────────────────────
+  // ── 6. Upsert usando as colunas exatas da constraint ──────────────────────
   //
   // onConflict deve listar as colunas da constraint, não o nome da constraint.
   // A constraint real é: client_id, integration_id, channel, date, campaign_id, adset_id, ad_id
@@ -351,7 +404,7 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
 
   base.upserted = rows.length;
 
-  // ── 6. Amostra dos registros gravados (sem dados sensíveis) ───────────────
+  // ── 7. Amostra dos registros gravados (sem dados sensíveis) ───────────────
   base.sampleSaved = [...aggregated.values()].slice(0, 3).map((r) => ({
     date: r.date,
     accountName: r.accountName,

@@ -673,7 +673,7 @@ function resolveCreativeResult(c: CreativeRow): {
 
 function BestAdsSection({ creatives }: { creatives: CreativeRow[] }) {
   const sorted = [...creatives]
-    .filter((c) => c.spend > 0)
+    .filter((c) => c.spend > 0 || c.impressions > 0 || c.leads > 0 || c.messages_started > 0)
     .sort((a, b) => {
       // Campanhas com leads ficam acima das de mensagens; desempate por spend
       const aResult = a.leads > 0 ? a.leads : 0;
@@ -705,32 +705,40 @@ function BestAdsSection({ creatives }: { creatives: CreativeRow[] }) {
         Melhores anúncios
       </h4>
       {/* Carrossel horizontal: 4 cards visíveis por vez em desktop, scroll suave para mais */}
-      <div className="flex gap-3 overflow-x-auto pb-2 -mb-2 scroll-smooth snap-x snap-mandatory">
-        {sorted.map((c) => {
-          const result = resolveCreativeResult(c);
-          return (
-            <div
-              key={c.campaignId}
-              className="relative group shrink-0 w-40 snap-start rounded-xl border border-[#dfdedf] bg-white overflow-hidden"
-            >
-              <CreativeThumb url={c.thumbnail_url} name={c.campaignName} />
-              <div className="px-2.5 py-2 bg-white">
-                <p className="text-[8px] text-[#171f38] font-light truncate leading-tight">
-                  {c.campaignName ?? "—"}
-                </p>
+      <div className="relative">
+        <div className="flex gap-3 overflow-x-auto pb-2 -mb-2 scroll-smooth snap-x snap-mandatory">
+          {sorted.map((c) => {
+            const result = resolveCreativeResult(c);
+            return (
+              <div
+                key={c.adId}
+                className="relative group shrink-0 w-[calc(25%-9px)] snap-start rounded-xl border border-[#dfdedf] bg-white overflow-hidden"
+              >
+                <CreativeThumb url={c.thumbnail_url} name={c.adName ?? c.campaignName} />
+                <div className="px-2.5 py-2 bg-white">
+                  <p className="text-[8px] text-[#171f38] font-light truncate leading-tight">
+                    {c.adName ?? c.campaignName ?? "—"}
+                  </p>
+                </div>
+                {/* Overlay de hover */}
+                <div className="absolute inset-0 bg-[#0f1626]/[0.88] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-center px-3.5 gap-3">
+                  <HoverMetric label="Investimento" value={formatValue(c.spend, "currency_brl")} />
+                  <HoverMetric label={result.label} value={formatValue(result.value, "integer")} />
+                  <HoverMetric
+                    label={result.costLabel}
+                    value={result.cost != null ? formatValue(result.cost, "currency_brl") : "—"}
+                  />
+                </div>
               </div>
-              {/* Overlay de hover */}
-              <div className="absolute inset-0 bg-[#0f1626]/[0.88] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-center px-3.5 gap-3">
-                <HoverMetric label="Investimento" value={formatValue(c.spend, "currency_brl")} />
-                <HoverMetric label={result.label} value={formatValue(result.value, "integer")} />
-                <HoverMetric
-                  label={result.costLabel}
-                  value={result.cost != null ? formatValue(result.cost, "currency_brl") : "—"}
-                />
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+        {sorted.length > 4 && (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#f1f1f1] via-[#f1f1f1]/70 to-transparent"
+          />
+        )}
       </div>
     </div>
   );
@@ -809,11 +817,20 @@ export function MetaAdsView({
   const summary = performance?.summary ?? null;
   const rows = performance?.rows ?? [];
 
-  // Lógica de conversão: Leads ou Mensagens (baseado em block.settings, sem mudança de schema)
-  const isLeads = blocks.some(
-    (b) =>
-      (b.block.settings as Record<string, unknown> | null)?.conversion_metric === "leads"
-  );
+  // Lógica de conversão: admin pode fixar "leads" ou "messages"; se não configurado, detecta pelos dados
+  const adminConvMetric = (() => {
+    for (const { block } of blocks) {
+      const m = (block.settings as Record<string, unknown> | null)?.conversion_metric;
+      if (m === "leads" || m === "messages") return m as "leads" | "messages";
+    }
+    return null;
+  })();
+
+  const isLeads =
+    adminConvMetric === "leads" ||
+    (adminConvMetric !== "messages" &&
+      typeof summary?.leads === "number" &&
+      (summary.leads as number) > 0);
 
   // Lê métricas do gráfico de evolução configuradas no Admin (salvas em block.settings)
   const configuredEvolutionKeys = (() => {

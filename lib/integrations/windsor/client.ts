@@ -48,6 +48,9 @@ export const WINDSOR_SYNC_FIELDS = [
   "action_values",
   // Criativo — thumbnail do anúncio
   "thumbnail_url",
+  // Granularidade de anúncio individual
+  "ad_id",
+  "ad_name",
 ] as const;
 
 // Verifica se WINDSOR_API_KEY está presente no servidor

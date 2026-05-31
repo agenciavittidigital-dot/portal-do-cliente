@@ -194,10 +194,14 @@ export async function loadPerformanceData(
 // ── Criativos Meta Ads (agrupados por campanha, com thumbnail) ────────────────
 
 export interface CreativeRow {
+  adId: string;
+  adName: string | null;
   campaignId: string;
   campaignName: string | null;
   thumbnail_url: string | null;
   spend: number;
+  impressions: number;
+  clicks: number;
   leads: number;
   messages_started: number;
   cost_per_lead: number | null;
@@ -213,7 +217,7 @@ export async function loadCreativesData(
     const admin = createAdminClient();
     const { data, error } = await admin
       .from("performance_daily")
-      .select("campaign_id, campaign_name, thumbnail_url, spend, leads, messages_started")
+      .select("ad_id, ad_name, campaign_id, campaign_name, thumbnail_url, spend, impressions, clicks, leads, messages_started")
       .eq("client_id", clientId)
       .eq("channel", "meta_ads")
       .gte("date", startDate)
@@ -223,15 +227,30 @@ export async function loadCreativesData(
 
     if (error || !data?.length) return [];
 
-    const byId = new Map<
-      string,
-      { campaignName: string | null; thumbnail_url: string | null; spend: number; leads: number; messages_started: number }
-    >();
+    type CreativeAccum = {
+      adName: string | null;
+      campaignId: string;
+      campaignName: string | null;
+      thumbnail_url: string | null;
+      spend: number;
+      impressions: number;
+      clicks: number;
+      leads: number;
+      messages_started: number;
+    };
+    const byId = new Map<string, CreativeAccum>();
 
     for (const row of data) {
       const r = row as Record<string, unknown>;
-      const id = String(r.campaign_id ?? "unknown");
+      const campaignId = String(r.campaign_id ?? "unknown");
+      // Usa ad_id real quando disponível; fallback para campaign_id (dados pré-ad-level)
+      const rawAdId = String(r.ad_id ?? "");
+      const id =
+        rawAdId && rawAdId !== "unknown" ? rawAdId : campaignId;
+
       const spend = Number(r.spend) || 0;
+      const impressions = Number(r.impressions) || 0;
+      const clicks = Number(r.clicks) || 0;
       const leads = Number(r.leads) || 0;
       const messages_started = Number(r.messages_started) || 0;
       const thumb = r.thumbnail_url ? String(r.thumbnail_url) : null;
@@ -239,26 +258,37 @@ export async function loadCreativesData(
       const existing = byId.get(id);
       if (existing) {
         existing.spend += spend;
+        existing.impressions += impressions;
+        existing.clicks += clicks;
         existing.leads += leads;
         existing.messages_started += messages_started;
         if (!existing.thumbnail_url && thumb) existing.thumbnail_url = thumb;
       } else {
-        const name = r.campaign_name;
+        const camName = r.campaign_name;
+        const adNameRaw = r.ad_name;
         byId.set(id, {
-          campaignName: typeof name === "string" && name ? name : null,
+          adName: typeof adNameRaw === "string" && adNameRaw ? adNameRaw : null,
+          campaignId,
+          campaignName: typeof camName === "string" && camName ? camName : null,
           thumbnail_url: thumb,
           spend,
+          impressions,
+          clicks,
           leads,
           messages_started,
         });
       }
     }
 
-    return [...byId.entries()].map(([campaignId, c]) => ({
-      campaignId,
+    return [...byId.entries()].map(([adId, c]) => ({
+      adId,
+      adName: c.adName,
+      campaignId: c.campaignId,
       campaignName: c.campaignName,
       thumbnail_url: c.thumbnail_url,
       spend: c.spend,
+      impressions: c.impressions,
+      clicks: c.clicks,
       leads: c.leads,
       messages_started: c.messages_started,
       cost_per_lead: c.leads > 0 ? c.spend / c.leads : null,
