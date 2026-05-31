@@ -514,7 +514,7 @@ function EvolutionChart({
           <XAxis
             dataKey="date"
             tickFormatter={fmtDate}
-            tick={{ fill: "rgba(0,0,0,0.3)", fontSize: 8, fontWeight: 300 }}
+            tick={{ fill: "#171f38", fontSize: 8, fontWeight: 300 }}
             axisLine={false}
             tickLine={false}
             dy={4}
@@ -563,20 +563,58 @@ function EvolutionChart({
   );
 }
 
-// ── Cards de gênero e faixa etária (estado vazio elegante) ────────────────────
+// ── Cards de gênero e faixa etária ────────────────────────────────────────────
+//
+// Dados demográficos (gender, age_range) NÃO existem em performance_daily
+// nem são coletados pelo sync Windsor atual. Exibe placeholder até que:
+//   1. Windsor retorne breakdown demográfico no endpoint /all
+//   2. O sync seja atualizado para coletar esses campos
+//   3. O schema receba tabela/colunas demográficas (ex: performance_demographics)
+// Quando disponíveis, passar os dados via prop `slices`.
 
-function DonutCard({ title, className }: { title: string; className?: string }) {
+interface DonutSlice {
+  label: string;
+  value: number; // percentual 0–100
+  color: string;
+}
+
+function DonutCard({
+  title,
+  className,
+  slices,
+}: {
+  title: string;
+  className?: string;
+  slices?: DonutSlice[] | null;
+}) {
+  const hasData = slices && slices.length > 0;
+
   return (
     <div className={cn("rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex flex-col", className)}>
       <h5 className="text-[11px] font-light text-[#455cab] tracking-wide mb-2">
         {title}
       </h5>
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-[9px] text-[#171f38]/30 font-light text-center leading-relaxed">
-          Sem dados
-          <br />
-          no período
-        </p>
+        {hasData ? (
+          // TODO: substituir por PieChart (Recharts) quando slices forem fornecidos via sync demográfico
+          <div className="space-y-1 w-full">
+            {slices!.map((s) => (
+              <div key={s.label} className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                  <span className="text-[9px] text-[#171f38]/60 font-light">{s.label}</span>
+                </div>
+                <span className="text-[9px] text-[#171f38] font-light tabular-nums">{s.value.toFixed(1)}%</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-[9px] text-[#171f38]/30 font-light text-center leading-relaxed">
+            Sem dados
+            <br />
+            no período
+          </p>
+        )}
       </div>
     </div>
   );
@@ -609,21 +647,39 @@ function CreativeThumb({ url, name }: { url: string | null; name: string | null 
   );
 }
 
-function BestAdsSection({
-  creatives,
-  isLeads,
-}: {
-  creatives: CreativeRow[];
-  isLeads: boolean;
-}) {
-  const resultLabel = isLeads ? "Leads" : "Mensagens";
+// Decide a métrica de resultado por criativo:
+// leads têm prioridade sobre mensagens — respeita o objetivo real da campanha.
+function resolveCreativeResult(c: CreativeRow): {
+  value: number;
+  label: string;
+  cost: number | null;
+  costLabel: string;
+} {
+  if (c.leads > 0) {
+    return {
+      value: c.leads,
+      label: "Leads",
+      cost: c.cost_per_lead,
+      costLabel: "Custo / Lead",
+    };
+  }
+  return {
+    value: c.messages_started,
+    label: "Mensagens",
+    cost: c.cost_per_message,
+    costLabel: "Custo / Mensagem",
+  };
+}
 
+function BestAdsSection({ creatives }: { creatives: CreativeRow[] }) {
   const sorted = [...creatives]
     .filter((c) => c.spend > 0)
     .sort((a, b) => {
-      const aRes = isLeads ? a.leads : a.messages_started;
-      const bRes = isLeads ? b.leads : b.messages_started;
-      if (bRes !== aRes) return bRes - aRes;
+      // Campanhas com leads ficam acima das de mensagens; desempate por spend
+      const aResult = a.leads > 0 ? a.leads : 0;
+      const bResult = b.leads > 0 ? b.leads : 0;
+      if (bResult !== aResult) return bResult - aResult;
+      if (b.messages_started !== a.messages_started) return b.messages_started - a.messages_started;
       return b.spend - a.spend;
     });
 
@@ -648,28 +704,28 @@ function BestAdsSection({
       <h4 className="text-[11px] font-light text-[#455cab] tracking-wide">
         Melhores anúncios
       </h4>
-      <div className="flex gap-3 overflow-x-auto pb-1 -mb-1">
+      {/* Carrossel horizontal: 4 cards visíveis por vez em desktop, scroll suave para mais */}
+      <div className="flex gap-3 overflow-x-auto pb-2 -mb-2 scroll-smooth snap-x snap-mandatory">
         {sorted.map((c) => {
-          const resultVal = isLeads ? c.leads : c.messages_started;
-          const costVal = isLeads ? c.cost_per_lead : c.cost_per_message;
+          const result = resolveCreativeResult(c);
           return (
             <div
               key={c.campaignId}
-              className="relative group shrink-0 w-40 rounded-xl border border-[#dfdedf] bg-white overflow-hidden"
+              className="relative group shrink-0 w-40 snap-start rounded-xl border border-[#dfdedf] bg-white overflow-hidden"
             >
               <CreativeThumb url={c.thumbnail_url} name={c.campaignName} />
               <div className="px-2.5 py-2 bg-white">
-                <p className="text-[8px] text-[#171f38]/55 font-light truncate leading-tight">
+                <p className="text-[8px] text-[#171f38] font-light truncate leading-tight">
                   {c.campaignName ?? "—"}
                 </p>
               </div>
               {/* Overlay de hover */}
               <div className="absolute inset-0 bg-[#0f1626]/[0.88] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-center px-3.5 gap-3">
                 <HoverMetric label="Investimento" value={formatValue(c.spend, "currency_brl")} />
-                <HoverMetric label={resultLabel} value={formatValue(resultVal, "integer")} />
+                <HoverMetric label={result.label} value={formatValue(result.value, "integer")} />
                 <HoverMetric
-                  label={`Custo / ${resultLabel}`}
-                  value={costVal != null ? formatValue(costVal, "currency_brl") : "—"}
+                  label={result.costLabel}
+                  value={result.cost != null ? formatValue(result.cost, "currency_brl") : "—"}
                 />
               </div>
             </div>
@@ -680,7 +736,13 @@ function BestAdsSection({
   );
 }
 
-// ── Mapa de calor por região (estado vazio elegante) ──────────────────────────
+// ── Mapa de calor por região ──────────────────────────────────────────────────
+//
+// Dados regionais (region, city, state) NÃO existem em performance_daily
+// nem são coletados pelo sync Windsor atual. Exibe placeholder até que:
+//   1. Windsor retorne breakdown regional no endpoint /all
+//   2. O sync seja atualizado para coletar esses campos
+//   3. O schema receba tabela/colunas regionais
 
 function RegionHeatmapPlaceholder() {
   return (
@@ -869,16 +931,23 @@ export function MetaAdsView({
           <EvolutionChart rows={rows} metricKeys={evolutionMetricKeys} />
         </div>
 
-        {/* Coluna 4 — Gênero e Faixa etária */}
+        {/* Coluna 4 — Gênero e Faixa etária
+            Sem dados: depende de sync Windsor com breakdown demográfico + schema performance_demographics */}
         <div className="flex flex-col gap-3">
           <DonutCard title="Percentual de Gênero" className="flex-1" />
           <DonutCard title="Faixa etária" className="flex-1" />
         </div>
       </div>
 
-      {/* ── Seção: Melhores anúncios + Mapa de calor por região ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_minmax(200px,0.42fr)] gap-3">
-        <BestAdsSection creatives={creatives ?? []} isLeads={isLeads} />
+      {/* ── Seção: Melhores anúncios + Mapa de calor por região ──
+          Usa o mesmo grid de 4 colunas da seção superior para alinhar a coluna
+          do Mapa de calor com os cards de Gênero e Faixa etária.
+          Melhores anúncios ocupa as 3 primeiras colunas (xl:col-span-3).
+      ─────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(270px,1.25fr)_minmax(128px,0.6fr)_minmax(400px,2.5fr)_minmax(200px,1fr)] gap-3">
+        <div className="xl:col-span-3">
+          <BestAdsSection creatives={creatives ?? []} />
+        </div>
         <RegionHeatmapPlaceholder />
       </div>
     </div>
