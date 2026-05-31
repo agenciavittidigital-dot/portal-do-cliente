@@ -39,6 +39,7 @@ export interface AdminDashboardBlock {
   position: number;
   size: string | null;
   visible: boolean;
+  settings: Record<string, unknown> | null;
   metrics: AdminBlockMetric[];
 }
 
@@ -118,7 +119,7 @@ export async function listClientDashboardConfig(
   // All blocks — no visible filter
   const { data: blockRows } = await admin
     .from("dashboard_blocks")
-    .select("id, dashboard_id, channel, block_type, title, description, position, size, visible")
+    .select("id, dashboard_id, channel, block_type, title, description, position, size, visible, settings")
     .in("dashboard_id", dashIds)
     .order("position");
 
@@ -193,6 +194,7 @@ export async function listClientDashboardConfig(
       position: Number(r.position ?? 0),
       size: r.size ? String(r.size) : null,
       visible: r.visible !== false,
+      settings: (r.settings as Record<string, unknown>) ?? null,
       metrics: metricsByBlockId.get(bid) ?? [],
     };
     const list = blocksByDashId.get(did) ?? [];
@@ -251,6 +253,7 @@ export async function updateAdminDashboardBlock(
     description?: string | null;
     position?: number;
     size?: string | null;
+    settingsPatch?: Record<string, unknown>;
   }
 ): Promise<void> {
   const admin = mkAdmin();
@@ -261,6 +264,18 @@ export async function updateAdminDashboardBlock(
   if ("description" in patch) update.description = patch.description;
   if (patch.position !== undefined) update.position = patch.position;
   if ("size" in patch) update.size = patch.size;
+
+  if (patch.settingsPatch) {
+    const { data: current } = await admin
+      .from("dashboard_blocks")
+      .select("settings")
+      .eq("id", id)
+      .maybeSingle();
+    const existing = (current?.settings as Record<string, unknown>) ?? {};
+    update.settings = { ...existing, ...patch.settingsPatch };
+  }
+
+  if (Object.keys(update).length === 0) return;
 
   const { error } = await admin.from("dashboard_blocks").update(update).eq("id", id);
   if (error) throw new Error(error.message);

@@ -6,6 +6,7 @@ import {
   ChevronRight,
   ExternalLink,
   LayoutDashboard,
+  BarChart3,
   ChevronLeft,
   AlertCircle,
   Check,
@@ -52,9 +53,9 @@ function InlineEdit({
       <span
         onClick={() => { setDraft(value); setEditing(true); }}
         className={cn(
-          "cursor-text rounded px-1 py-0.5 hover:bg-white/[0.05] transition-colors text-[11px]",
-          mono ? "font-mono text-white/50" : "text-white/65",
-          !value && "text-white/20 italic"
+          "cursor-text rounded px-1 py-0.5 hover:bg-black/[0.05] transition-colors text-[11px]",
+          mono ? "font-mono text-[#5F6368]/80" : "text-[#111111]/75",
+          !value && "text-[#5F6368]/50 italic"
         )}
         title="Clique para editar"
       >
@@ -74,7 +75,7 @@ function InlineEdit({
         if (e.key === "Escape") { setEditing(false); setDraft(value); }
       }}
       className={cn(
-        "rounded border border-vitti-blue/30 bg-vitti-dark px-1.5 py-0.5 text-[11px] text-white/80 focus:outline-none w-40",
+        "rounded border border-vitti-blue/30 bg-white px-1.5 py-0.5 text-[11px] text-[#111111]/90 focus:outline-none w-40",
         mono && "font-mono"
       )}
     />
@@ -101,7 +102,7 @@ function Toggle({
         "relative inline-flex h-4 w-7 items-center rounded-full border transition-colors shrink-0 disabled:opacity-40",
         checked
           ? "bg-emerald-500/30 border-emerald-500/40"
-          : "bg-white/[0.04] border-white/[0.10]"
+          : "bg-black/[0.04] border-black/[0.10]"
       )}
     >
       <span
@@ -126,7 +127,7 @@ function StatusPill({ status }: { status: string }) {
         "text-[9px] font-light px-2 py-0.5 rounded-full border",
         pub
           ? "border-emerald-500/20 text-emerald-400/80 bg-emerald-500/5"
-          : "border-white/[0.08] text-white/30"
+          : "border-black/[0.08] text-[#5F6368]/60"
       )}
     >
       {pub ? "Publicado" : "Rascunho"}
@@ -149,6 +150,24 @@ function FeedbackLine({ type, msg }: { type: "success" | "error"; msg: string })
     </span>
   );
 }
+
+// ── Métricas disponíveis para o gráfico de evolução (Meta Ads) ───────────────
+
+const AVAILABLE_EVOLUTION_METRICS = [
+  { key: "spend",            label: "Investimento" },
+  { key: "impressions",      label: "Impressões" },
+  { key: "reach",            label: "Alcance" },
+  { key: "clicks",           label: "Cliques" },
+  { key: "messages_started", label: "Mensagens" },
+  { key: "leads",            label: "Leads" },
+  { key: "frequency",        label: "Frequência" },
+  { key: "ctr",              label: "CTR" },
+  { key: "cpc",              label: "CPC" },
+  { key: "cpm",              label: "CPM" },
+  { key: "purchases",        label: "Compras" },
+  { key: "purchase_value",   label: "Vlr. Compra" },
+  { key: "cost_per_lead",    label: "CPL" },
+];
 
 // ── Metric row ────────────────────────────────────────────────────────────────
 
@@ -199,12 +218,12 @@ function MetricRow({
           onSave={(v) => patch({ display_name: v || null })}
         />
         {localMetric.metricKey && (
-          <p className="text-[8px] font-mono text-white/20 mt-0.5 px-1">{localMetric.metricKey}</p>
+          <p className="text-[8px] font-mono text-[#5F6368]/50 mt-0.5 px-1">{localMetric.metricKey}</p>
         )}
       </div>
 
       {/* Format + source */}
-      <p className="text-white/20 truncate">
+      <p className="text-[#5F6368]/50 truncate">
         {localMetric.metricFormat ?? localMetric.source_field ?? "—"}
       </p>
 
@@ -219,7 +238,7 @@ function MetricRow({
 
       {/* show_variation */}
       <div className="flex items-center gap-1">
-        <span className="text-[8px] text-white/20">Var.</span>
+        <span className="text-[8px] text-[#5F6368]/50">Var.</span>
         <Toggle
           checked={localMetric.show_variation ?? false}
           onChange={(v) => patch({ show_variation: v })}
@@ -229,7 +248,7 @@ function MetricRow({
 
       {/* show_sparkline */}
       <div className="flex items-center gap-1">
-        <span className="text-[8px] text-white/20">Graf.</span>
+        <span className="text-[8px] text-[#5F6368]/50">Graf.</span>
         <Toggle
           checked={localMetric.show_sparkline ?? false}
           onChange={(v) => patch({ show_sparkline: v })}
@@ -240,7 +259,7 @@ function MetricRow({
       {/* Feedback */}
       <div className="w-16 text-right">
         {saving ? (
-          <Loader2 size={10} className="animate-spin text-white/30 inline" />
+          <Loader2 size={10} className="animate-spin text-[#5F6368]/60 inline" />
         ) : feedback ? (
           <FeedbackLine {...feedback} />
         ) : null}
@@ -272,7 +291,14 @@ function BlockCard({
 
   async function patch(p: Record<string, unknown>) {
     const prev = { ...localBlock };
-    setLocalBlock((b) => ({ ...b, ...p }));
+    if ("settingsPatch" in p && typeof p.settingsPatch === "object") {
+      setLocalBlock((b) => ({
+        ...b,
+        settings: { ...(b.settings ?? {}), ...(p.settingsPatch as Record<string, unknown>) },
+      }));
+    } else {
+      setLocalBlock((b) => ({ ...b, ...p }));
+    }
     setSaving(true);
     try {
       await onPatch(block.id, p);
@@ -285,27 +311,37 @@ function BlockCard({
     }
   }
 
+  function toggleEvolutionMetric(key: string) {
+    const current = Array.isArray(localBlock.settings?.evolution_metrics)
+      ? (localBlock.settings!.evolution_metrics as string[])
+      : [];
+    const next = current.includes(key)
+      ? current.filter((k) => k !== key)
+      : [...current, key];
+    patch({ settingsPatch: { evolution_metrics: next } });
+  }
+
   const SIZES = ["small", "medium", "large", "full"];
 
   return (
     <div
       className={cn(
-        "rounded-xl border border-white/[0.05] overflow-hidden",
+        "rounded-xl border border-black/[0.06] overflow-hidden",
         !localBlock.visible && "opacity-50"
       )}
     >
       {/* Block header */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-white/[0.015]">
+      <div className="flex items-center gap-3 px-4 py-3 bg-black/[0.02]">
         {/* Expand arrow */}
         <button
           onClick={() => setExpanded((v) => !v)}
-          className="text-white/25 hover:text-white/60 transition-colors shrink-0"
+          className="text-[#5F6368]/55 hover:text-[#111111]/75 transition-colors shrink-0"
         >
           {expanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
         </button>
 
         {/* Position */}
-        <span className="text-[10px] font-mono text-white/25 w-5 shrink-0">
+        <span className="text-[10px] font-mono text-[#5F6368]/55 w-5 shrink-0">
           {localBlock.position}
         </span>
 
@@ -319,7 +355,7 @@ function BlockCard({
         <div className="flex-1" />
 
         {/* Metric count */}
-        <span className="text-[9px] text-white/20 shrink-0">
+        <span className="text-[9px] text-[#5F6368]/50 shrink-0">
           {block.metrics.length} métr.
         </span>
 
@@ -327,7 +363,7 @@ function BlockCard({
         <select
           value={localBlock.size ?? ""}
           onChange={(e) => patch({ size: e.target.value || null })}
-          className="text-[9px] font-light bg-white/[0.03] border border-white/[0.07] rounded px-1.5 py-0.5 text-white/40 focus:outline-none"
+          className="text-[9px] font-light bg-black/[0.03] border border-black/[0.08] rounded px-1.5 py-0.5 text-[#5F6368]/70 focus:outline-none"
         >
           <option value="">—</option>
           {SIZES.map((s) => (
@@ -346,7 +382,7 @@ function BlockCard({
 
         {/* Feedback */}
         {saving ? (
-          <Loader2 size={11} className="animate-spin text-white/30 shrink-0" />
+          <Loader2 size={11} className="animate-spin text-[#5F6368]/60 shrink-0" />
         ) : feedback ? (
           <FeedbackLine {...feedback} />
         ) : null}
@@ -354,10 +390,10 @@ function BlockCard({
 
       {/* Expanded: description + metrics */}
       {expanded && (
-        <div className="border-t border-white/[0.04]">
+        <div className="border-t border-black/[0.05]">
           {/* Description */}
-          <div className="px-4 py-2.5 border-b border-white/[0.03] flex items-center gap-2">
-            <span className="text-[9px] text-white/20 uppercase tracking-widest shrink-0">
+          <div className="px-4 py-2.5 border-b border-black/[0.04] flex items-center gap-2">
+            <span className="text-[9px] text-[#5F6368]/50 uppercase tracking-widest shrink-0">
               Descrição
             </span>
             <InlineEdit
@@ -367,16 +403,50 @@ function BlockCard({
             />
           </div>
 
+          {/* Evolution metrics picker — only for meta_ads blocks */}
+          {localBlock.channel === "meta_ads" && (
+            <div className="px-4 py-3 border-b border-black/[0.04]">
+              <p className="text-[9px] text-[#5F6368]/50 uppercase tracking-widest mb-2">
+                Métricas do gráfico de evolução
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {AVAILABLE_EVOLUTION_METRICS.map((m) => {
+                  const selected = Array.isArray(localBlock.settings?.evolution_metrics)
+                    ? (localBlock.settings!.evolution_metrics as string[]).includes(m.key)
+                    : false;
+                  return (
+                    <button
+                      key={m.key}
+                      onClick={() => toggleEvolutionMetric(m.key)}
+                      disabled={saving}
+                      className={cn(
+                        "text-[9px] px-2 py-0.5 rounded border transition-colors disabled:opacity-40",
+                        selected
+                          ? "bg-vitti-blue/10 border-vitti-blue/30 text-vitti-blue"
+                          : "bg-black/[0.02] border-black/[0.08] text-[#5F6368]/60 hover:border-vitti-blue/20 hover:text-[#5F6368]/80"
+                      )}
+                    >
+                      {m.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[8px] text-[#5F6368]/35 mt-1.5 font-light">
+                Se nenhuma selecionada, usa padrão: Investimento + Mensagens/Leads
+              </p>
+            </div>
+          )}
+
           {/* Metrics table */}
           {block.metrics.length === 0 ? (
-            <p className="px-4 py-3 text-[10px] text-white/20 font-light">
+            <p className="px-4 py-3 text-[10px] text-[#5F6368]/50 font-light">
               Nenhuma métrica vinculada.
             </p>
           ) : (
             <div>
               {/* Header */}
               <div
-                className="grid px-4 py-1.5 bg-white/[0.01] border-b border-white/[0.04] text-[8px] text-white/20 uppercase tracking-widest"
+                className="grid px-4 py-1.5 bg-black/[0.02] border-b border-black/[0.05] text-[8px] text-[#5F6368]/50 uppercase tracking-widest"
                 style={{ gridTemplateColumns: "1fr 1fr auto auto auto auto" }}
               >
                 <span>Nome / Key</span>
@@ -458,18 +528,18 @@ function DashboardCard({
   const metricsLink = `/metricas?clientId=${clientId}&period=last_7_days`;
 
   return (
-    <div className="rounded-2xl border border-white/[0.07] bg-white/[0.01] overflow-hidden">
+    <div className="rounded-2xl border border-black/[0.08] bg-black/[0.02] overflow-hidden">
       {/* Dashboard header */}
-      <div className="px-5 py-4 border-b border-white/[0.05]">
+      <div className="px-5 py-4 border-b border-black/[0.06]">
         <div className="flex items-center gap-3 flex-wrap">
           <LayoutDashboard size={14} className="text-vitti-light/40 shrink-0" />
-          <p className="text-sm font-light text-white/80">{localDash.name ?? "Dashboard"}</p>
+          <p className="text-sm font-light text-[#111111]/90">{localDash.name ?? "Dashboard"}</p>
           <StatusPill status={localDash.status} />
           <div className="flex-1" />
           {feedback ? (
             <FeedbackLine {...feedback} />
           ) : saving ? (
-            <Loader2 size={12} className="animate-spin text-white/30" />
+            <Loader2 size={12} className="animate-spin text-[#5F6368]/60" />
           ) : null}
         </div>
 
@@ -477,7 +547,7 @@ function DashboardCard({
         <div className="flex items-center gap-4 mt-3 flex-wrap">
           {/* Publish toggle */}
           <div className="flex items-center gap-2">
-            <span className="text-[9px] text-white/25 uppercase tracking-widest">Status</span>
+            <span className="text-[9px] text-[#5F6368]/55 uppercase tracking-widest">Status</span>
             <button
               onClick={() =>
                 patchDash({
@@ -489,7 +559,7 @@ function DashboardCard({
                 "text-[9px] font-light px-2.5 py-1 rounded-full border transition-all disabled:opacity-40",
                 localDash.status === "published"
                   ? "border-emerald-500/25 text-emerald-400/70 hover:border-red-400/25 hover:text-red-400/60"
-                  : "border-white/[0.08] text-white/30 hover:border-emerald-500/25 hover:text-emerald-400/60"
+                  : "border-black/[0.08] text-[#5F6368]/60 hover:border-emerald-500/25 hover:text-emerald-400/60"
               )}
             >
               {localDash.status === "published" ? "Despublicar" : "Publicar"}
@@ -498,14 +568,14 @@ function DashboardCard({
 
           {/* Default period */}
           <div className="flex items-center gap-2">
-            <span className="text-[9px] text-white/25 uppercase tracking-widest">Período padrão</span>
+            <span className="text-[9px] text-[#5F6368]/55 uppercase tracking-widest">Período padrão</span>
             <select
               value={defaultPeriod}
               onChange={(e) =>
                 patchDash({ settingsPatch: { default_period: e.target.value } })
               }
               disabled={saving}
-              className="text-[9px] font-light bg-white/[0.03] border border-white/[0.07] rounded px-2 py-1 text-white/50 focus:outline-none"
+              className="text-[9px] font-light bg-black/[0.03] border border-black/[0.08] rounded px-2 py-1 text-[#5F6368]/80 focus:outline-none"
             >
               {PERIOD_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -517,7 +587,7 @@ function DashboardCard({
 
           {/* Compare previous period */}
           <div className="flex items-center gap-2">
-            <span className="text-[9px] text-white/25 uppercase tracking-widest">Comparar período anterior</span>
+            <span className="text-[9px] text-[#5F6368]/55 uppercase tracking-widest">Comparar período anterior</span>
             <Toggle
               checked={comparePrev}
               onChange={(v) =>
@@ -530,14 +600,14 @@ function DashboardCard({
 
         {/* Stats */}
         <div className="flex items-center gap-4 mt-2.5">
-          <span className="text-[9px] text-white/20">
-            Canal: <span className="text-white/40">{localDash.default_channel ?? "—"}</span>
+          <span className="text-[9px] text-[#5F6368]/50">
+            Canal: <span className="text-[#5F6368]/70">{localDash.default_channel ?? "—"}</span>
           </span>
-          <span className="text-[9px] text-white/20">
-            Blocos: <span className="text-white/40">{localDash.totalBlocks}</span>
+          <span className="text-[9px] text-[#5F6368]/50">
+            Blocos: <span className="text-[#5F6368]/70">{localDash.totalBlocks}</span>
           </span>
-          <span className="text-[9px] text-white/20">
-            Métricas: <span className="text-white/40">{localDash.totalMetrics}</span>
+          <span className="text-[9px] text-[#5F6368]/50">
+            Métricas: <span className="text-[#5F6368]/70">{localDash.totalMetrics}</span>
           </span>
           <a
             href={metricsLink}
@@ -554,7 +624,7 @@ function DashboardCard({
       {/* Blocks */}
       <div className="px-5 py-4 space-y-2.5">
         {dashboard.blocks.length === 0 ? (
-          <p className="text-[11px] text-white/20 font-light text-center py-4">
+          <p className="text-[11px] text-[#5F6368]/50 font-light text-center py-4">
             Nenhum bloco configurado. Use &quot;Garantir dashboard padrão&quot; no painel de Clientes.
           </p>
         ) : (
@@ -580,23 +650,23 @@ function ClientInfoSection({
   client: ClientDashboardConfig["client"];
 }) {
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.01] px-5 py-4 flex items-center gap-6 flex-wrap">
+    <div className="rounded-xl border border-black/[0.07] bg-black/[0.02] px-5 py-4 flex items-center gap-6 flex-wrap">
       <div>
-        <p className="text-xs font-light text-white/70">{client.name}</p>
-        <p className="text-[10px] font-mono text-white/30 mt-0.5">{client.slug}</p>
+        <p className="text-xs font-light text-[#111111]/80">{client.name}</p>
+        <p className="text-[10px] font-mono text-[#5F6368]/60 mt-0.5">{client.slug}</p>
       </div>
 
-      <div className="flex items-center gap-4 text-[10px] font-light text-white/35 flex-wrap">
+      <div className="flex items-center gap-4 text-[10px] font-light text-[#5F6368]/65 flex-wrap">
         <span>
           Segmento:{" "}
-          <span className="text-white/55">{client.segment ?? "—"}</span>
+          <span className="text-[#111111]/65">{client.segment ?? "—"}</span>
         </span>
         <span
           className={cn(
             "px-2 py-0.5 rounded-full border text-[9px]",
             client.status === "active"
               ? "border-emerald-500/20 text-emerald-400/70"
-              : "border-white/[0.07] text-white/30"
+              : "border-black/[0.08] text-[#5F6368]/60"
           )}
         >
           {client.status === "active" ? "Ativo" : "Inativo"}
@@ -605,7 +675,7 @@ function ClientInfoSection({
           Windsor:{" "}
           <span
             className={cn(
-              client.windsorMappings > 0 ? "text-vitti-light/60" : "text-white/20"
+              client.windsorMappings > 0 ? "text-vitti-light/60" : "text-[#5F6368]/50"
             )}
           >
             {client.windsorMappings} mapeamento(s)
@@ -613,7 +683,7 @@ function ClientInfoSection({
         </span>
         <span>
           Performance:{" "}
-          <span className="text-white/55">
+          <span className="text-[#111111]/65">
             {client.performanceRecords.toLocaleString("pt-BR")} registros
           </span>
         </span>
@@ -629,6 +699,159 @@ function ClientInfoSection({
           Abrir métricas do cliente
           <ExternalLink size={11} />
         </a>
+      </div>
+    </div>
+  );
+}
+
+// ── Seção de Configurações Meta Ads ──────────────────────────────────────────
+
+function MetaAdsConfigSection({
+  config,
+  onPatchBlock,
+}: {
+  config: ClientDashboardConfig;
+  onPatchBlock: (id: string, patch: Record<string, unknown>) => Promise<void>;
+}) {
+  // Encontra o primeiro bloco meta_ads entre todos os dashboards do cliente
+  const metaBlock = config.dashboards
+    .flatMap((d) => d.blocks)
+    .find((b) => b.channel === "meta_ads");
+
+  const initialKeys = Array.isArray(metaBlock?.settings?.evolution_metrics)
+    ? (metaBlock!.settings!.evolution_metrics as string[])
+    : [];
+
+  const [selectedKeys, setSelectedKeys] = useState<string[]>(initialKeys);
+  const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+
+  if (!metaBlock) return null;
+  // Re-atribuição para que closures abaixo enxerguem o tipo sem undefined
+  const block = metaBlock;
+
+  function flash(type: "success" | "error", msg: string) {
+    setFeedback({ type, msg });
+    setTimeout(() => setFeedback(null), 3000);
+  }
+
+  async function toggleMetric(key: string) {
+    const isSelected = selectedKeys.includes(key);
+    if (!isSelected && selectedKeys.length >= 3) return; // máximo 3
+
+    const next = isSelected
+      ? selectedKeys.filter((k) => k !== key)
+      : [...selectedKeys, key];
+
+    const prev = selectedKeys;
+    setSelectedKeys(next);
+    setSaving(true);
+    try {
+      await onPatchBlock(block.id, {
+        settingsPatch: { evolution_metrics: next },
+      });
+      flash("success", next.length === 0 ? "Usando padrão" : "Salvo");
+    } catch {
+      setSelectedKeys(prev);
+      flash("error", "Erro ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const atMax = selectedKeys.length >= 3;
+
+  return (
+    <div className="rounded-2xl border border-[#455cab]/15 bg-[#455cab]/[0.025] overflow-hidden">
+      {/* Cabeçalho */}
+      <div className="px-5 py-4 border-b border-[#455cab]/10 flex items-center gap-3">
+        <div className="w-7 h-7 rounded-lg bg-[#455cab]/10 border border-[#455cab]/15 flex items-center justify-center shrink-0">
+          <BarChart3 size={13} className="text-[#455cab]/60" />
+        </div>
+        <div>
+          <p className="text-sm font-light text-[#455cab] tracking-wide">
+            Configurações Meta Ads
+          </p>
+          <p className="text-[10px] text-[#5F6368]/45 mt-0.5 font-light">
+            Configurações específicas para a aba Meta Ads deste cliente.
+          </p>
+        </div>
+        <div className="ml-auto flex items-center gap-2 min-w-[80px] justify-end">
+          {saving ? (
+            <Loader2 size={12} className="animate-spin text-[#5F6368]/60" />
+          ) : feedback ? (
+            <FeedbackLine {...feedback} />
+          ) : null}
+        </div>
+      </div>
+
+      {/* Corpo */}
+      <div className="px-5 py-5">
+        {/* Campo: Métricas do gráfico de evolução */}
+        <div>
+          <div className="flex items-baseline gap-2 mb-1">
+            <p className="text-[11px] font-light text-[#111111]/80">
+              Métricas do gráfico de evolução
+            </p>
+            <span className="text-[9px] text-[#5F6368]/40 font-light">máx. 3</span>
+          </div>
+          <p className="text-[9px] text-[#5F6368]/45 font-light mb-3 leading-relaxed">
+            Define quais métricas aparecem no gráfico &quot;Evolução no período&quot; da aba Meta Ads.
+            <br />
+            Se nenhuma selecionada, usa o padrão: Investimento + Mensagens ou Leads.
+          </p>
+
+          {/* Pills selecionáveis */}
+          <div className="flex flex-wrap gap-2">
+            {AVAILABLE_EVOLUTION_METRICS.map((m) => {
+              const selected = selectedKeys.includes(m.key);
+              const locked = !selected && atMax;
+              return (
+                <button
+                  key={m.key}
+                  onClick={() => toggleMetric(m.key)}
+                  disabled={saving || locked}
+                  title={locked ? "Máximo de 3 métricas atingido" : undefined}
+                  className={cn(
+                    "flex items-center gap-1.5 text-[10px] px-3 py-1.5 rounded-lg border transition-all",
+                    selected
+                      ? "bg-[#455cab]/10 border-[#455cab]/35 text-[#455cab] font-medium"
+                      : locked
+                      ? "bg-black/[0.015] border-black/[0.05] text-[#5F6368]/35 cursor-not-allowed"
+                      : "bg-black/[0.02] border-black/[0.08] text-[#5F6368]/65 hover:border-[#455cab]/25 hover:text-[#5F6368]/85"
+                  )}
+                >
+                  {selected && <Check size={9} className="shrink-0" />}
+                  {m.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Resumo e avisos */}
+          <div className="mt-3 space-y-1">
+            {selectedKeys.length > 0 ? (
+              <p className="text-[9px] text-[#455cab]/60 font-light">
+                Selecionadas:{" "}
+                {selectedKeys
+                  .map(
+                    (k) =>
+                      AVAILABLE_EVOLUTION_METRICS.find((m) => m.key === k)?.label ?? k
+                  )
+                  .join(", ")}
+              </p>
+            ) : (
+              <p className="text-[9px] text-[#5F6368]/40 font-light">
+                Nenhuma selecionada — usando padrão do sistema.
+              </p>
+            )}
+            {atMax && (
+              <p className="text-[9px] text-amber-600/55 font-light">
+                Limite atingido. Desmarque uma métrica para selecionar outra.
+              </p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -715,13 +938,13 @@ export function DashboardsAdminPanel({
     <div className="space-y-5">
       {/* Client selector */}
       <div className="flex items-center gap-3">
-        <label className="text-[10px] text-white/30 uppercase tracking-widest shrink-0">
+        <label className="text-[10px] text-[#5F6368]/60 uppercase tracking-widest shrink-0">
           Cliente
         </label>
         <select
           value={selectedId}
           onChange={handleClientChange}
-          className="bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-white/70 focus:outline-none focus:border-vitti-blue/30 transition-colors min-w-56"
+          className="bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-[#111111]/80 focus:outline-none focus:border-vitti-blue/30 transition-colors min-w-56"
         >
           <option value="">Selecionar cliente…</option>
           {initialClients.map((c) => (
@@ -732,7 +955,7 @@ export function DashboardsAdminPanel({
           ))}
         </select>
 
-        {loading && <Loader2 size={13} className="animate-spin text-white/30" />}
+        {loading && <Loader2 size={13} className="animate-spin text-[#5F6368]/60" />}
       </div>
 
       {/* Error */}
@@ -745,9 +968,9 @@ export function DashboardsAdminPanel({
 
       {/* Empty state */}
       {!selectedId && !loading && (
-        <div className="flex flex-col items-center justify-center py-16 gap-2 rounded-xl border border-dashed border-white/[0.05]">
-          <LayoutDashboard size={20} className="text-white/10" />
-          <p className="text-[11px] text-white/20 font-light">
+        <div className="flex flex-col items-center justify-center py-16 gap-2 rounded-xl border border-dashed border-black/[0.06]">
+          <LayoutDashboard size={20} className="text-[#5F6368]/25" />
+          <p className="text-[11px] text-[#5F6368]/50 font-light">
             Selecione um cliente para visualizar os dashboards
           </p>
         </div>
@@ -758,12 +981,19 @@ export function DashboardsAdminPanel({
         <div className="space-y-5">
           <ClientInfoSection client={config.client} />
 
+          {/* Configurações específicas por canal — aparece antes dos blocos */}
+          <MetaAdsConfigSection
+            key={config.client.id}
+            config={config}
+            onPatchBlock={patchBlock}
+          />
+
           {config.dashboards.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-white/[0.05] px-5 py-10 text-center">
-              <p className="text-[11px] text-white/20 font-light">
+            <div className="rounded-xl border border-dashed border-black/[0.06] px-5 py-10 text-center">
+              <p className="text-[11px] text-[#5F6368]/50 font-light">
                 Nenhum dashboard configurado para este cliente.
               </p>
-              <p className="text-[10px] text-white/15 mt-1 font-light">
+              <p className="text-[10px] text-[#5F6368]/35 mt-1 font-light">
                 Acesse Admin → Clientes e use &quot;Garantir dashboard padrão&quot;.
               </p>
             </div>
@@ -789,7 +1019,7 @@ export function BackToAdmin() {
   return (
     <a
       href="/admin"
-      className="inline-flex items-center gap-1.5 text-[10px] font-light text-white/30 hover:text-white/60 transition-colors"
+      className="inline-flex items-center gap-1.5 text-[10px] font-light text-[#5F6368]/60 hover:text-[#111111]/75 transition-colors"
     >
       <ChevronLeft size={12} />
       Admin

@@ -88,6 +88,15 @@ export async function PATCH(
     patch.size = s && VALID_SIZES.includes(s) ? s : null;
   }
 
+  if (
+    "settingsPatch" in b &&
+    typeof b.settingsPatch === "object" &&
+    b.settingsPatch !== null &&
+    !Array.isArray(b.settingsPatch)
+  ) {
+    patch.settingsPatch = b.settingsPatch as Record<string, unknown>;
+  }
+
   try {
     await updateAdminDashboardBlock(id, patch);
     return NextResponse.json<BlockPatchResponse>({ success: true });
