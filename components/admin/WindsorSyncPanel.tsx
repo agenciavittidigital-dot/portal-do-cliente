@@ -38,12 +38,12 @@ function Stat({
   highlight?: boolean;
 }) {
   return (
-    <div className="bg-white/[0.02] rounded-lg border border-white/[0.04] px-3 py-2.5">
-      <p className="text-[8px] text-white/20 uppercase tracking-[0.15em] font-light">{label}</p>
+    <div className="bg-black/[0.02] rounded-lg border border-black/[0.05] px-3 py-2.5">
+      <p className="text-[8px] text-[#5F6368]/50 uppercase tracking-[0.15em] font-light">{label}</p>
       <p
         className={cn(
           "text-sm font-light tabular-nums mt-1",
-          highlight ? "text-emerald-400/70" : "text-white/65"
+          highlight ? "text-emerald-400/70" : "text-[#111111]/75"
         )}
       >
         {value}
@@ -85,19 +85,19 @@ export function WindsorSyncPanel() {
   }
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.01] divide-y divide-white/[0.04]">
+    <div className="rounded-xl border border-black/[0.07] bg-black/[0.02] divide-y divide-white/[0.04]">
 
       {/* ── Header ────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-5 py-4 gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-lg bg-black/[0.03] border border-black/[0.07] flex items-center justify-center shrink-0">
             <Database size={14} className="text-vitti-light/30" />
           </div>
           <div>
-            <p className="text-xs font-light text-white/65">
+            <p className="text-xs font-light text-[#111111]/75">
               Sincronização Windsor → performance_daily
             </p>
-            <p className="text-[10px] font-light text-white/25 mt-0.5">
+            <p className="text-[10px] font-light text-[#5F6368]/55 mt-0.5">
               Grava dados da Windsor apenas para contas mapeadas
             </p>
           </div>
@@ -108,7 +108,7 @@ export function WindsorSyncPanel() {
           className={cn(
             "flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-[11px] font-light transition-all duration-150 select-none",
             loading
-              ? "border-white/[0.07] text-white/20 cursor-not-allowed"
+              ? "border-black/[0.08] text-[#5F6368]/50 cursor-not-allowed"
               : "border-vitti-blue/30 text-vitti-light/80 bg-vitti-blue/[0.10] hover:bg-vitti-blue/[0.16] cursor-pointer"
           )}
         >
@@ -148,9 +148,9 @@ export function WindsorSyncPanel() {
             {/* Badge de sucesso */}
             <div className="flex items-center gap-2">
               <CheckCircle2 size={12} className="text-emerald-400/50 shrink-0" />
-              <p className="text-[11px] font-light text-white/40">
+              <p className="text-[11px] font-light text-[#5F6368]/70">
                 Sincronização concluída ·{" "}
-                <span className="font-mono text-[9px] text-white/25">{result.datePreset}</span>
+                <span className="font-mono text-[9px] text-[#5F6368]/55">{result.datePreset}</span>
               </p>
             </div>
 
@@ -177,7 +177,7 @@ export function WindsorSyncPanel() {
                   {result.fieldsSynced.map((f) => (
                     <span
                       key={f}
-                      className="text-[8px] font-mono px-1.5 py-0.5 rounded border border-white/[0.07] text-white/30 bg-white/[0.01]"
+                      className="text-[8px] font-mono px-1.5 py-0.5 rounded border border-black/[0.08] text-[#5F6368]/60 bg-black/[0.02]"
                     >
                       {f}
                     </span>
@@ -188,13 +188,13 @@ export function WindsorSyncPanel() {
 
             {/* Contas não mapeadas */}
             {result.unmappedAccounts.length > 0 && (
-              <div className="rounded-lg border border-white/[0.05] bg-white/[0.01] px-4 py-3 space-y-1.5">
+              <div className="rounded-lg border border-black/[0.06] bg-black/[0.02] px-4 py-3 space-y-1.5">
                 <p className="text-[9px] text-white/[0.15] uppercase tracking-[0.15em] font-light">
                   Contas ignoradas — sem mapeamento
                 </p>
                 <div className="space-y-1">
                   {result.unmappedAccounts.map((name) => (
-                    <p key={name} className="text-[10px] font-light text-white/30">
+                    <p key={name} className="text-[10px] font-light text-[#5F6368]/60">
                       · {name}
                     </p>
                   ))}
@@ -208,12 +208,12 @@ export function WindsorSyncPanel() {
                 <p className="text-[9px] text-white/[0.15] uppercase tracking-[0.15em] font-light mb-2">
                   Amostra gravada ({result.sampleSaved.length} de {fmtInt(result.upserted)})
                 </p>
-                <div className="rounded-xl border border-white/[0.05] overflow-hidden">
-                  <div className="grid grid-cols-6 px-4 py-2 bg-white/[0.02] border-b border-white/[0.04]">
+                <div className="rounded-xl border border-black/[0.06] overflow-hidden">
+                  <div className="grid grid-cols-6 px-4 py-2 bg-black/[0.02] border-b border-black/[0.05]">
                     {(["Data", "Conta", "Campanha", "Invest.", "Impress.", "Leads"] as const).map((h) => (
                       <p
                         key={h}
-                        className="text-[9px] text-white/20 uppercase tracking-[0.12em] font-light"
+                        className="text-[9px] text-[#5F6368]/50 uppercase tracking-[0.12em] font-light"
                       >
                         {h}
                       </p>
@@ -224,17 +224,17 @@ export function WindsorSyncPanel() {
                       key={i}
                       className={cn(
                         "grid grid-cols-6 px-4 py-2.5 text-[10px] font-light tabular-nums items-center",
-                        i < result.sampleSaved.length - 1 && "border-b border-white/[0.03]"
+                        i < result.sampleSaved.length - 1 && "border-b border-black/[0.04]"
                       )}
                     >
-                      <span className="text-white/40">{fmtDateBR(rec.date)}</span>
-                      <span className="text-white/35 truncate pr-2">{rec.accountName}</span>
-                      <span className="text-white/35 truncate pr-2">
+                      <span className="text-[#5F6368]/70">{fmtDateBR(rec.date)}</span>
+                      <span className="text-[#5F6368]/65 truncate pr-2">{rec.accountName}</span>
+                      <span className="text-[#5F6368]/65 truncate pr-2">
                         {rec.campaignName ?? "—"}
                       </span>
-                      <span className="text-white/55">{fmtCurrency(rec.spend)}</span>
-                      <span className="text-white/40">{fmtInt(rec.impressions)}</span>
-                      <span className="text-white/40">{fmtInt(rec.leads)}</span>
+                      <span className="text-[#111111]/65">{fmtCurrency(rec.spend)}</span>
+                      <span className="text-[#5F6368]/70">{fmtInt(rec.impressions)}</span>
+                      <span className="text-[#5F6368]/70">{fmtInt(rec.leads)}</span>
                     </div>
                   ))}
                 </div>

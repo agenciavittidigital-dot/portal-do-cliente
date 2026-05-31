@@ -116,17 +116,17 @@ export function WindsorAccountMapping({ clients }: WindsorAccountMappingProps) {
   }
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.01] divide-y divide-white/[0.04]">
+    <div className="rounded-xl border border-black/[0.07] bg-black/[0.02] divide-y divide-white/[0.04]">
 
       {/* ── Header ────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-5 py-4 gap-4 flex-wrap">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-lg bg-black/[0.03] border border-black/[0.07] flex items-center justify-center shrink-0">
             <Link2 size={14} className="text-vitti-light/30" />
           </div>
           <div>
-            <p className="text-xs font-light text-white/65">Mapeamento de Contas Windsor</p>
-            <p className="text-[10px] font-light text-white/25 mt-0.5">
+            <p className="text-xs font-light text-[#111111]/75">Mapeamento de Contas Windsor</p>
+            <p className="text-[10px] font-light text-[#5F6368]/55 mt-0.5">
               Associe cada conta de anúncio a um cliente do portal
             </p>
           </div>
@@ -137,7 +137,7 @@ export function WindsorAccountMapping({ clients }: WindsorAccountMappingProps) {
           className={cn(
             "flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-[11px] font-light transition-all duration-150 select-none",
             loading
-              ? "border-white/[0.07] text-white/20 cursor-not-allowed"
+              ? "border-black/[0.08] text-[#5F6368]/50 cursor-not-allowed"
               : "border-vitti-blue/30 text-vitti-light/80 bg-vitti-blue/[0.10] hover:bg-vitti-blue/[0.16] cursor-pointer"
           )}
         >
@@ -192,7 +192,7 @@ export function WindsorAccountMapping({ clients }: WindsorAccountMappingProps) {
             {accountStates.map((state, i) => (
               <div
                 key={state.row.accountName}
-                className="rounded-xl border border-white/[0.05] bg-white/[0.01] px-4 py-3 space-y-2.5"
+                className="rounded-xl border border-black/[0.06] bg-black/[0.02] px-4 py-3 space-y-2.5"
               >
                 {/* Nome + status */}
                 <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -200,12 +200,12 @@ export function WindsorAccountMapping({ clients }: WindsorAccountMappingProps) {
                     {state.row.mapped || state.saved ? (
                       <CheckCircle2 size={12} className="text-emerald-400/50 shrink-0" />
                     ) : (
-                      <Circle size={12} className="text-white/15 shrink-0" />
+                      <Circle size={12} className="text-[#5F6368]/35 shrink-0" />
                     )}
                     <div>
-                      <p className="text-[11px] font-light text-white/70">{state.row.accountName}</p>
+                      <p className="text-[11px] font-light text-[#111111]/80">{state.row.accountName}</p>
                       {state.row.accountId && (
-                        <p className="text-[9px] font-light text-white/20 font-mono">
+                        <p className="text-[9px] font-light text-[#5F6368]/50 font-mono">
                           {state.row.accountId}
                         </p>
                       )}
@@ -216,7 +216,7 @@ export function WindsorAccountMapping({ clients }: WindsorAccountMappingProps) {
                       "text-[9px] font-light px-2 py-0.5 rounded-full border",
                       state.row.mapped || state.saved
                         ? "text-emerald-400/60 border-emerald-400/20 bg-emerald-400/[0.05]"
-                        : "text-white/25 border-white/[0.08] bg-white/[0.02]"
+                        : "text-[#5F6368]/55 border-black/[0.08] bg-black/[0.02]"
                     )}
                   >
                     {state.row.mapped || state.saved ? "Mapeada" : "Não mapeada"}
@@ -229,7 +229,7 @@ export function WindsorAccountMapping({ clients }: WindsorAccountMappingProps) {
                     value={state.selectedClientId}
                     onChange={(e) => setAccountField(i, { selectedClientId: e.target.value, saved: false })}
                     disabled={state.saving}
-                    className="flex-1 min-w-0 bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-1.5 text-[11px] text-white/50 font-light focus:outline-none focus:border-vitti-blue/40 transition-colors appearance-none"
+                    className="flex-1 min-w-0 bg-black/[0.04] border border-black/[0.08] rounded-lg px-3 py-1.5 text-[11px] text-[#5F6368]/80 font-light focus:outline-none focus:border-vitti-blue/40 transition-colors appearance-none"
                   >
                     <option value="">Selecione um cliente...</option>
                     {clients.map((c) => (
@@ -244,7 +244,7 @@ export function WindsorAccountMapping({ clients }: WindsorAccountMappingProps) {
                     className={cn(
                       "flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[10px] font-light transition-all duration-150 select-none shrink-0",
                       !state.selectedClientId || state.saving
-                        ? "border-white/[0.07] text-white/20 cursor-not-allowed"
+                        ? "border-black/[0.08] text-[#5F6368]/50 cursor-not-allowed"
                         : "border-vitti-blue/30 text-vitti-light/80 bg-vitti-blue/[0.10] hover:bg-vitti-blue/[0.16] cursor-pointer"
                     )}
                   >
@@ -265,8 +265,8 @@ export function WindsorAccountMapping({ clients }: WindsorAccountMappingProps) {
                   <p className="text-[10px] font-light text-red-400/60">{state.saveError}</p>
                 )}
                 {(state.row.mapped || state.saved) && state.row.clientName && !state.saved && (
-                  <p className="text-[10px] font-light text-white/25">
-                    Mapeada para: <span className="text-white/45">{state.row.clientName}</span>
+                  <p className="text-[10px] font-light text-[#5F6368]/55">
+                    Mapeada para: <span className="text-[#5F6368]/75">{state.row.clientName}</span>
                   </p>
                 )}
               </div>

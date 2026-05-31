@@ -19,7 +19,7 @@ const PRESETS: { value: DatePreset; label: string }[] = [
 
 function RawValue({ value }: { value: unknown }) {
   const [open, setOpen] = useState(false);
-  if (value == null) return <span className="text-white/15">—</span>;
+  if (value == null) return <span className="text-[#5F6368]/35">—</span>;
   if (typeof value === "number") {
     return (
       <span className="text-emerald-400/80 tabular-nums">
@@ -28,7 +28,7 @@ function RawValue({ value }: { value: unknown }) {
     );
   }
   if (typeof value === "string") {
-    return <span className="text-white/40 font-mono text-[9px]">{value}</span>;
+    return <span className="text-[#5F6368]/70 font-mono text-[9px]">{value}</span>;
   }
   const json = JSON.stringify(value, null, 0);
   const isArr = Array.isArray(value);
@@ -74,8 +74,8 @@ function FieldRow({ c }: { c: ProbeFieldCoverage }) {
     : hasData && isStructured
       ? "border-amber-400/30 text-amber-400/75 bg-amber-400/[0.05]"
       : hasData
-        ? "border-white/12 text-white/40"
-        : "border-white/[0.05] text-white/18";
+        ? "border-white/12 text-[#5F6368]/70"
+        : "border-black/[0.06] text-white/18";
 
   return (
     <div className="flex flex-wrap items-start gap-x-3 gap-y-0.5 py-1 border-b border-white/[0.025] last:border-0">
@@ -89,7 +89,7 @@ function FieldRow({ c }: { c: ProbeFieldCoverage }) {
               {c.realNonZero} registros
             </span>
             {c.accountsWithValues.length > 0 && (
-              <span className="text-[8px] text-white/30 font-light truncate max-w-[280px]">
+              <span className="text-[8px] text-[#5F6368]/60 font-light truncate max-w-[280px]">
                 {c.accountsWithValues.join(", ")}
               </span>
             )}
@@ -104,7 +104,7 @@ function FieldRow({ c }: { c: ProbeFieldCoverage }) {
             <span className="text-[8px] text-amber-400/65 font-light">
               {c.realNonNull} registros — {c.valueType}
               {c.sampleAccount && (
-                <span className="text-white/25 ml-1.5">({c.sampleAccount})</span>
+                <span className="text-[#5F6368]/55 ml-1.5">({c.sampleAccount})</span>
               )}
             </span>
             {c.sampleValue != null && (
@@ -114,11 +114,11 @@ function FieldRow({ c }: { c: ProbeFieldCoverage }) {
             )}
           </div>
         ) : hasData ? (
-          <span className="text-[8px] text-white/30 font-light">
+          <span className="text-[8px] text-[#5F6368]/60 font-light">
             {c.realNonNull} registros não-nulos — todos zero ou vazio
           </span>
         ) : (
-          <span className="text-[8px] text-white/15 font-light italic">
+          <span className="text-[8px] text-[#5F6368]/35 font-light italic">
             sem dados em contas reais
           </span>
         )}
@@ -141,14 +141,14 @@ function CategorySection({
   const [open, setOpen] = useState(summary.withValues > 0 || summary.withData > 0);
 
   return (
-    <div className="rounded-lg border border-white/[0.05] bg-white/[0.01] overflow-hidden">
+    <div className="rounded-lg border border-black/[0.06] bg-black/[0.02] overflow-hidden">
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-3 py-2 text-left gap-3"
       >
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-[10px] font-light text-white/60 truncate">{name}</span>
-          <span className="text-[8px] text-white/20 shrink-0">{fields.length} campos</span>
+          <span className="text-[10px] font-light text-[#111111]/70 truncate">{name}</span>
+          <span className="text-[8px] text-[#5F6368]/50 shrink-0">{fields.length} campos</span>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {summary.withValues > 0 && (
@@ -167,14 +167,14 @@ function CategorySection({
             </span>
           )}
           {open ? (
-            <ChevronUp size={10} className="text-white/20" />
+            <ChevronUp size={10} className="text-[#5F6368]/50" />
           ) : (
-            <ChevronDown size={10} className="text-white/20" />
+            <ChevronDown size={10} className="text-[#5F6368]/50" />
           )}
         </div>
       </button>
       {open && (
-        <div className="px-3 pb-2 border-t border-white/[0.04] pt-2">
+        <div className="px-3 pb-2 border-t border-black/[0.05] pt-2">
           {fields.map((c) => (
             <FieldRow key={c.field} c={c} />
           ))}
@@ -196,22 +196,22 @@ function RawRecordCard({
   const [open, setOpen] = useState(idx === 0);
   const entries = Object.entries(record);
   return (
-    <div className="rounded-lg border border-white/[0.05] overflow-hidden">
+    <div className="rounded-lg border border-black/[0.06] overflow-hidden">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-3 py-2 text-left bg-white/[0.01]"
+        className="w-full flex items-center justify-between px-3 py-2 text-left bg-black/[0.02]"
       >
-        <span className="text-[9px] font-mono text-white/35 truncate">
+        <span className="text-[9px] font-mono text-[#5F6368]/65 truncate">
           {String(record.date ?? "")} — {String(record.account_name ?? "?")} — {String(record.campaign ?? "?")}
         </span>
         {open ? (
-          <ChevronUp size={10} className="text-white/20 shrink-0" />
+          <ChevronUp size={10} className="text-[#5F6368]/50 shrink-0" />
         ) : (
-          <ChevronDown size={10} className="text-white/20 shrink-0" />
+          <ChevronDown size={10} className="text-[#5F6368]/50 shrink-0" />
         )}
       </button>
       {open && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 px-3 pb-3 pt-2 border-t border-white/[0.03]">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 px-3 pb-3 pt-2 border-t border-black/[0.04]">
           {entries.map(([k, v]) => (
             <div key={k} className="min-w-0">
               <p className="text-[7px] font-mono text-white/18 truncate mb-0.5">{k}</p>
@@ -274,19 +274,19 @@ export function WindsorMetaRawProbePanel() {
   );
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.01]">
+    <div className="rounded-xl border border-black/[0.07] bg-black/[0.02]">
       {/* Header */}
       <div className="px-5 py-4 space-y-3">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-black/[0.03] border border-black/[0.07] flex items-center justify-center shrink-0">
               <FlaskConical size={14} className="text-vitti-light/40" />
             </div>
             <div>
-              <p className="text-xs font-light text-white/65">
+              <p className="text-xs font-light text-[#111111]/75">
                 Probe Meta Ads — Contas Reais (Expandido)
               </p>
-              <p className="text-[10px] font-light text-white/25 mt-0.5">
+              <p className="text-[10px] font-light text-[#5F6368]/55 mt-0.5">
                 Testa {40}+ candidatos de conversão — exclui demos — não salva nada
               </p>
             </div>
@@ -302,7 +302,7 @@ export function WindsorMetaRawProbePanel() {
                   className={`text-[9px] font-light px-2.5 py-1 rounded-full border transition-all disabled:opacity-40 ${
                     datePreset === p.value
                       ? "border-vitti-medium/60 text-vitti-light/80 bg-vitti-medium/10"
-                      : "border-white/[0.08] text-white/30 hover:border-white/20"
+                      : "border-black/[0.08] text-[#5F6368]/60 hover:border-white/20"
                   }`}
                 >
                   {p.label}
@@ -322,7 +322,7 @@ export function WindsorMetaRawProbePanel() {
 
       {/* Results */}
       {(result || fetchError) && (
-        <div className="px-5 pb-5 border-t border-white/[0.04] pt-4 space-y-4">
+        <div className="px-5 pb-5 border-t border-black/[0.05] pt-4 space-y-4">
           {fetchError && (
             <p className="text-[11px] text-red-400/70 font-light">{fetchError}</p>
           )}
@@ -334,10 +334,10 @@ export function WindsorMetaRawProbePanel() {
             <>
               {/* Chips de resumo */}
               <div className="flex flex-wrap gap-2">
-                <span className="text-[9px] px-2.5 py-1 rounded-full border border-white/[0.08] text-white/30">
+                <span className="text-[9px] px-2.5 py-1 rounded-full border border-black/[0.08] text-[#5F6368]/60">
                   {result.totalRecords} registros · {result.datePreset}
                 </span>
-                <span className="text-[9px] px-2.5 py-1 rounded-full border border-white/[0.07] text-white/22">
+                <span className="text-[9px] px-2.5 py-1 rounded-full border border-black/[0.08] text-white/22">
                   {result.demoRecords} demo excluídos
                 </span>
                 <span
@@ -370,7 +370,7 @@ export function WindsorMetaRawProbePanel() {
                     {result.realAccountNames.map((name) => (
                       <span
                         key={name}
-                        className="text-[9px] px-2 py-0.5 rounded-full border border-white/[0.07] text-white/40"
+                        className="text-[9px] px-2 py-0.5 rounded-full border border-black/[0.08] text-[#5F6368]/70"
                       >
                         {name}
                       </span>
@@ -395,14 +395,14 @@ export function WindsorMetaRawProbePanel() {
                         Verifique a configuração da fonte Meta Ads dentro da Windsor.
                       </p>
                       {hasRoasData ? (
-                        <p className="text-[9px] text-white/35 font-light">
+                        <p className="text-[9px] text-[#5F6368]/65 font-light">
                           Apenas{" "}
-                          <span className="font-mono text-white/55">roas</span>{" "}
+                          <span className="font-mono text-[#111111]/65">roas</span>{" "}
                           retornou valor real — Leads, Mensagens e Compras não foram entregues.
                           O problema está na configuração da fonte Meta Ads na Windsor, não no código do portal.
                         </p>
                       ) : (
-                        <p className="text-[9px] text-white/30 font-light">
+                        <p className="text-[9px] text-[#5F6368]/60 font-light">
                           Nenhum campo de conversão (Leads, Mensagens, Compras, ROAS) retornou valor real.
                           O problema está na configuração da fonte Meta Ads na Windsor, não no código do portal.
                         </p>
@@ -423,7 +423,7 @@ export function WindsorMetaRawProbePanel() {
                             <span className="text-[8px] font-mono px-1.5 py-0.5 rounded border border-emerald-400/30 text-emerald-400/85 bg-emerald-400/[0.07]">
                               {c.field}
                             </span>
-                            <span className="text-[8px] text-white/25 font-light">{c.category}</span>
+                            <span className="text-[8px] text-[#5F6368]/55 font-light">{c.category}</span>
                             <span className="text-[8px] text-emerald-400/65 font-light">
                               {c.realNonZero} registros · {c.accountsWithValues.join(", ")}
                             </span>

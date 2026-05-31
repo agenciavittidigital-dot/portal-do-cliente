@@ -49,11 +49,11 @@ function DiagnosticSection() {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
-        <p className="text-xs font-light text-white/50">Diagnóstico — Google Ads</p>
+        <p className="text-xs font-light text-[#5F6368]/80">Diagnóstico — Google Ads</p>
         <button
           onClick={runTest}
           disabled={loading}
-          className="flex items-center gap-1.5 text-[9px] font-light px-3 py-1.5 rounded-full border border-white/[0.08] text-white/40 hover:text-white/70 hover:border-white/[0.15] transition-all disabled:opacity-50"
+          className="flex items-center gap-1.5 text-[9px] font-light px-3 py-1.5 rounded-full border border-black/[0.08] text-[#5F6368]/70 hover:text-[#111111]/85 hover:border-black/[0.15] transition-all disabled:opacity-50"
         >
           {loading ? <Loader2 size={10} className="animate-spin" /> : <Search size={10} />}
           Testar Google Ads
@@ -71,7 +71,7 @@ function DiagnosticSection() {
         <div className="space-y-3">
           {/* Summary chips */}
           <div className="flex flex-wrap gap-2">
-            <span className="text-[9px] font-light px-2.5 py-1 rounded-full border border-white/[0.07] text-white/40">
+            <span className="text-[9px] font-light px-2.5 py-1 rounded-full border border-black/[0.08] text-[#5F6368]/70">
               {result.googleAdsRecords} registros Google Ads
             </span>
             <span className="text-[9px] font-light px-2.5 py-1 rounded-full border border-emerald-400/20 text-emerald-400/60">
@@ -86,15 +86,15 @@ function DiagnosticSection() {
 
           {/* Datasources encontrados */}
           {result.allDatasources.length > 0 && (
-            <div className="bg-white/[0.02] border border-white/[0.05] rounded-lg px-3 py-2.5 space-y-1.5">
-              <p className="text-[9px] text-white/25 font-light uppercase tracking-widest">
+            <div className="bg-black/[0.02] border border-black/[0.06] rounded-lg px-3 py-2.5 space-y-1.5">
+              <p className="text-[9px] text-[#5F6368]/55 font-light uppercase tracking-widest">
                 Datasources Windsor encontrados
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {result.allDatasources.map((ds) => (
                   <span
                     key={ds}
-                    className="text-[9px] font-mono px-2 py-0.5 rounded border border-white/[0.07] text-white/50"
+                    className="text-[9px] font-mono px-2 py-0.5 rounded border border-black/[0.08] text-[#5F6368]/80"
                   >
                     {ds}
                   </span>
@@ -105,13 +105,13 @@ function DiagnosticSection() {
 
           {/* Contas Google Ads */}
           {result.googleAdsAccounts.length > 0 ? (
-            <div className="bg-white/[0.02] border border-white/[0.05] rounded-lg px-3 py-2.5 space-y-1.5">
-              <p className="text-[9px] text-white/25 font-light uppercase tracking-widest">
+            <div className="bg-black/[0.02] border border-black/[0.06] rounded-lg px-3 py-2.5 space-y-1.5">
+              <p className="text-[9px] text-[#5F6368]/55 font-light uppercase tracking-widest">
                 Contas Google Ads detectadas
               </p>
               <div className="space-y-1">
                 {result.googleAdsAccounts.map((acc) => (
-                  <p key={acc} className="text-[10px] font-light text-white/60">
+                  <p key={acc} className="text-[10px] font-light text-[#111111]/70">
                     {acc}
                   </p>
                 ))}
@@ -132,7 +132,7 @@ function DiagnosticSection() {
                   Aceitos
                 </p>
                 {result.fieldsAccepted.map((f) => (
-                  <p key={f} className="text-[9px] font-mono text-white/50">
+                  <p key={f} className="text-[9px] font-mono text-[#5F6368]/80">
                     {f}
                   </p>
                 ))}
@@ -144,7 +144,7 @@ function DiagnosticSection() {
                   Rejeitados
                 </p>
                 {result.fieldsRejected.map((f) => (
-                  <p key={f} className="text-[9px] font-mono text-white/50">
+                  <p key={f} className="text-[9px] font-mono text-[#5F6368]/80">
                     {f}
                   </p>
                 ))}
@@ -157,13 +157,13 @@ function DiagnosticSection() {
             <div>
               <button
                 onClick={() => setShowSample((s) => !s)}
-                className="flex items-center gap-1 text-[9px] text-white/30 hover:text-white/60 transition-colors"
+                className="flex items-center gap-1 text-[9px] text-[#5F6368]/60 hover:text-[#111111]/75 transition-colors"
               >
                 {showSample ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
                 {showSample ? "Ocultar" : "Ver"} amostra ({result.sampleRecords.length} registros)
               </button>
               {showSample && (
-                <pre className="mt-2 text-[9px] font-mono text-white/40 bg-white/[0.02] border border-white/[0.05] rounded-lg p-3 overflow-x-auto max-h-48">
+                <pre className="mt-2 text-[9px] font-mono text-[#5F6368]/70 bg-black/[0.02] border border-black/[0.06] rounded-lg p-3 overflow-x-auto max-h-48">
                   {JSON.stringify(result.sampleRecords, null, 2)}
                 </pre>
               )}
@@ -241,11 +241,11 @@ function AccountMappingSection({ clients }: { clients: ActiveClient[] }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
-        <p className="text-xs font-light text-white/50">Mapeamento — Contas Google Ads</p>
+        <p className="text-xs font-light text-[#5F6368]/80">Mapeamento — Contas Google Ads</p>
         <button
           onClick={discoverAccounts}
           disabled={loadingAccounts}
-          className="flex items-center gap-1.5 text-[9px] font-light px-3 py-1.5 rounded-full border border-white/[0.08] text-white/40 hover:text-white/70 hover:border-white/[0.15] transition-all disabled:opacity-50"
+          className="flex items-center gap-1.5 text-[9px] font-light px-3 py-1.5 rounded-full border border-black/[0.08] text-[#5F6368]/70 hover:text-[#111111]/85 hover:border-black/[0.15] transition-all disabled:opacity-50"
         >
           {loadingAccounts ? <Loader2 size={10} className="animate-spin" /> : <RefreshCw size={10} />}
           Descobrir contas
@@ -264,10 +264,10 @@ function AccountMappingSection({ clients }: { clients: ActiveClient[] }) {
           {accounts.map((acc) => (
             <div
               key={acc.accountName}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-white/[0.05] bg-white/[0.01]"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-black/[0.06] bg-black/[0.02]"
             >
               <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-light text-white/70 truncate">{acc.accountName}</p>
+                <p className="text-[11px] font-light text-[#111111]/80 truncate">{acc.accountName}</p>
                 {acc.mapped && acc.clientName && (
                   <p className="text-[9px] text-emerald-400/50 font-light">
                     Mapeado → {acc.clientName}
@@ -285,7 +285,7 @@ function AccountMappingSection({ clients }: { clients: ActiveClient[] }) {
                 onChange={(e) =>
                   setSelectedClient((prev) => ({ ...prev, [acc.accountName]: e.target.value }))
                 }
-                className="bg-white/[0.03] border border-white/[0.07] rounded-lg px-2 py-1.5 text-[9px] font-light text-white/60 focus:outline-none min-w-[140px]"
+                className="bg-black/[0.03] border border-black/[0.08] rounded-lg px-2 py-1.5 text-[9px] font-light text-[#111111]/70 focus:outline-none min-w-[140px]"
               >
                 <option value="" className="bg-[#0d1117]">
                   Selecionar cliente...
@@ -315,7 +315,7 @@ function AccountMappingSection({ clients }: { clients: ActiveClient[] }) {
       )}
 
       {accounts.length === 0 && !loadingAccounts && !accountError && (
-        <p className="text-[11px] text-white/20 font-light">
+        <p className="text-[11px] text-[#5F6368]/50 font-light">
           Clique em &ldquo;Descobrir contas&rdquo; para listar as contas Google Ads disponíveis.
         </p>
       )}
@@ -352,7 +352,7 @@ function SyncSection() {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
-        <p className="text-xs font-light text-white/50">Sincronização — Google Ads</p>
+        <p className="text-xs font-light text-[#5F6368]/80">Sincronização — Google Ads</p>
         <button
           onClick={runSync}
           disabled={loading}
@@ -379,7 +379,7 @@ function SyncSection() {
             ) : (
               <AlertCircle size={13} className="text-amber-400/60" />
             )}
-            <span className="text-[11px] font-light text-white/60">
+            <span className="text-[11px] font-light text-[#111111]/70">
               {result.upserted > 0
                 ? `${result.upserted} registros gravados em performance_daily (channel = google_ads)`
                 : "Nenhum registro gravado — verifique mapeamentos acima."}
@@ -398,10 +398,10 @@ function SyncSection() {
             ].map(({ label, value }) => (
               <div
                 key={label}
-                className="bg-white/[0.02] border border-white/[0.05] rounded-lg px-2.5 py-2"
+                className="bg-black/[0.02] border border-black/[0.06] rounded-lg px-2.5 py-2"
               >
-                <p className="text-[9px] text-white/25 font-light">{label}</p>
-                <p className="text-base font-light text-white/70 mt-0.5">{value}</p>
+                <p className="text-[9px] text-[#5F6368]/55 font-light">{label}</p>
+                <p className="text-base font-light text-[#111111]/80 mt-0.5">{value}</p>
               </div>
             ))}
           </div>
@@ -410,7 +410,7 @@ function SyncSection() {
           {result.fieldsSynced.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {result.fieldsSynced.map((f) => (
-                <span key={f} className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/[0.03] border border-white/[0.05] text-white/30">
+                <span key={f} className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/[0.03] border border-black/[0.06] text-[#5F6368]/60">
                   {f}
                 </span>
               ))}
@@ -424,7 +424,7 @@ function SyncSection() {
                 Contas Google Ads sem mapeamento:
               </p>
               {result.unmappedAccounts.map((a) => (
-                <p key={a} className="text-[9px] font-mono text-white/40">
+                <p key={a} className="text-[9px] font-mono text-[#5F6368]/70">
                   {a}
                 </p>
               ))}
@@ -433,12 +433,12 @@ function SyncSection() {
 
           {/* Amostra */}
           {result.sampleSaved.length > 0 && (
-            <div className="border border-white/[0.05] rounded-lg overflow-hidden">
+            <div className="border border-black/[0.06] rounded-lg overflow-hidden">
               <table className="w-full text-[9px] font-light">
                 <thead>
-                  <tr className="border-b border-white/[0.05] bg-white/[0.02]">
+                  <tr className="border-b border-black/[0.06] bg-black/[0.02]">
                     {["Data", "Conta", "Campanha", "Invest.", "Cliques", "Impress.", "Conversões"].map((h) => (
-                      <th key={h} className="text-left px-3 py-2 text-white/25 font-light">
+                      <th key={h} className="text-left px-3 py-2 text-[#5F6368]/55 font-light">
                         {h}
                       </th>
                     ))}
@@ -446,14 +446,14 @@ function SyncSection() {
                 </thead>
                 <tbody>
                   {result.sampleSaved.map((row, i) => (
-                    <tr key={i} className="border-b border-white/[0.03]">
-                      <td className="px-3 py-2 text-white/50">{row.date}</td>
-                      <td className="px-3 py-2 text-white/50 max-w-[80px] truncate">{row.accountName}</td>
-                      <td className="px-3 py-2 text-white/40 max-w-[100px] truncate">{row.campaignName ?? "—"}</td>
-                      <td className="px-3 py-2 text-white/50">R$ {row.spend.toFixed(2)}</td>
-                      <td className="px-3 py-2 text-white/50">{row.clicks}</td>
-                      <td className="px-3 py-2 text-white/50">{row.impressions}</td>
-                      <td className="px-3 py-2 text-white/50">{row.conversions}</td>
+                    <tr key={i} className="border-b border-black/[0.04]">
+                      <td className="px-3 py-2 text-[#5F6368]/80">{row.date}</td>
+                      <td className="px-3 py-2 text-[#5F6368]/80 max-w-[80px] truncate">{row.accountName}</td>
+                      <td className="px-3 py-2 text-[#5F6368]/70 max-w-[100px] truncate">{row.campaignName ?? "—"}</td>
+                      <td className="px-3 py-2 text-[#5F6368]/80">R$ {row.spend.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-[#5F6368]/80">{row.clicks}</td>
+                      <td className="px-3 py-2 text-[#5F6368]/80">{row.impressions}</td>
+                      <td className="px-3 py-2 text-[#5F6368]/80">{row.conversions}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -472,35 +472,35 @@ export function WindsorGoogleAdsPanel({ clients }: { clients: ActiveClient[] }) 
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.01]">
+    <div className="rounded-xl border border-black/[0.07] bg-black/[0.02]">
       <button
         onClick={() => setOpen((o) => !o)}
         className="w-full flex items-center justify-between px-5 py-4"
       >
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-lg bg-black/[0.03] border border-black/[0.07] flex items-center justify-center shrink-0">
             <Search size={14} className="text-vitti-light/40" />
           </div>
           <div className="text-left">
-            <p className="text-xs font-light text-white/65">Google Ads — Windsor AI</p>
-            <p className="text-[10px] font-light text-white/25 mt-0.5">
+            <p className="text-xs font-light text-[#111111]/75">Google Ads — Windsor AI</p>
+            <p className="text-[10px] font-light text-[#5F6368]/55 mt-0.5">
               Diagnóstico, mapeamento e sincronização de dados Google Ads
             </p>
           </div>
         </div>
         {open ? (
-          <ChevronUp size={13} className="text-white/25 shrink-0" />
+          <ChevronUp size={13} className="text-[#5F6368]/55 shrink-0" />
         ) : (
-          <ChevronDown size={13} className="text-white/25 shrink-0" />
+          <ChevronDown size={13} className="text-[#5F6368]/55 shrink-0" />
         )}
       </button>
 
       {open && (
-        <div className="border-t border-white/[0.05] px-5 py-4 space-y-6">
+        <div className="border-t border-black/[0.06] px-5 py-4 space-y-6">
           <DiagnosticSection />
-          <div className="border-t border-white/[0.04]" />
+          <div className="border-t border-black/[0.05]" />
           <AccountMappingSection clients={clients} />
-          <div className="border-t border-white/[0.04]" />
+          <div className="border-t border-black/[0.05]" />
           <SyncSection />
         </div>
       )}

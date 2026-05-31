@@ -27,12 +27,12 @@ const CATEGORY_ORDER: ConversionCategory[] = ["actions", "messages", "leads", "p
 // ── Exibição de valor amostrado ────────────────────────────────────────────────
 
 function SampleValuePreview({ value }: { value: unknown }) {
-  if (value == null) return <span className="text-white/20">—</span>;
+  if (value == null) return <span className="text-[#5F6368]/50">—</span>;
   if (typeof value === "number") {
     return <span className="text-emerald-400/70">{value.toLocaleString("pt-BR")}</span>;
   }
   if (typeof value === "string") {
-    return <span className="text-white/50 font-mono text-[9px]">{value}</span>;
+    return <span className="text-[#5F6368]/80 font-mono text-[9px]">{value}</span>;
   }
   // array ou objeto — mostra JSON compacto
   const json = JSON.stringify(value, null, 0);
@@ -51,11 +51,11 @@ function FieldRow({ stat }: { stat: ConversionFieldStat }) {
 
   if (stat.status === "rejected") {
     return (
-      <div className="flex items-center gap-2 py-1.5 border-b border-white/[0.03] last:border-0">
+      <div className="flex items-center gap-2 py-1.5 border-b border-black/[0.04] last:border-0">
         <span className="text-[9px] font-mono px-2 py-0.5 rounded border border-red-400/20 text-red-400/50 bg-red-400/5 shrink-0">
           {stat.field}
         </span>
-        <span className="text-[9px] text-white/20 font-light">rejeitado</span>
+        <span className="text-[9px] text-[#5F6368]/50 font-light">rejeitado</span>
         {stat.errorDetail && (
           <span className="text-[9px] text-red-400/40 font-light truncate">{stat.errorDetail}</span>
         )}
@@ -76,7 +76,7 @@ function FieldRow({ stat }: { stat: ConversionFieldStat }) {
       : "border-emerald-400/15 text-emerald-400/40 bg-emerald-400/[0.03]";
 
   return (
-    <div className="border-b border-white/[0.03] last:border-0">
+    <div className="border-b border-black/[0.04] last:border-0">
       <div className="flex items-start gap-2 py-1.5">
         <span className={`text-[9px] font-mono px-2 py-0.5 rounded border shrink-0 ${chipClass}`}>
           {stat.field}
@@ -87,11 +87,11 @@ function FieldRow({ stat }: { stat: ConversionFieldStat }) {
               <span className="text-[9px] font-light text-emerald-400/70">
                 {stat.totalValue.toLocaleString("pt-BR")} total
               </span>
-              <span className="text-[9px] font-light text-white/30">
+              <span className="text-[9px] font-light text-[#5F6368]/60">
                 {stat.nonZeroRows} {stat.nonZeroRows === 1 ? "linha" : "linhas"}
               </span>
               {stat.sampleCampaign && (
-                <span className="text-[9px] font-light text-white/25 truncate max-w-[200px]">
+                <span className="text-[9px] font-light text-[#5F6368]/55 truncate max-w-[200px]">
                   {stat.sampleCampaign}
                 </span>
               )}
@@ -105,14 +105,14 @@ function FieldRow({ stat }: { stat: ConversionFieldStat }) {
               {stat.sampleValue != null && (
                 <button
                   onClick={() => setExpanded((v) => !v)}
-                  className="text-[9px] font-light text-white/30 hover:text-white/60 transition-colors"
+                  className="text-[9px] font-light text-[#5F6368]/60 hover:text-[#111111]/75 transition-colors"
                 >
                   {expanded ? "ocultar" : "ver amostra"}
                 </button>
               )}
             </div>
           ) : (
-            <span className="text-[9px] font-light text-white/20">
+            <span className="text-[9px] font-light text-[#5F6368]/50">
               aceito — sem valores no período
             </span>
           )}
@@ -142,16 +142,16 @@ function CategorySection({
   const withData = stats.filter((s) => s.nonNullRows > 0 && s.nonZeroRows === 0).length;
 
   return (
-    <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] overflow-hidden">
+    <div className="rounded-lg border border-black/[0.07] bg-black/[0.02] overflow-hidden">
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-4 py-3 text-left gap-3"
       >
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="text-[11px] font-light text-white/70 truncate">
+          <span className="text-[11px] font-light text-[#111111]/80 truncate">
             {CATEGORY_LABELS[category]}
           </span>
-          <span className="text-[9px] text-white/25 font-light shrink-0">
+          <span className="text-[9px] text-[#5F6368]/55 font-light shrink-0">
             {stats.length} candidatos
           </span>
         </div>
@@ -166,18 +166,18 @@ function CategorySection({
               {withData} não-nulo{withData !== 1 ? "s" : ""}
             </span>
           )}
-          <span className="text-[9px] px-2 py-0.5 rounded-full border border-white/[0.08] text-white/30">
+          <span className="text-[9px] px-2 py-0.5 rounded-full border border-black/[0.08] text-[#5F6368]/60">
             {accepted}/{stats.length}
           </span>
           {open ? (
-            <ChevronUp size={12} className="text-white/25" />
+            <ChevronUp size={12} className="text-[#5F6368]/55" />
           ) : (
-            <ChevronDown size={12} className="text-white/25" />
+            <ChevronDown size={12} className="text-[#5F6368]/55" />
           )}
         </div>
       </button>
       {open && (
-        <div className="px-4 pb-3 border-t border-white/[0.04] pt-3">
+        <div className="px-4 pb-3 border-t border-black/[0.05] pt-3">
           {stats.map((s) => (
             <FieldRow key={s.field} stat={s} />
           ))}
@@ -229,7 +229,7 @@ function SelectorPill<T extends string>({
           className={`text-[9px] font-light px-2.5 py-1 rounded-full border transition-all disabled:cursor-not-allowed disabled:opacity-40 ${
             value === opt
               ? "border-vitti-medium/60 text-vitti-light/80 bg-vitti-medium/10"
-              : "border-white/[0.08] text-white/30 hover:border-white/20 hover:text-white/50"
+              : "border-black/[0.08] text-[#5F6368]/60 hover:border-white/20 hover:text-[#111111]/70"
           }`}
         >
           {labels[opt]}
@@ -270,17 +270,17 @@ export function WindsorConversionTestPanel() {
   const byCategory = result?.results ? groupByCategory(result.results) : null;
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.01]">
+    <div className="rounded-xl border border-black/[0.07] bg-black/[0.02]">
       {/* Header */}
       <div className="px-5 py-4 space-y-3">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-black/[0.03] border border-black/[0.07] flex items-center justify-center shrink-0">
               <Microscope size={14} className="text-vitti-light/40" />
             </div>
             <div>
-              <p className="text-xs font-light text-white/65">Diagnóstico de Conversões Meta</p>
-              <p className="text-[10px] font-light text-white/25 mt-0.5">
+              <p className="text-xs font-light text-[#111111]/75">Diagnóstico de Conversões Meta</p>
+              <p className="text-[10px] font-light text-[#5F6368]/55 mt-0.5">
                 Descobre quais campos Windsor retornam mensagens, leads e compras reais — não salva nada
               </p>
             </div>
@@ -298,7 +298,7 @@ export function WindsorConversionTestPanel() {
         {/* Seletores */}
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-[9px] text-white/20 font-light uppercase tracking-wider">
+            <span className="text-[9px] text-[#5F6368]/50 font-light uppercase tracking-wider">
               Período
             </span>
             <SelectorPill
@@ -310,7 +310,7 @@ export function WindsorConversionTestPanel() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[9px] text-white/20 font-light uppercase tracking-wider">
+            <span className="text-[9px] text-[#5F6368]/50 font-light uppercase tracking-wider">
               Endpoint
             </span>
             <SelectorPill
@@ -324,10 +324,10 @@ export function WindsorConversionTestPanel() {
         </div>
 
         {/* Nota explicativa */}
-        <div className="flex items-start gap-2 rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2">
-          <Info size={11} className="text-white/20 shrink-0 mt-0.5" />
-          <p className="text-[9px] font-light text-white/25 leading-relaxed">
-            <span className="text-white/40">Campo aceito</span> não significa campo com valor.
+        <div className="flex items-start gap-2 rounded-lg border border-black/[0.06] bg-black/[0.02] px-3 py-2">
+          <Info size={11} className="text-[#5F6368]/50 shrink-0 mt-0.5" />
+          <p className="text-[9px] font-light text-[#5F6368]/55 leading-relaxed">
+            <span className="text-[#5F6368]/70">Campo aceito</span> não significa campo com valor.
             Um campo aceito pela Windsor pode retornar null/0 se não houver eventos no período.
             O objetivo é encontrar campos com valores reais &gt; 0 ou dados não-numéricos como arrays de ações.
           </p>
@@ -336,7 +336,7 @@ export function WindsorConversionTestPanel() {
 
       {/* Results */}
       {(result || fetchError) && (
-        <div className="px-5 pb-5 border-t border-white/[0.04] pt-4 space-y-4">
+        <div className="px-5 pb-5 border-t border-black/[0.05] pt-4 space-y-4">
           {fetchError && (
             <p className="text-[11px] font-light text-red-400/70">{fetchError}</p>
           )}
@@ -348,7 +348,7 @@ export function WindsorConversionTestPanel() {
             <>
               {/* Summary chips */}
               <div className="flex flex-wrap gap-2">
-                <span className="text-[9px] font-light px-2.5 py-1 rounded-full border border-white/[0.08] text-white/30">
+                <span className="text-[9px] font-light px-2.5 py-1 rounded-full border border-black/[0.08] text-[#5F6368]/60">
                   {result.totalFetched} linhas · {DATE_PRESET_LABELS[result.datePreset]} · /{result.endpoint}
                 </span>
                 <span className="text-[9px] font-light px-2.5 py-1 rounded-full border border-emerald-400/20 text-emerald-400/70 bg-emerald-400/5">
@@ -372,7 +372,7 @@ export function WindsorConversionTestPanel() {
                     nenhum campo com dados no período
                   </span>
                 )}
-                <span className="text-[9px] font-light px-2.5 py-1 rounded-full border border-white/[0.08] text-white/25">
+                <span className="text-[9px] font-light px-2.5 py-1 rounded-full border border-black/[0.08] text-[#5F6368]/55">
                   {new Date(result.testedAt).toLocaleTimeString("pt-BR")}
                 </span>
               </div>
@@ -390,7 +390,7 @@ export function WindsorConversionTestPanel() {
                         <span className="text-[9px] font-mono px-2 py-0.5 rounded border border-emerald-400/30 text-emerald-400/80 bg-emerald-400/[0.08]">
                           {r.field}
                         </span>
-                        <span className="text-[9px] text-white/25 font-light">
+                        <span className="text-[9px] text-[#5F6368]/55 font-light">
                           {CATEGORY_LABELS[r.category]}
                         </span>
                         <span className="text-[9px] font-light text-emerald-400/60">
@@ -398,7 +398,7 @@ export function WindsorConversionTestPanel() {
                           {r.nonZeroRows === 1 ? "linha" : "linhas"}
                         </span>
                         {r.sampleCampaign && (
-                          <span className="text-[9px] font-light text-white/20 truncate max-w-[200px]">
+                          <span className="text-[9px] font-light text-[#5F6368]/50 truncate max-w-[200px]">
                             {r.sampleCampaign}
                           </span>
                         )}
@@ -413,7 +413,7 @@ export function WindsorConversionTestPanel() {
                   <p className="text-[9px] text-amber-400/50 tracking-[0.15em] uppercase">
                     Campos com dados não-numéricos
                   </p>
-                  <p className="text-[9px] font-light text-white/25 leading-relaxed">
+                  <p className="text-[9px] font-light text-[#5F6368]/55 leading-relaxed">
                     Estes campos retornaram valores, mas em formato não-numérico (possivelmente arrays de ações).
                     Expanda a categoria correspondente para ver a amostra.
                   </p>
@@ -461,12 +461,12 @@ export function WindsorConversionTestPanel() {
                       return (
                         <div
                           key={i}
-                          className="rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2 grid grid-cols-2 sm:grid-cols-3 gap-1.5"
+                          className="rounded-lg border border-black/[0.06] bg-black/[0.02] px-3 py-2 grid grid-cols-2 sm:grid-cols-3 gap-1.5"
                         >
                           {entries.map(([k, v]) => (
                             <div key={k}>
-                              <p className="text-[8px] font-mono text-white/20 truncate">{k}</p>
-                              <div className="text-[10px] font-light text-white/50 truncate">
+                              <p className="text-[8px] font-mono text-[#5F6368]/50 truncate">{k}</p>
+                              <div className="text-[10px] font-light text-[#5F6368]/80 truncate">
                                 <SampleValuePreview value={v} />
                               </div>
                             </div>
