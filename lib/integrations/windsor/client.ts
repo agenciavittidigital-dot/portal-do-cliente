@@ -46,6 +46,8 @@ export const WINDSOR_SYNC_FIELDS = [
   // Arrays brutos (fallback — Windsor pode retornar via actions em vez de campos achatados)
   "actions",
   "action_values",
+  // Criativo — thumbnail do anúncio
+  "thumbnail_url",
 ] as const;
 
 // Verifica se WINDSOR_API_KEY está presente no servidor

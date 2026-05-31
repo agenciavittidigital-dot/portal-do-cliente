@@ -42,6 +42,8 @@ export interface WindsorRawRecord {
   // Campos de conversão estruturados (fallback — Meta Ads arrays brutos)
   actions?: Array<Record<string, unknown>> | null;
   action_values?: Array<Record<string, unknown>> | null;
+  // Criativo — thumbnail do anúncio/campanha
+  thumbnail_url?: string | null;
   // Campos adicionais que Windsor pode retornar sem mapeamento prévio
   [key: string]: unknown;
 }

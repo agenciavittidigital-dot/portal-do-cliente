@@ -62,6 +62,7 @@ interface AggregatedRecord {
   roasWeightedSum: number;
   groupedCount: number;
   rawSample: Record<string, unknown>;
+  thumbnail_url: string | null;
 }
 
 export interface SyncSample {
@@ -226,6 +227,7 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
       existing.video_views_75 += safeNum(raw.video_views_75);
       existing.roasWeightedSum += safeNum(raw.roas) * rawSpend;
       existing.groupedCount++;
+      if (!existing.thumbnail_url) existing.thumbnail_url = safeStr(raw.thumbnail_url);
     } else {
       const rawSpend = safeNum(raw.spend);
       aggregated.set(key, {
@@ -248,6 +250,7 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
         roasWeightedSum: safeNum(raw.roas) * rawSpend,
         groupedCount: 1,
         rawSample: raw as Record<string, unknown>,
+        thumbnail_url: safeStr(raw.thumbnail_url),
       });
     }
 
@@ -308,6 +311,7 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
       engagements: rec.engagements,
       video_views_25: rec.video_views_25,
       video_views_75: rec.video_views_75,
+      thumbnail_url: rec.thumbnail_url,
       raw_data: {
         windsor_raw_sample: rec.rawSample,
         sync_meta: {
