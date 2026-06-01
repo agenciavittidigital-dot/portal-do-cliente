@@ -42,3 +42,6 @@ next-env.d.ts
 
 # Claude Code memory
 memory/
+
+# Claude Code internal worktrees
+.claude/worktrees/
