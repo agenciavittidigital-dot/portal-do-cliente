@@ -8,6 +8,7 @@ import { WindsorConversionTestPanel } from "@/components/admin/WindsorConversion
 import { WindsorMetaRawProbePanel } from "@/components/admin/WindsorMetaRawProbePanel";
 import { WindsorGoogleAdsPanel } from "@/components/admin/WindsorGoogleAdsPanel";
 import { WindsorRegionalSyncPanel } from "@/components/admin/WindsorRegionalSyncPanel";
+import { WindsorDemographicSyncPanel } from "@/components/admin/WindsorDemographicSyncPanel";
 import { getWindsorStatus } from "@/lib/integrations/windsor/client";
 import { loadActiveClients } from "@/lib/data/dashboards";
 import Link from "next/link";
@@ -77,6 +78,8 @@ export default async function AdminPage() {
           <WindsorGoogleAdsPanel clients={clients} />
 
           <WindsorRegionalSyncPanel />
+
+          <WindsorDemographicSyncPanel />
 
           {/* Meta Ads — sincronização automática (futura) */}
           <div className="rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)]">

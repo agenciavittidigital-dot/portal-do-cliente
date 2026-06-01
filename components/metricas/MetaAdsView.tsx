@@ -20,7 +20,7 @@ import type {
   PerformanceSummary,
 } from "@/types";
 import type { CreativeRow } from "@/lib/data/performance";
-import type { RegionRow } from "@/lib/data/performance-breakdowns";
+import type { RegionRow, DemographicRow } from "@/lib/data/performance-breakdowns";
 import { RegionHeatmap } from "./RegionHeatmap";
 
 // ── Opções do filtro de período ───────────────────────────────────────────────
@@ -565,14 +565,7 @@ function EvolutionChart({
   );
 }
 
-// ── Cards de gênero e faixa etária ────────────────────────────────────────────
-//
-// Dados demográficos (gender, age_range) NÃO existem em performance_daily
-// nem são coletados pelo sync Windsor atual. Exibe placeholder até que:
-//   1. Windsor retorne breakdown demográfico no endpoint /all
-//   2. O sync seja atualizado para coletar esses campos
-//   3. O schema receba tabela/colunas demográficas (ex: performance_demographics)
-// Quando disponíveis, passar os dados via prop `slices`.
+// ── Helpers demográficos ──────────────────────────────────────────────────────
 
 interface DonutSlice {
   label: string;
@@ -580,33 +573,119 @@ interface DonutSlice {
   color: string;
 }
 
+const GENDER_COLORS: Record<string, string> = {
+  female: "#f472b6", feminino: "#f472b6",
+  male:   "#60a5fa", masculino: "#60a5fa",
+};
+function genderColor(v: string): string {
+  return GENDER_COLORS[v.toLowerCase()] ?? "#9ca3af";
+}
+function genderLabel(v: string): string {
+  const l = v.toLowerCase();
+  if (l === "female" || l === "feminino") return "Feminino";
+  if (l === "male"   || l === "masculino") return "Masculino";
+  return "Outros";
+}
+
+const AGE_ORDER = ["13-17", "18-24", "25-34", "35-44", "45-54", "55-64", "65+"];
+const AGE_COLORS = ["#bfdbfe", "#93c5fd", "#60a5fa", "#3b82f6", "#6366f1", "#8b5cf6", "#a78bfa"];
+function ageColor(v: string): string {
+  const i = AGE_ORDER.indexOf(v);
+  return AGE_COLORS[i >= 0 ? i : AGE_COLORS.length - 1];
+}
+
+function buildDemographicSlices(
+  rows: DemographicRow[],
+  type: "gender" | "age"
+): { slices: DonutSlice[]; metricLabel: string } | null {
+  const filtered = rows.filter((r) => r.breakdownType === type);
+  if (filtered.length === 0) return null;
+
+  const sumLeads       = filtered.reduce((s, r) => s + r.leads, 0);
+  const sumImpressions = filtered.reduce((s, r) => s + r.impressions, 0);
+  const sumReach       = filtered.reduce((s, r) => s + r.reach, 0);
+
+  let key: "leads" | "impressions" | "reach" | "spend";
+  let metricLabel: string;
+  if (sumLeads > 0)       { key = "leads";       metricLabel = "leads"; }
+  else if (sumImpressions > 0) { key = "impressions"; metricLabel = "impressões"; }
+  else if (sumReach > 0)  { key = "reach";       metricLabel = "alcance"; }
+  else                    { key = "spend";       metricLabel = "investimento"; }
+
+  const total = filtered.reduce((s, r) => s + r[key], 0);
+  if (total === 0) return null;
+
+  const colorFn = type === "gender" ? genderColor : ageColor;
+  const labelFn = type === "gender" ? genderLabel : (v: string) => v;
+
+  const slices: DonutSlice[] = filtered
+    .map((r) => ({
+      label: labelFn(r.breakdownValue),
+      value: (r[key] / total) * 100,
+      color: colorFn(r.breakdownValue),
+    }))
+    .sort((a, b) => {
+      if (type === "age") {
+        const ai = AGE_ORDER.indexOf(a.label);
+        const bi = AGE_ORDER.indexOf(b.label);
+        if (ai >= 0 && bi >= 0) return ai - bi;
+      }
+      return b.value - a.value;
+    });
+
+  return { slices, metricLabel };
+}
+
+// ── DonutCard ─────────────────────────────────────────────────────────────────
+
 function DonutCard({
   title,
   className,
   slices,
+  metricLabel,
 }: {
   title: string;
   className?: string;
   slices?: DonutSlice[] | null;
+  metricLabel?: string;
 }) {
   const hasData = slices && slices.length > 0;
+  const maxVal  = hasData ? Math.max(...slices!.map((s) => s.value)) : 0;
 
   return (
     <div className={cn("rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex flex-col", className)}>
-      <h5 className="text-[11px] font-light text-[#455cab] tracking-wide mb-2">
-        {title}
-      </h5>
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex items-center justify-between mb-2">
+        <h5 className="text-[11px] font-light text-[#455cab] tracking-wide">{title}</h5>
+        {hasData && metricLabel && (
+          <span className="text-[8px] text-[#455cab]/40 font-light uppercase tracking-wider">
+            {metricLabel}
+          </span>
+        )}
+      </div>
+      <div className="flex-1 flex flex-col justify-center">
         {hasData ? (
-          // TODO: substituir por PieChart (Recharts) quando slices forem fornecidos via sync demográfico
-          <div className="space-y-1 w-full">
+          <div className="flex flex-col gap-[6px]">
             {slices!.map((s) => (
-              <div key={s.label} className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
-                  <span className="text-[9px] text-[#171f38]/60 font-light">{s.label}</span>
+              <div key={s.label}>
+                <div className="flex items-center justify-between gap-1 mb-[3px]">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                    <span className="text-[9px] text-[#171f38]/65 font-light">{s.label}</span>
+                  </div>
+                  <span className="text-[9px] text-[#171f38]/70 font-light tabular-nums">
+                    {s.value.toFixed(1)}%
+                  </span>
                 </div>
-                <span className="text-[9px] text-[#171f38] font-light tabular-nums">{s.value.toFixed(1)}%</span>
+                <div className="h-[2px] rounded-full bg-[#455cab]/[0.08] overflow-hidden ml-3.5">
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${maxVal > 0 ? (s.value / maxVal) * 100 : 0}%`,
+                      backgroundColor: s.color,
+                      opacity: 0.65,
+                    }}
+                  />
+                </div>
               </div>
             ))}
           </div>
@@ -753,6 +832,7 @@ interface MetaAdsViewProps {
   performance?: PerformanceData | null;
   creatives?: CreativeRow[] | null;
   regionBreakdown?: RegionRow[] | null;
+  demographicBreakdown?: DemographicRow[] | null;
   initialPeriod?: string;
   initialStartDate?: string;
   initialEndDate?: string;
@@ -763,6 +843,7 @@ export function MetaAdsView({
   performance,
   creatives,
   regionBreakdown,
+  demographicBreakdown,
   initialPeriod = "last_7_days",
   initialStartDate = "",
   initialEndDate = "",
@@ -926,12 +1007,28 @@ export function MetaAdsView({
           <EvolutionChart rows={rows} metricKeys={evolutionMetricKeys} />
         </div>
 
-        {/* Coluna 4 — Gênero e Faixa etária
-            Sem dados: depende de sync Windsor com breakdown demográfico + schema performance_demographics */}
-        <div className="flex flex-col gap-3">
-          <DonutCard title="Percentual de Gênero" className="flex-1" />
-          <DonutCard title="Faixa etária" className="flex-1" />
-        </div>
+        {/* Coluna 4 — Gênero e Faixa etária */}
+        {(() => {
+          const demo = demographicBreakdown ?? [];
+          const gender = buildDemographicSlices(demo, "gender");
+          const age    = buildDemographicSlices(demo, "age");
+          return (
+            <div className="flex flex-col gap-3">
+              <DonutCard
+                title="Percentual de Gênero"
+                className="flex-1"
+                slices={gender?.slices}
+                metricLabel={gender?.metricLabel}
+              />
+              <DonutCard
+                title="Faixa etária"
+                className="flex-1"
+                slices={age?.slices}
+                metricLabel={age?.metricLabel}
+              />
+            </div>
+          );
+        })()}
       </div>
 
       {/* ── Seção: Melhores anúncios + Mapa de calor por região ──

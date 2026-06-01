@@ -53,6 +53,21 @@ export const WINDSOR_SYNC_FIELDS = [
   "ad_name",
 ] as const;
 
+// Campos para o sync de breakdown demográfico (gênero e faixa etária)
+// Separado de WINDSOR_SYNC_FIELDS — grava em performance_breakdowns, não em performance_daily
+export const WINDSOR_DEMOGRAPHIC_FIELDS = [
+  "date",
+  "account_name",
+  "gender",
+  "age",
+  "spend",
+  "impressions",
+  "reach",
+  "clicks",
+  "leads",
+  "messages_started",
+] as const;
+
 // Campos para o sync de breakdown regional (região por estado/cidade)
 // Separado de WINDSOR_SYNC_FIELDS — grava em performance_breakdowns, não em performance_daily
 export const WINDSOR_REGIONAL_FIELDS = [
