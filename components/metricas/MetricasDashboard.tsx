@@ -102,7 +102,13 @@ export function MetricasDashboard({
 
       {/* ── Blocos do canal ───────────────────────────────────── */}
       {selected === "google_ads" ? (
-        <GoogleAdsView performance={performanceGoogleAds} campaigns={googleAdsCampaigns} />
+        <GoogleAdsView
+          performance={performanceGoogleAds}
+          campaigns={googleAdsCampaigns}
+          initialPeriod={initialPeriod}
+          initialStartDate={initialStartDate}
+          initialEndDate={initialEndDate}
+        />
       ) : blocksForChannel.length > 0 ? (
         selected === "meta_ads" ? (
           <MetaAdsView
