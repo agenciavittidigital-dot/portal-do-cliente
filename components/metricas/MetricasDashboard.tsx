@@ -9,6 +9,7 @@ import { MetaAdsView } from "./MetaAdsView";
 import { GoogleAdsView } from "./GoogleAdsView";
 import type { DashboardWithBlocks, PerformanceData, PlatformKey } from "@/types";
 import type { GoogleAdsCampaignRow, CreativeRow } from "@/lib/data/performance";
+import type { RegionRow } from "@/lib/data/performance-breakdowns";
 
 interface PlatformDef {
   key: PlatformKey;
@@ -27,6 +28,7 @@ interface Props {
   performanceGoogleAds?: PerformanceData | null;
   googleAdsCampaigns?: GoogleAdsCampaignRow[];
   creativesMetaAds?: CreativeRow[] | null;
+  regionBreakdown?: RegionRow[] | null;
   initialPeriod?: string;
   initialStartDate?: string;
   initialEndDate?: string;
@@ -38,6 +40,7 @@ export function MetricasDashboard({
   performanceGoogleAds,
   googleAdsCampaigns,
   creativesMetaAds,
+  regionBreakdown,
   initialPeriod,
   initialStartDate,
   initialEndDate,
@@ -106,6 +109,7 @@ export function MetricasDashboard({
             blocks={blocksForChannel}
             performance={performance}
             creatives={creativesMetaAds}
+            regionBreakdown={regionBreakdown}
             initialPeriod={initialPeriod}
             initialStartDate={initialStartDate}
             initialEndDate={initialEndDate}

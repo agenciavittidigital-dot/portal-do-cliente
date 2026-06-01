@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, ChevronDown, BarChart3, Film, MapPin } from "lucide-react";
+import { Calendar, ChevronDown, BarChart3, Film } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   AreaChart,
@@ -20,6 +20,8 @@ import type {
   PerformanceSummary,
 } from "@/types";
 import type { CreativeRow } from "@/lib/data/performance";
+import type { RegionRow } from "@/lib/data/performance-breakdowns";
+import { RegionHeatmap } from "./RegionHeatmap";
 
 // ── Opções do filtro de período ───────────────────────────────────────────────
 
@@ -744,38 +746,13 @@ function BestAdsSection({ creatives }: { creatives: CreativeRow[] }) {
   );
 }
 
-// ── Mapa de calor por região ──────────────────────────────────────────────────
-//
-// Dados regionais (region, city, state) NÃO existem em performance_daily
-// nem são coletados pelo sync Windsor atual. Exibe placeholder até que:
-//   1. Windsor retorne breakdown regional no endpoint /all
-//   2. O sync seja atualizado para coletar esses campos
-//   3. O schema receba tabela/colunas regionais
-
-function RegionHeatmapPlaceholder() {
-  return (
-    <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex flex-col">
-      <h4 className="text-[11px] font-light text-[#455cab] tracking-wide">
-        Mapa de calor por região
-      </h4>
-      <div className="flex-1 flex flex-col items-center justify-center gap-2 min-h-[200px]">
-        <MapPin size={16} className="text-[#455cab]/20" />
-        <p className="text-[10px] text-[#171f38]/30 font-light text-center leading-relaxed">
-          Dados regionais
-          <br />
-          em breve
-        </p>
-      </div>
-    </div>
-  );
-}
-
 // ── MetaAdsView ───────────────────────────────────────────────────────────────
 
 interface MetaAdsViewProps {
   blocks: BlockWithMetrics[];
   performance?: PerformanceData | null;
   creatives?: CreativeRow[] | null;
+  regionBreakdown?: RegionRow[] | null;
   initialPeriod?: string;
   initialStartDate?: string;
   initialEndDate?: string;
@@ -785,6 +762,7 @@ export function MetaAdsView({
   blocks,
   performance,
   creatives,
+  regionBreakdown,
   initialPeriod = "last_7_days",
   initialStartDate = "",
   initialEndDate = "",
@@ -960,12 +938,13 @@ export function MetaAdsView({
           Usa o mesmo grid de 4 colunas da seção superior para alinhar a coluna
           do Mapa de calor com os cards de Gênero e Faixa etária.
           Melhores anúncios ocupa as 3 primeiras colunas (xl:col-span-3).
+          Última coluna levemente mais larga que a seção superior (280px vs 200px).
       ─────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(270px,1.25fr)_minmax(128px,0.6fr)_minmax(400px,2.5fr)_minmax(200px,1fr)] gap-3">
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(240px,1.05fr)_minmax(110px,0.5fr)_minmax(360px,2.1fr)_minmax(280px,1.15fr)] gap-3">
         <div className="xl:col-span-3">
           <BestAdsSection creatives={creatives ?? []} />
         </div>
-        <RegionHeatmapPlaceholder />
+        <RegionHeatmap rows={regionBreakdown ?? []} isLeads={isLeads} />
       </div>
     </div>
   );

@@ -44,6 +44,8 @@ export interface WindsorRawRecord {
   action_values?: Array<Record<string, unknown>> | null;
   // Criativo — thumbnail do anúncio/campanha
   thumbnail_url?: string | null;
+  // Breakdown dimensional
+  region?: string | null;
   // Campos adicionais que Windsor pode retornar sem mapeamento prévio
   [key: string]: unknown;
 }

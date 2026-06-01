@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
 import { loadActiveClients, loadClientDashboards } from "@/lib/data/dashboards";
 import { computeDateRange, loadPerformanceData, loadGoogleAdsCampaigns, loadCreativesData } from "@/lib/data/performance";
+import { loadRegionalBreakdown } from "@/lib/data/performance-breakdowns";
 import { ClientSelector } from "@/components/metricas/ClientSelector";
 import { MetricasDashboard } from "@/components/metricas/MetricasDashboard";
 
@@ -47,15 +48,16 @@ export default async function MetricasPage({
     const dashboards =
       valid && requestedId ? await loadClientDashboards(requestedId) : [];
 
-    const [performance, performanceGoogleAds, googleAdsCampaigns, creativesMetaAds] =
+    const [performance, performanceGoogleAds, googleAdsCampaigns, creativesMetaAds, regionBreakdown] =
       valid && requestedId
         ? await Promise.all([
             loadPerformanceData(requestedId, "meta_ads", perfStart, perfEnd),
             loadPerformanceData(requestedId, "google_ads", perfStart, perfEnd),
             loadGoogleAdsCampaigns(requestedId, perfStart, perfEnd),
             loadCreativesData(requestedId, perfStart, perfEnd),
+            loadRegionalBreakdown(requestedId, perfStart, perfEnd),
           ])
-        : [null, null, [], []];
+        : [null, null, [], [], []];
 
     const targetClientId = valid ? requestedId : null;
 
@@ -83,6 +85,7 @@ export default async function MetricasPage({
             performanceGoogleAds={performanceGoogleAds}
             googleAdsCampaigns={googleAdsCampaigns ?? []}
             creativesMetaAds={creativesMetaAds ?? []}
+            regionBreakdown={regionBreakdown ?? []}
             {...filterProps}
           />
         )}
@@ -97,14 +100,15 @@ export default async function MetricasPage({
     ? await loadClientDashboards(targetClientId)
     : [];
 
-  const [performance, performanceGoogleAds, googleAdsCampaigns, creativesMetaAds] = targetClientId
+  const [performance, performanceGoogleAds, googleAdsCampaigns, creativesMetaAds, regionBreakdown] = targetClientId
     ? await Promise.all([
         loadPerformanceData(targetClientId, "meta_ads", perfStart, perfEnd),
         loadPerformanceData(targetClientId, "google_ads", perfStart, perfEnd),
         loadGoogleAdsCampaigns(targetClientId, perfStart, perfEnd),
         loadCreativesData(targetClientId, perfStart, perfEnd),
+        loadRegionalBreakdown(targetClientId, perfStart, perfEnd),
       ])
-    : [null, null, [], []];
+    : [null, null, [], [], []];
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -124,6 +128,7 @@ export default async function MetricasPage({
           performanceGoogleAds={performanceGoogleAds}
           googleAdsCampaigns={googleAdsCampaigns ?? []}
           creativesMetaAds={creativesMetaAds ?? []}
+          regionBreakdown={regionBreakdown ?? []}
           {...filterProps}
         />
       ) : (

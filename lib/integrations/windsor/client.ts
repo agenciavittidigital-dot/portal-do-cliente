@@ -53,6 +53,20 @@ export const WINDSOR_SYNC_FIELDS = [
   "ad_name",
 ] as const;
 
+// Campos para o sync de breakdown regional (região por estado/cidade)
+// Separado de WINDSOR_SYNC_FIELDS — grava em performance_breakdowns, não em performance_daily
+export const WINDSOR_REGIONAL_FIELDS = [
+  "date",
+  "account_name",
+  "region",
+  "spend",
+  "impressions",
+  "reach",
+  "clicks",
+  "leads",
+  "messages_started",
+] as const;
+
 // Verifica se WINDSOR_API_KEY está presente no servidor
 // Nunca expõe a chave completa — retorna versão mascarada para logs/UI
 export function getWindsorStatus(): WindsorStatus {
