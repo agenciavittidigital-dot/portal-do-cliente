@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   LayoutDashboard,
   BarChart3,
@@ -14,11 +13,12 @@ import {
   GraduationCap,
   Settings,
   LogOut,
-  ChevronLeft,
   LockKeyhole,
+  PanelLeftClose,
+  PanelRightOpen,
 } from "lucide-react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 interface NavItemDef {
   label: string;
@@ -94,131 +94,178 @@ export function Sidebar({ permissions, isAdmin }: SidebarProps) {
     ? ALL_NAV_ITEMS
     : ALL_NAV_ITEMS.filter((item) => permissions.includes(item.permission));
 
+  const itemBase = cn(
+    "flex items-center gap-3 rounded-xl px-3 py-3 text-sm",
+    "transition-all duration-200"
+  );
+  const itemNormal = "text-white/60 hover:bg-white/5 hover:text-white";
+  const itemActive = "bg-white/15 text-white font-medium";
+
+  const collapsedItemBase = cn(
+    "flex items-center justify-center rounded-xl p-2.5",
+    "transition-all duration-200"
+  );
+
   return (
     <aside
       className={cn(
-        "flex flex-col h-full bg-gradient-to-b from-[#171F38] to-[#455CAB] border-r border-white/[0.07] transition-all duration-300 shrink-0",
-        collapsed ? "w-[60px]" : "w-56"
+        "relative flex flex-col overflow-hidden bg-[#171F38] shrink-0",
+        "transition-all duration-300",
+        collapsed ? "w-16" : "w-60"
       )}
     >
-      {/* Logo */}
-      <div className="flex items-center h-16 px-4 border-b border-white/[0.07] shrink-0">
-        {!collapsed && (
-          <Image
-            src="/assets/vitti-logo-white2.png.png"
-            alt="Vitti"
-            width={48}
-            height={16}
-            className="object-contain select-none"
-            priority
-          />
-        )}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          aria-label="Toggle sidebar"
+      {/* Background image overlay */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/bg-sidebar.png"
+        alt=""
+        className="absolute inset-0 h-full w-full object-cover opacity-90 pointer-events-none"
+        style={{ zIndex: 0 }}
+      />
+
+      <div className="relative flex flex-1 flex-col" style={{ zIndex: 1 }}>
+
+        {/* Header */}
+        <div
           className={cn(
-            "p-1.5 rounded-md text-white/25 hover:text-white/60 hover:bg-white/5 transition-colors",
-            collapsed ? "mx-auto" : "ml-auto"
+            "flex h-14 items-center border-b border-white/10 transition-all duration-300",
+            collapsed ? "justify-center px-0" : "justify-between px-4"
           )}
         >
-          <ChevronLeft
-            size={15}
-            className={cn(
-              "transition-transform duration-300",
-              collapsed && "rotate-180"
-            )}
-          />
-        </button>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto overflow-x-hidden">
-        {navItems.length > 0 ? (
-          navItems.map((item) => {
-            const isActive =
-              pathname === item.href ||
-              pathname.startsWith(item.href + "/") ||
-              item.alsoActiveOn.some(
-                (p) => pathname === p || pathname.startsWith(p + "/")
-              );
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                title={collapsed ? item.label : undefined}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg text-sm font-light transition-all duration-150 group",
-                  collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5",
-                  isActive
-                    ? "bg-white/10 text-white border border-white/[0.12]"
-                    : "text-white/45 hover:text-white/85 hover:bg-white/[0.06] border border-transparent"
-                )}
-              >
-                <Icon
-                  size={16}
-                  className={cn(
-                    "shrink-0 transition-colors",
-                    isActive
-                      ? "text-white"
-                      : "text-white/35 group-hover:text-white/65"
-                  )}
-                />
-                {!collapsed && (
-                  <span className="truncate leading-none">{item.label}</span>
-                )}
-              </Link>
-            );
-          })
-        ) : (
-          <div
-            className={cn(
-              "flex flex-col items-center gap-2 py-6",
-              collapsed ? "px-1" : "px-3"
-            )}
-          >
-            <LockKeyhole size={16} className="text-white/10" />
+          <div className="flex items-center gap-3 min-w-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-vitti-icon.png"
+              alt="Vitti"
+              className="h-10 w-auto object-contain shrink-0"
+            />
             {!collapsed && (
-              <p className="text-[11px] text-white/15 font-light leading-relaxed text-center">
-                Nenhum módulo disponível.
-                <br />
-                Contate a equipe Vitti.
+              <p className="truncate text-sm font-semibold tracking-tight text-white">
+                Portal do Cliente
               </p>
             )}
           </div>
-        )}
-      </nav>
+          {!collapsed && (
+            <button
+              onClick={() => setCollapsed(true)}
+              title="Recolher menu"
+              className="rounded-lg p-1.5 text-white/40 transition-all duration-200 hover:bg-white/10 hover:text-white"
+            >
+              <PanelLeftClose className="h-4 w-4" />
+            </button>
+          )}
+        </div>
 
-      {/* Bottom actions */}
-      <div className="px-2 py-3 border-t border-white/[0.07] space-y-0.5 shrink-0">
-        {isAdmin && (
-          <Link
-            href="/admin"
-            title={collapsed ? "Admin" : undefined}
-            className={cn(
-              "flex items-center gap-3 rounded-lg text-sm font-light transition-all border",
-              pathname === "/admin" || pathname.startsWith("/admin/")
-                ? "bg-white/10 text-white border-white/[0.12]"
-                : "text-white/40 hover:text-white/75 hover:bg-white/[0.06] border-transparent",
-              collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"
-            )}
-          >
-            <Settings size={15} className="shrink-0" />
-            {!collapsed && <span>Admin</span>}
-          </Link>
+        {/* Expand button (collapsed state) */}
+        {collapsed && (
+          <div className="flex justify-center border-b border-white/10 py-2">
+            <button
+              onClick={() => setCollapsed(false)}
+              title="Expandir menu"
+              className="rounded-lg p-1.5 text-white/40 transition-all duration-200 hover:bg-white/10 hover:text-white"
+            >
+              <PanelRightOpen className="h-4 w-4" />
+            </button>
+          </div>
         )}
 
-        <button
-          onClick={handleSignOut}
-          title={collapsed ? "Sair" : undefined}
+        {/* Navigation */}
+        <nav
           className={cn(
-            "w-full flex items-center gap-3 rounded-lg text-sm font-light text-white/30 hover:text-red-400/70 hover:bg-red-500/5 transition-all border border-transparent",
-            collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"
+            "flex flex-1 flex-col gap-0.5 py-2 overflow-y-auto overflow-x-hidden",
+            collapsed ? "items-center px-2" : "px-4"
           )}
         >
-          <LogOut size={15} className="shrink-0" />
-          {!collapsed && <span>Sair</span>}
-        </button>
+          {navItems.length > 0 ? (
+            navItems.map((item) => {
+              const isActive =
+                pathname === item.href ||
+                pathname.startsWith(item.href + "/") ||
+                item.alsoActiveOn.some(
+                  (p) => pathname === p || pathname.startsWith(p + "/")
+                );
+              const Icon = item.icon;
+
+              if (collapsed) {
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    title={item.label}
+                    className={cn(collapsedItemBase, isActive ? itemActive : itemNormal)}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                  </Link>
+                );
+              }
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(itemBase, isActive ? itemActive : itemNormal)}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {item.label}
+                </Link>
+              );
+            })
+          ) : (
+            <div
+              className={cn(
+                "flex flex-col items-center gap-2 py-6",
+                collapsed ? "px-1" : "px-3"
+              )}
+            >
+              <LockKeyhole className="h-4 w-4 text-white/10" />
+              {!collapsed && (
+                <p className="text-[11px] text-white/15 font-light leading-relaxed text-center">
+                  Nenhum módulo disponível.
+                  <br />
+                  Contate a equipe Vitti.
+                </p>
+              )}
+            </div>
+          )}
+        </nav>
+
+        {/* Footer */}
+        <div
+          className={cn(
+            "border-t border-white/10 transition-all duration-300",
+            collapsed ? "flex flex-col items-center gap-1 p-2" : "p-4"
+          )}
+        >
+          {isAdmin && (
+            <Link
+              href="/admin"
+              title={collapsed ? "Admin" : undefined}
+              className={cn(
+                collapsed ? collapsedItemBase : cn(itemBase, "mb-0.5 w-full"),
+                pathname === "/admin" || pathname.startsWith("/admin/")
+                  ? itemActive
+                  : itemNormal
+              )}
+            >
+              <Settings className="h-4 w-4 shrink-0" />
+              {!collapsed && <span>Admin</span>}
+            </Link>
+          )}
+
+          <button
+            onClick={handleSignOut}
+            title={collapsed ? "Sair" : undefined}
+            className={cn(
+              "flex items-center gap-2 rounded-xl transition-all duration-200",
+              "text-white/50 hover:bg-white/10 hover:text-white",
+              collapsed ? "p-2" : "w-full px-3 py-2 text-xs"
+            )}
+          >
+            <LogOut className="h-3.5 w-3.5 shrink-0" />
+            {!collapsed && "Sair"}
+          </button>
+        </div>
+
       </div>
     </aside>
   );
