@@ -1,29 +1,60 @@
 @import "tailwindcss";
 
 @theme {
-  --color-vitti-black: #000000;
-  --color-vitti-dark: #171F38;
-  --color-vitti-gray: #4B4B4C;
-  --color-vitti-blue: #455CAB;
-  --color-vitti-light: #638ACC;
-  --color-vitti-white: #FFFFFF;
-  --color-vitti-surface: #F7F7F8;
-  --color-vitti-fg: #111111;
-  --color-vitti-fg-muted: #5F6368;
+  /* ── Vitti brand palette ───────────────────────────────────────────────── */
+  --color-vitti-black:   #000000;
+  --color-vitti-dark:    #171F38;
+  --color-vitti-gray:    #4B4B4C;
+  --color-vitti-blue:    #455CAB;
+  --color-vitti-light:   #638ACC;
+  --color-vitti-white:   #FFFFFF;
+  --color-vitti-surface: #F8FAFC;  /* slate-50 — alinhado com bg do CRM */
+  --color-vitti-fg:      #0F172A;  /* slate-900 */
+  --color-vitti-fg-muted:#64748B;  /* slate-500 */
 }
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
 }
 
+/* ── shadcn/ui compatible tokens — espelhados do CRM ──────────────────────── */
 :root {
-  --background: #F7F7F8;
-  --foreground: #111111;
+  --background:              #F8FAFC;  /* slate-50 */
+  --foreground:              #0F172A;  /* slate-900 */
+
+  --card:                    #FFFFFF;
+  --card-foreground:         #0F172A;
+
+  --popover:                 #FFFFFF;
+  --popover-foreground:      #0F172A;
+
+  --primary:                 #455CAB;  /* vitti-blue */
+  --primary-foreground:      #FFFFFF;
+
+  --secondary:               #F1F5F9;  /* slate-100 */
+  --secondary-foreground:    #171F38;  /* vitti-dark */
+
+  --muted:                   #F1F5F9;  /* slate-100 */
+  --muted-foreground:        #64748B;  /* slate-500 */
+
+  --accent:                  #EFF3FB;  /* vitti-blue/8 */
+  --accent-foreground:       #171F38;
+
+  --destructive:             #EF4444;
+  --destructive-foreground:  #FFFFFF;
+
+  --border:                  #E2E8F0;  /* slate-200 */
+  --input:                   #E2E8F0;
+  --ring:                    #455CAB;
+
+  --radius:                  0.5rem;
 }
 
+/* ── Base ─────────────────────────────────────────────────────────────────── */
 body {
   background: var(--background);
   color: var(--foreground);
+  font-family: var(--font-sans, var(--font-inter)), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -32,6 +63,7 @@ body {
   box-sizing: border-box;
 }
 
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
