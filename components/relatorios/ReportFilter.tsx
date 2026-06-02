@@ -35,7 +35,7 @@ export function ReportFilter({ options, currentValue }: Props) {
     <select
       value={currentValue}
       onChange={(e) => handleChange(e.target.value)}
-      className="text-[10px] font-light text-[#455cab]/70 bg-[#f1f1f1] border border-[#dfdedf] rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#455cab]/40 transition-colors cursor-pointer"
+      className="text-[10px] font-light text-vitti-blue/70 bg-white/70 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#455cab]/40 transition-colors cursor-pointer"
     >
       <option value="">Todos os meses</option>
       {options.map((opt) => (

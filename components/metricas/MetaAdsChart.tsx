@@ -37,7 +37,7 @@ function CustomTooltip({
   const dateLabel = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : label;
 
   return (
-    <div className="rounded-xl border border-vitti-gray/[0.14] bg-white shadow-xl shadow-black/[0.08] px-4 py-3 space-y-2 min-w-[160px]">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-xl shadow-black/[0.08] px-4 py-3 space-y-2 min-w-[160px]">
       <p className="text-[9px] text-vitti-blue/45 tracking-[0.15em] uppercase font-light">
         {dateLabel}
       </p>
@@ -75,7 +75,7 @@ interface MetaAdsChartProps {
 export function MetaAdsChart({ rows }: MetaAdsChartProps) {
   if (rows.length === 0) {
     return (
-      <div className="h-full min-h-[200px] rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] flex flex-col items-center justify-center gap-2">
+      <div className="h-full min-h-[200px] rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] flex flex-col items-center justify-center gap-2">
         <BarChart3 size={16} className="text-vitti-blue/20" />
         <p className="text-[10px] text-vitti-blue/30 font-light">Aguardando sincronização</p>
       </div>
@@ -85,7 +85,7 @@ export function MetaAdsChart({ rows }: MetaAdsChartProps) {
   const showDots = rows.length <= 2;
 
   return (
-    <div className="h-full min-h-[200px] rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] overflow-hidden px-2 pt-3 pb-1">
+    <div className="h-full min-h-[200px] rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-hidden px-2 pt-3 pb-1">
       <ResponsiveContainer width="100%" height={196}>
         <ComposedChart data={rows} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
           <CartesianGrid vertical={false} stroke="rgba(0,0,0,0.06)" />

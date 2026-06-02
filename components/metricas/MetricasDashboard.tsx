@@ -53,7 +53,7 @@ export function MetricasDashboard({
   if (dashboards.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-vitti-gray/[0.20]">
-        <div className="w-10 h-10 rounded-full bg-vitti-gray/[0.08] border border-vitti-gray/[0.14] flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200/60 flex items-center justify-center">
           <BarChart3 size={16} className="text-vitti-blue/30" />
         </div>
         <div className="text-center space-y-1.5">
@@ -86,7 +86,7 @@ export function MetricasDashboard({
                 "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold border transition-all duration-150",
                 isActive
                   ? "bg-[#171f38] border-[#638acc] hover:bg-[#1e2a47]"
-                  : "bg-[#f1f1f1] border-[#455cab] hover:bg-[#e8e8e8]"
+                  : "bg-white/60 border-vitti-blue hover:bg-slate-50"
               )}
             >
               <Image
@@ -146,7 +146,7 @@ export function MetricasDashboard({
 function NoDashboard({ label }: { label: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-vitti-gray/[0.20]">
-      <div className="w-10 h-10 rounded-full bg-vitti-gray/[0.08] border border-vitti-gray/[0.14] flex items-center justify-center">
+      <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200/60 flex items-center justify-center">
         <BarChart3 size={16} className="text-vitti-blue/30" />
       </div>
       <div className="text-center space-y-1.5">

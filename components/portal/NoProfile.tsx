@@ -38,7 +38,7 @@ export function NoProfile({ error = "profile_not_found" }: NoProfileProps) {
 
   return (
     <div className="flex flex-col items-center justify-center h-full gap-6 text-center px-8">
-      <div className="w-14 h-14 rounded-full bg-vitti-gray/[0.08] border border-vitti-gray/[0.14] flex items-center justify-center">
+      <div className="w-14 h-14 rounded-full bg-slate-100 border border-slate-200/60 flex items-center justify-center">
         <Icon size={22} className="text-vitti-blue/25" />
       </div>
 

@@ -82,7 +82,7 @@ function PeriodFilter({
       </button>
 
       {open && (
-        <div className="absolute top-full mt-2 right-0 z-50 min-w-[210px] rounded-xl border border-[#dfdedf] bg-white shadow-xl shadow-black/[0.08] overflow-hidden">
+        <div className="absolute top-full mt-2 right-0 z-50 min-w-[210px] rounded-xl border border-slate-200 bg-white shadow-xl shadow-black/[0.08] overflow-hidden">
           {PERIOD_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -106,7 +106,7 @@ function PeriodFilter({
           ))}
 
           {period === "custom" && (
-            <div className="border-t border-[#dfdedf] px-4 py-3 space-y-2 bg-[#f1f1f1]/40">
+            <div className="border-t border-slate-200/60 px-4 py-3 space-y-2 bg-slate-50/80">
               <p className="text-[9px] text-[#455cab]/40 tracking-[0.1em] uppercase font-light">
                 Período personalizado
               </p>
@@ -115,14 +115,14 @@ function PeriodFilter({
                 value={customStart}
                 max={customEnd || undefined}
                 onChange={(e) => onChange("custom", e.target.value, customEnd)}
-                className="w-full bg-white border border-[#dfdedf] rounded-lg px-3 py-2 text-[11px] text-[#455cab]/60 font-light focus:outline-none focus:border-[#455cab]/40 transition-colors [color-scheme:light]"
+                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[11px] text-[#455cab]/60 font-light focus:outline-none focus:border-[#455cab]/40 transition-colors [color-scheme:light]"
               />
               <input
                 type="date"
                 value={customEnd}
                 min={customStart || undefined}
                 onChange={(e) => onChange("custom", customStart, e.target.value)}
-                className="w-full bg-white border border-[#dfdedf] rounded-lg px-3 py-2 text-[11px] text-[#455cab]/60 font-light focus:outline-none focus:border-[#455cab]/40 transition-colors [color-scheme:light]"
+                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[11px] text-[#455cab]/60 font-light focus:outline-none focus:border-[#455cab]/40 transition-colors [color-scheme:light]"
               />
               {customStart && customEnd && (
                 <button
@@ -235,7 +235,7 @@ function KpiCard({
   return (
     <div
       className={cn(
-        "rounded-xl border bg-[#f1f1f1] border-[#dfdedf] flex flex-col gap-1 min-w-0 overflow-hidden",
+        "rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] flex flex-col gap-1 min-w-0 overflow-hidden",
         hasSparkline ? "pt-4 px-4 pb-0" : "p-4"
       )}
     >
@@ -280,7 +280,7 @@ function ChartTooltip({
     parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : label;
 
   return (
-    <div className="rounded-xl border border-[#dfdedf] bg-white shadow-lg px-3 py-2.5 space-y-1.5 min-w-[148px]">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-lg px-3 py-2.5 space-y-1.5 min-w-[148px]">
       <p className="text-[9px] text-[#171f38]/50 font-light">{dateLabel}</p>
       {payload.map((entry) => (
         <div key={entry.name} className="flex items-center justify-between gap-3">
@@ -325,7 +325,7 @@ function EvolutionChart({
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex flex-col">
+      <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col">
         <h4 className="text-[11px] font-light text-[#455cab] tracking-wide mb-1">
           Evolução no período
         </h4>
@@ -340,7 +340,7 @@ function EvolutionChart({
   }
 
   return (
-    <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex flex-col">
+    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col">
       <h4 className="text-[11px] font-light text-[#455cab] tracking-wide mb-3">
         Evolução no período
       </h4>
@@ -460,8 +460,8 @@ export function GoogleAdsView({
 
   if (!performance) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-[#dfdedf]">
-        <div className="w-10 h-10 rounded-full bg-[#f1f1f1] border border-[#dfdedf] flex items-center justify-center">
+      <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-slate-200">
+        <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
           <BarChart3 size={16} className="text-[#455cab]/30" />
         </div>
         <div className="text-center space-y-1.5">
@@ -560,7 +560,7 @@ export function GoogleAdsView({
       </div>
 
       {/* ── Divisor ─────────────────────────────────────────────── */}
-      <div className="border-t border-[#dfdedf]" />
+      <div className="border-t border-slate-200/60" />
 
       {/* ── Gráfico de evolução ──────────────────────────────────── */}
       <EvolutionChart rows={rows} hasConversions={hasConversions} />

@@ -69,19 +69,19 @@ export default async function CallsPage({
       {/* Header */}
       <div>
         <div className="flex items-center gap-3">
-          <h2 className="text-xl font-light text-vitti-blue tracking-wide">Calls</h2>
+          <h2 className="text-xl font-semibold tracking-tight text-vitti-fg">Calls</h2>
           {calls.length > 0 && (
             <Badge label={`${calls.length}`} variant="default" />
           )}
         </div>
-        <p className="text-sm text-vitti-blue/50 mt-0.5 font-light">
+        <p className="text-sm text-vitti-fg-muted mt-0.5">
           Reuniões e gravações com a equipe Vitti
         </p>
       </div>
 
       {/* Admin sem clientId na URL */}
       {isAdmin && !adminPreview && (
-        <div className="rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] px-5 py-6 flex flex-col items-center gap-3 text-center">
+        <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] px-5 py-6 flex flex-col items-center gap-3 text-center">
           <Video size={24} className="text-vitti-blue/25" />
           <p className="text-sm font-light text-vitti-blue/50">
             Selecione um cliente no Admin para visualizar as calls.
@@ -127,11 +127,11 @@ export default async function CallsPage({
                 return (
                   <div
                     key={call.id}
-                    className="rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] p-5 hover:border-vitti-gray/[0.25] hover:shadow-md transition-all"
+                    className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-5 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgb(0,0,0,0.10)] transition-all duration-200"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-vitti-gray/[0.10] border border-vitti-gray/[0.14] flex items-center justify-center shrink-0 mt-0.5">
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0 mt-0.5">
                           <Phone size={13} className="text-vitti-light/60" />
                         </div>
                         <div className="min-w-0">

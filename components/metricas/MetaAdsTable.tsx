@@ -56,8 +56,8 @@ export function MetaAdsTable({ rows }: MetaAdsTableProps) {
   const sorted = isEmpty ? [] : [...rows].sort((a, b) => b.date.localeCompare(a.date));
 
   return (
-    <div className="rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] overflow-x-auto">
-      <div className="grid grid-cols-9 border-b border-vitti-gray/[0.14] px-4 py-2.5 bg-vitti-gray/[0.04] min-w-[720px]">
+    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-x-auto">
+      <div className="grid grid-cols-9 border-b border-slate-200/60 px-4 py-2.5 bg-slate-50/60 min-w-[720px]">
         {COLS.map((col) => (
           <p
             key={col}
@@ -74,7 +74,7 @@ export function MetaAdsTable({ rows }: MetaAdsTableProps) {
               key={i}
               className={cn(
                 "grid grid-cols-9 px-4 py-3 gap-x-2 min-w-[720px]",
-                i < SKELETON_WIDTHS.length - 1 && "border-b border-vitti-gray/[0.10]"
+                i < SKELETON_WIDTHS.length - 1 && "border-b border-slate-200/40"
               )}
             >
               {widths.map((w, j) => (
@@ -91,7 +91,7 @@ export function MetaAdsTable({ rows }: MetaAdsTableProps) {
               key={row.date}
               className={cn(
                 "grid grid-cols-9 px-4 py-3 gap-x-2 min-w-[720px] text-[11px] font-light tabular-nums items-center",
-                i < sorted.length - 1 && "border-b border-vitti-gray/[0.10]"
+                i < sorted.length - 1 && "border-b border-slate-200/40"
               )}
             >
               <span className="text-vitti-blue/60">{fmtDate(row.date)}</span>

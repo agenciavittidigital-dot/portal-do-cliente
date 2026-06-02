@@ -15,7 +15,7 @@ export function ClientSelector({ clients, selectedClientId, loadError }: Props) 
     const initial = (client?.name ?? "C").charAt(0).toUpperCase();
 
     return (
-      <div className="flex items-center justify-between px-4 py-3 rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
+      <div className="flex items-center justify-between px-4 py-3 rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
         <div className="flex items-center gap-3">
           <div className="w-7 h-7 rounded-full bg-vitti-blue/15 border border-vitti-blue/20 flex items-center justify-center shrink-0">
             <span className="text-[11px] font-light text-vitti-blue/80">{initial}</span>
@@ -70,7 +70,7 @@ export function ClientSelector({ clients, selectedClientId, loadError }: Props) 
               <Link
                 key={client.id}
                 href={`/metricas?clientId=${client.id}`}
-                className="group flex items-center gap-3 p-4 rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] hover:border-vitti-blue/30 hover:bg-vitti-blue/[0.06] transition-all duration-150"
+                className="group flex items-center gap-3 p-4 rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-vitti-blue/30 hover:bg-vitti-blue/[0.06] transition-all duration-150"
               >
                 <div className="w-9 h-9 rounded-full bg-vitti-blue/10 border border-vitti-blue/15 flex items-center justify-center shrink-0 group-hover:bg-vitti-blue/20 transition-colors">
                   <span className="text-sm font-light text-vitti-blue/60 group-hover:text-vitti-blue transition-colors">

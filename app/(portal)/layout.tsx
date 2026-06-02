@@ -22,13 +22,15 @@ export default async function PortalLayout({
     return (
       <div className="flex h-screen bg-vitti-surface overflow-hidden">
         <Sidebar permissions={[]} isAdmin={false} />
-        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <div className="relative flex flex-col flex-1 min-w-0 overflow-hidden">
+          <div className="pointer-events-none absolute left-[-10%] top-[-10%] h-[500px] w-[500px] rounded-full bg-vitti-light/[0.08] blur-3xl" />
+          <div className="pointer-events-none absolute bottom-[-10%] right-[-5%] h-[400px] w-[400px] rounded-full bg-vitti-light/[0.08] blur-3xl" />
           <Topbar
             userEmail={user?.email ?? null}
             userName={null}
             clientName={null}
           />
-          <main className="flex-1 overflow-y-auto">
+          <main className="relative z-10 flex-1 overflow-y-auto">
             <NoProfile error={ctx?.error ?? "profile_not_found"} />
           </main>
         </div>
@@ -42,13 +44,15 @@ export default async function PortalLayout({
         permissions={ctx.permissions}
         isAdmin={ctx.isAdmin}
       />
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+      <div className="relative flex flex-col flex-1 min-w-0 overflow-hidden">
+        <div className="pointer-events-none absolute left-[-10%] top-[-10%] h-[500px] w-[500px] rounded-full bg-vitti-light/[0.08] blur-3xl" />
+        <div className="pointer-events-none absolute bottom-[-10%] right-[-5%] h-[400px] w-[400px] rounded-full bg-vitti-light/[0.08] blur-3xl" />
         <Topbar
           userEmail={user?.email ?? null}
           userName={ctx.profile?.name ?? null}
           clientName={ctx.client?.name ?? null}
         />
-        <main className="flex-1 overflow-y-auto p-6 lg:p-8 bg-white">{children}</main>
+        <main className="relative z-10 flex-1 overflow-y-auto p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );

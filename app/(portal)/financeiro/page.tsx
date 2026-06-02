@@ -133,15 +133,15 @@ export default async function FinanceiroPage({
 
       {/* Cabeçalho */}
       <div>
-        <h2 className="text-xl font-light text-[#171f38] tracking-wide">Financeiro</h2>
-        <p className="text-sm text-[#171f38]/50 mt-0.5 font-light">
+        <h2 className="text-xl font-semibold tracking-tight text-vitti-fg">Financeiro</h2>
+        <p className="text-sm text-vitti-fg-muted mt-0.5">
           Central financeira do seu contrato
         </p>
       </div>
 
       {/* Admin: sem clientId */}
       {isAdmin && !adminPreview && (
-        <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex items-center gap-3">
+        <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex items-center gap-3">
           <CreditCard size={14} className="text-[#455cab]/50 shrink-0" />
           <div className="flex-1">
             <p className="text-sm font-light text-[#171f38]">
@@ -179,7 +179,7 @@ export default async function FinanceiroPage({
 
       {/* Cliente sem vínculo */}
       {!isAdmin && !clientFound && (
-        <div className="rounded-xl border border-dashed border-[#dfdedf] py-16 flex flex-col items-center justify-center gap-3">
+        <div className="rounded-xl border border-dashed border-slate-200 py-16 flex flex-col items-center justify-center gap-3">
           <CreditCard size={20} className="text-[#455cab]/20" />
           <p className="text-sm font-light text-[#171f38]/50">
             Nenhum cliente vinculado à sua conta.
@@ -200,8 +200,8 @@ export default async function FinanceiroPage({
             </p>
 
             {latestNf ? (
-              <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-5 flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-[#455cab]/[0.08] border border-[#455cab]/[0.15] flex items-center justify-center shrink-0">
+              <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-5 flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
                   <FileText size={18} className="text-[#455cab]/70" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -256,7 +256,7 @@ export default async function FinanceiroPage({
                 )}
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed border-[#dfdedf] py-12 flex flex-col items-center justify-center gap-2">
+              <div className="rounded-xl border border-dashed border-slate-200 py-12 flex flex-col items-center justify-center gap-2">
                 <FileText size={18} className="text-[#455cab]/20" />
                 <p className="text-sm font-light text-[#171f38]/40">
                   Nenhuma nota fiscal disponível no momento
@@ -268,7 +268,7 @@ export default async function FinanceiroPage({
           </div>
 
           {/* Divisor */}
-          <div className="border-t border-[#dfdedf]" />
+          <div className="border-t border-slate-200/60" />
 
           {/* ── Pagamentos e Boletos ─────────────────────────────────── */}
           <div className="space-y-5">
@@ -283,7 +283,7 @@ export default async function FinanceiroPage({
               </p>
 
               {pendingPayments.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-[#dfdedf] py-10 flex flex-col items-center justify-center gap-2">
+                <div className="rounded-xl border border-dashed border-slate-200 py-10 flex flex-col items-center justify-center gap-2">
                   <Barcode size={18} className="text-[#455cab]/20" />
                   <p className="text-sm font-light text-[#171f38]/40">
                     Nenhum boleto a pagar
@@ -300,10 +300,10 @@ export default async function FinanceiroPage({
                     return (
                       <div
                         key={p.id}
-                        className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-5 flex items-start gap-4"
+                        className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-5 flex items-start gap-4"
                       >
                         {/* Ícone */}
-                        <div className="w-12 h-12 rounded-xl bg-[#455cab]/[0.08] border border-[#455cab]/[0.15] flex items-center justify-center shrink-0">
+                        <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
                           <Barcode size={18} className="text-[#455cab]/70" />
                         </div>
 

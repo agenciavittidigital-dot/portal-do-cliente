@@ -85,7 +85,7 @@ function toAbbr(regionName: string): string | null {
 
 function Placeholder() {
   return (
-    <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex flex-col">
+    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col">
       <h4 className="text-[11px] font-light text-[#455cab] tracking-wide">Por estado</h4>
       <div className="flex-1 flex flex-col items-center justify-center gap-2 min-h-[200px]">
         <MapPin size={16} className="text-[#455cab]/20" />
@@ -133,7 +133,7 @@ export function RegionHeatmap({ rows, isLeads = false }: Props) {
         }).format(v);
 
   return (
-    <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex flex-col gap-3">
+    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col gap-3">
       {/* Cabeçalho */}
       <div className="flex items-center justify-between">
         <h4 className="text-[11px] font-light text-[#455cab] tracking-wide">Por estado</h4>

@@ -152,15 +152,15 @@ export default async function RelatoriosPage({
 
       {/* Cabeçalho */}
       <div>
-        <h2 className="text-xl font-light text-[#171f38] tracking-wide">Relatórios</h2>
-        <p className="text-sm text-[#171f38]/50 mt-0.5 font-light">
+        <h2 className="text-xl font-semibold tracking-tight text-vitti-fg">Relatórios</h2>
+        <p className="text-sm text-vitti-fg-muted mt-0.5">
           Relatórios mensais e personalizados da sua conta
         </p>
       </div>
 
       {/* Admin: sem clientId selecionado */}
       {isAdmin && !adminPreview && (
-        <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex items-center gap-3">
+        <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex items-center gap-3">
           <FileText size={14} className="text-[#455cab]/50 shrink-0" />
           <div className="flex-1">
             <p className="text-sm font-light text-[#171f38]">
@@ -198,7 +198,7 @@ export default async function RelatoriosPage({
 
       {/* Cliente sem vínculo */}
       {!isAdmin && !clientFound && (
-        <div className="rounded-xl border border-dashed border-[#dfdedf] py-16 flex flex-col items-center justify-center gap-3">
+        <div className="rounded-xl border border-dashed border-slate-200 py-16 flex flex-col items-center justify-center gap-3">
           <FileText size={20} className="text-[#455cab]/20" />
           <p className="text-sm font-light text-[#171f38]/50">
             Nenhum cliente vinculado à sua conta.
@@ -219,9 +219,9 @@ export default async function RelatoriosPage({
             </p>
 
             {latestReport ? (
-              <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-5 flex items-start gap-4">
+              <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-5 flex items-start gap-4">
                 {/* Ícone */}
-                <div className="w-12 h-12 rounded-xl bg-[#455cab]/[0.08] border border-[#455cab]/[0.15] flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
                   <FileText size={18} className="text-[#455cab]/70" />
                 </div>
 
@@ -267,7 +267,7 @@ export default async function RelatoriosPage({
                 )}
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed border-[#dfdedf] py-12 flex flex-col items-center justify-center gap-2">
+              <div className="rounded-xl border border-dashed border-slate-200 py-12 flex flex-col items-center justify-center gap-2">
                 <FileText size={18} className="text-[#455cab]/20" />
                 <p className="text-sm font-light text-[#171f38]/40">
                   Nenhum relatório disponível no momento
@@ -282,10 +282,10 @@ export default async function RelatoriosPage({
           {/* Histórico de Relatórios */}
           {allReports.length > 0 && (
             <div>
-              <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] overflow-hidden">
+              <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-hidden">
 
                 {/* Cabeçalho do histórico */}
-                <div className="px-4 py-3.5 border-b border-[#dfdedf]/60 flex items-center justify-between gap-3 flex-wrap">
+                <div className="px-4 py-3.5 border-b border-slate-200/60 flex items-center justify-between gap-3 flex-wrap">
                   <div className="flex items-center gap-2">
                     <h4 className="text-[11px] font-light text-[#455cab] tracking-wide">
                       Histórico de Relatórios
@@ -314,8 +314,8 @@ export default async function RelatoriosPage({
                     <div
                       key={rep.id}
                       className={cn(
-                        "flex items-center gap-4 px-4 py-3.5 hover:bg-[#455cab]/[0.02] transition-colors",
-                        i < pageReports.length - 1 && "border-b border-[#dfdedf]/60"
+                        "flex items-center gap-4 px-4 py-3.5 hover:bg-slate-50/80 transition-colors",
+                        i < pageReports.length - 1 && "border-b border-slate-200/60"
                       )}
                     >
                       <FileText size={13} className="text-[#455cab]/40 shrink-0" />
@@ -343,7 +343,7 @@ export default async function RelatoriosPage({
                             href={downloadUrls[rep.id]!}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#dfdedf] text-[10px] font-light text-[#455cab]/60 hover:border-[#455cab]/40 hover:text-[#455cab] transition-all"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-[10px] font-light text-[#455cab]/60 hover:border-[#455cab]/40 hover:text-[#455cab] transition-all"
                           >
                             <Download size={10} />
                             Baixar
@@ -368,13 +368,13 @@ export default async function RelatoriosPage({
                           { clientId: clientIdForUrl, year: filterYear, month: filterMonth },
                           safePage - 1
                         )}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#dfdedf] text-[10px] font-light text-[#455cab]/60 hover:text-[#455cab] hover:border-[#455cab]/40 transition-all"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-light text-[#455cab]/60 hover:text-[#455cab] hover:border-[#455cab]/40 transition-all"
                       >
                         <ChevronLeft size={11} />
                         Anterior
                       </Link>
                     ) : (
-                      <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#dfdedf]/40 text-[10px] font-light text-[#171f38]/20 select-none">
+                      <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/40 text-[10px] font-light text-[#171f38]/20 select-none">
                         <ChevronLeft size={11} />
                         Anterior
                       </span>
@@ -385,13 +385,13 @@ export default async function RelatoriosPage({
                           { clientId: clientIdForUrl, year: filterYear, month: filterMonth },
                           safePage + 1
                         )}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#dfdedf] text-[10px] font-light text-[#455cab]/60 hover:text-[#455cab] hover:border-[#455cab]/40 transition-all"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-light text-[#455cab]/60 hover:text-[#455cab] hover:border-[#455cab]/40 transition-all"
                       >
                         Próxima
                         <ChevronRight size={11} />
                       </Link>
                     ) : (
-                      <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#dfdedf]/40 text-[10px] font-light text-[#171f38]/20 select-none">
+                      <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/40 text-[10px] font-light text-[#171f38]/20 select-none">
                         Próxima
                         <ChevronRight size={11} />
                       </span>

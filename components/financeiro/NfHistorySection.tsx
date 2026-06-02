@@ -116,10 +116,10 @@ export function NfHistorySection({ invoices, downloadUrls }: Props) {
       {/* Histórico expandido */}
       {expanded && (
         <div className="mt-3">
-          <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] overflow-hidden">
+          <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-hidden">
 
             {/* Cabeçalho */}
-            <div className="px-4 py-3.5 border-b border-[#dfdedf]/60 flex items-center justify-between gap-3 flex-wrap">
+            <div className="px-4 py-3.5 border-b border-slate-200/60 flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-2">
                 <h4 className="text-[11px] font-light text-[#455cab] tracking-wide">
                   Histórico de Notas Fiscais
@@ -132,7 +132,7 @@ export function NfHistorySection({ invoices, downloadUrls }: Props) {
                 <select
                   value={filterVal}
                   onChange={(e) => handleFilterChange(e.target.value)}
-                  className="text-[10px] font-light text-[#455cab]/70 bg-[#f1f1f1] border border-[#dfdedf] rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#455cab]/40 transition-colors cursor-pointer"
+                  className="text-[10px] font-light text-vitti-blue/70 bg-white/70 border border-slate-200/60 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-vitti-blue/40 transition-colors cursor-pointer"
                 >
                   <option value="">Todos os meses</option>
                   {filterOptions.map(([key, label]) => (
@@ -155,8 +155,8 @@ export function NfHistorySection({ invoices, downloadUrls }: Props) {
                 <div
                   key={inv.id}
                   className={cn(
-                    "flex items-center gap-4 px-4 py-3.5 hover:bg-[#455cab]/[0.02] transition-colors",
-                    i < pageRows.length - 1 && "border-b border-[#dfdedf]/60"
+                    "flex items-center gap-4 px-4 py-3.5 hover:bg-slate-50/80 transition-colors",
+                    i < pageRows.length - 1 && "border-b border-slate-200/60"
                   )}
                 >
                   <FileText size={13} className="text-[#455cab]/40 shrink-0" />
@@ -196,13 +196,13 @@ export function NfHistorySection({ invoices, downloadUrls }: Props) {
                         href={downloadUrls[inv.id]!}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#dfdedf] text-[10px] font-light text-[#455cab]/60 hover:border-[#455cab]/40 hover:text-[#455cab] transition-all"
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-[10px] font-light text-[#455cab]/60 hover:border-[#455cab]/40 hover:text-[#455cab] transition-all"
                       >
                         <Download size={10} />
                         Baixar
                       </a>
                     ) : (
-                      <span className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#dfdedf]/40 text-[10px] font-light text-[#171f38]/20 select-none">
+                      <span className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200/40 text-[10px] font-light text-[#171f38]/20 select-none">
                         <Download size={10} />
                         Baixar
                       </span>
@@ -223,13 +223,13 @@ export function NfHistorySection({ invoices, downloadUrls }: Props) {
                 {safePage > 1 ? (
                   <button
                     onClick={() => setPage(safePage - 1)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#dfdedf] text-[10px] font-light text-[#455cab]/60 hover:text-[#455cab] hover:border-[#455cab]/40 transition-all"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-light text-[#455cab]/60 hover:text-[#455cab] hover:border-[#455cab]/40 transition-all"
                   >
                     <ChevronLeft size={11} />
                     Anterior
                   </button>
                 ) : (
-                  <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#dfdedf]/40 text-[10px] font-light text-[#171f38]/20 select-none">
+                  <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/40 text-[10px] font-light text-[#171f38]/20 select-none">
                     <ChevronLeft size={11} />
                     Anterior
                   </span>
@@ -237,13 +237,13 @@ export function NfHistorySection({ invoices, downloadUrls }: Props) {
                 {safePage < totalPages ? (
                   <button
                     onClick={() => setPage(safePage + 1)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#dfdedf] text-[10px] font-light text-[#455cab]/60 hover:text-[#455cab] hover:border-[#455cab]/40 transition-all"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-light text-[#455cab]/60 hover:text-[#455cab] hover:border-[#455cab]/40 transition-all"
                   >
                     Próxima
                     <ChevronRight size={11} />
                   </button>
                 ) : (
-                  <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#dfdedf]/40 text-[10px] font-light text-[#171f38]/20 select-none">
+                  <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/40 text-[10px] font-light text-[#171f38]/20 select-none">
                     Próxima
                     <ChevronRight size={11} />
                   </span>

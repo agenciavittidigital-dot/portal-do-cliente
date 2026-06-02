@@ -82,10 +82,10 @@ export default async function AdminPage() {
           <WindsorDemographicSyncPanel />
 
           {/* Meta Ads — sincronização automática (futura) */}
-          <div className="rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
+          <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
             <div className="flex items-center justify-between px-5 py-4 gap-4 flex-wrap">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-vitti-gray/[0.10] border border-vitti-gray/[0.14] flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
                   <Target size={14} className="text-vitti-light/60" />
                 </div>
                 <div>
@@ -96,12 +96,12 @@ export default async function AdminPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[9px] font-light px-2.5 py-1 rounded-full border border-vitti-gray/[0.20] text-vitti-blue/50 bg-vitti-gray/[0.06]">
+                <span className="text-[9px] font-light px-2.5 py-1 rounded-full border border-slate-200 text-vitti-blue/50 bg-slate-100/60">
                   Sincronização manual
                 </span>
                 <button
                   disabled
-                  className="text-[9px] font-light px-3 py-1.5 rounded-full border border-vitti-gray/[0.14] text-vitti-blue/35 cursor-not-allowed select-none"
+                  className="text-[9px] font-light px-3 py-1.5 rounded-full border border-slate-200 text-vitti-blue/35 cursor-not-allowed select-none"
                 >
                   Sincronizar — Em breve
                 </button>

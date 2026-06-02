@@ -148,7 +148,7 @@ function PeriodFilter({
       </button>
 
       {open && (
-        <div className="absolute top-full mt-2 right-0 z-50 min-w-[210px] rounded-xl border border-vitti-gray/[0.14] bg-white shadow-xl shadow-black/[0.08] overflow-hidden">
+        <div className="absolute top-full mt-2 right-0 z-50 min-w-[210px] rounded-xl border border-slate-200 bg-white shadow-xl shadow-black/[0.08] overflow-hidden">
           {PERIOD_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -172,7 +172,7 @@ function PeriodFilter({
           ))}
 
           {period === "custom" && (
-            <div className="border-t border-vitti-gray/[0.14] px-4 py-3 space-y-2 bg-vitti-gray/[0.04]">
+            <div className="border-t border-slate-200/60 px-4 py-3 space-y-2 bg-slate-50/60">
               <p className="text-[9px] text-vitti-blue/40 tracking-[0.1em] uppercase font-light">
                 Período personalizado
               </p>
@@ -181,14 +181,14 @@ function PeriodFilter({
                 value={customStart}
                 max={customEnd || undefined}
                 onChange={(e) => onChange("custom", e.target.value, customEnd)}
-                className="w-full bg-vitti-gray/[0.06] border border-vitti-gray/[0.14] rounded-lg px-3 py-2 text-[11px] text-vitti-blue/60 font-light focus:outline-none focus:border-vitti-blue/40 transition-colors [color-scheme:light]"
+                className="w-full bg-slate-100/60 border border-slate-200 rounded-lg px-3 py-2 text-[11px] text-vitti-blue/60 font-light focus:outline-none focus:border-vitti-blue/40 transition-colors [color-scheme:light]"
               />
               <input
                 type="date"
                 value={customEnd}
                 min={customStart || undefined}
                 onChange={(e) => onChange("custom", customStart, e.target.value)}
-                className="w-full bg-vitti-gray/[0.06] border border-vitti-gray/[0.14] rounded-lg px-3 py-2 text-[11px] text-vitti-blue/60 font-light focus:outline-none focus:border-vitti-blue/40 transition-colors [color-scheme:light]"
+                className="w-full bg-slate-100/60 border border-slate-200 rounded-lg px-3 py-2 text-[11px] text-vitti-blue/60 font-light focus:outline-none focus:border-vitti-blue/40 transition-colors [color-scheme:light]"
               />
               {customStart && customEnd && (
                 <button
@@ -265,7 +265,7 @@ function FixedKpiCard({
   const hasData = value !== null;
 
   return (
-    <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] pt-4 px-4 pb-0 flex flex-col gap-1 min-w-0 overflow-hidden">
+    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] pt-4 px-4 pb-0 flex flex-col gap-1 min-w-0 overflow-hidden">
       <p className="text-[11px] text-[#171f38] font-light tracking-wide truncate">
         {kpi.label}
       </p>
@@ -379,7 +379,7 @@ function FunnelChart({
 
 function SmallKpiCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-[#f1f1f1] border-[#dfdedf] px-3 py-2.5 flex flex-col gap-0.5">
+    <div className="rounded-xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] px-3 py-2.5 flex flex-col gap-0.5">
       <p className="text-[9px] text-[#171f38] font-light tracking-wide truncate">{label}</p>
       <p className="text-sm font-bold text-[#455cab] tabular-nums leading-tight">{value}</p>
     </div>
@@ -402,7 +402,7 @@ function EvolutionTooltip({
   const dl =
     parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : String(label ?? "");
   return (
-    <div className="rounded-xl border border-[#dfdedf] bg-white shadow-lg px-3 py-2.5 space-y-1.5 min-w-[148px]">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-lg px-3 py-2.5 space-y-1.5 min-w-[148px]">
       <p className="text-[9px] text-[#171f38]/50 font-light">{dl}</p>
       {payload.map((p) => {
         const def = EVOLUTION_METRIC_DEFS[p.name];
@@ -653,7 +653,7 @@ function DonutCard({
   const maxVal  = hasData ? Math.max(...slices!.map((s) => s.value)) : 0;
 
   return (
-    <div className={cn("rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex flex-col", className)}>
+    <div className={cn("rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col", className)}>
       <div className="flex items-center justify-between mb-2">
         <h5 className="text-[11px] font-light text-[#455cab] tracking-wide">{title}</h5>
         {hasData && metricLabel && (
@@ -766,7 +766,7 @@ function BestAdsSection({ creatives }: { creatives: CreativeRow[] }) {
 
   if (sorted.length === 0) {
     return (
-      <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex flex-col min-h-[268px]">
+      <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col min-h-[268px]">
         <h4 className="text-[11px] font-light text-[#455cab] tracking-wide mb-auto">
           Melhores anúncios
         </h4>
@@ -781,7 +781,7 @@ function BestAdsSection({ creatives }: { creatives: CreativeRow[] }) {
   }
 
   return (
-    <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex flex-col gap-3">
+    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col gap-3">
       <h4 className="text-[11px] font-light text-[#455cab] tracking-wide">
         Melhores anúncios
       </h4>
@@ -793,7 +793,7 @@ function BestAdsSection({ creatives }: { creatives: CreativeRow[] }) {
             return (
               <div
                 key={c.adId}
-                className="relative group shrink-0 w-[calc(25%-9px)] snap-start rounded-xl border border-[#dfdedf] bg-white overflow-hidden"
+                className="relative group shrink-0 w-[calc(25%-9px)] snap-start rounded-xl border border-slate-200 bg-white overflow-hidden"
               >
                 <CreativeThumb url={c.thumbnail_url} name={c.adName ?? c.campaignName} />
                 <div className="px-2.5 py-2 bg-white">
@@ -952,7 +952,7 @@ export function MetaAdsView({
       </div>
 
       {/* ── Divisor ─────────────────────────────────────────────── */}
-      <div className="border-t border-vitti-gray/[0.14]" />
+      <div className="border-t border-slate-200/60" />
 
       {/* ── Área inferior: 4 colunas ─────────────────────────────
           Desktop (xl): funil | cards | gráfico | donuts
@@ -962,7 +962,7 @@ export function MetaAdsView({
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(270px,1.25fr)_minmax(128px,0.6fr)_minmax(400px,2.5fr)_minmax(200px,1fr)] gap-3 items-stretch">
 
         {/* Coluna 1 — Funil de resultados */}
-        <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex flex-col">
+        <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col">
           <h4 className="text-[13px] font-semibold text-[#455cab] tracking-wide mb-5 text-center">
             Funil de resultados
           </h4>
@@ -1000,7 +1000,7 @@ export function MetaAdsView({
         </div>
 
         {/* Coluna 3 — Gráfico de evolução */}
-        <div className="rounded-xl border bg-[#f1f1f1] border-[#dfdedf] p-4 flex flex-col">
+        <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col">
           <h4 className="text-[11px] font-light text-[#455cab] tracking-wide mb-1">
             Evolução no período
           </h4>

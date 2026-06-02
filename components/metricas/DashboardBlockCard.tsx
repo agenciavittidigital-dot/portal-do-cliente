@@ -60,7 +60,7 @@ export function DashboardBlockCard({ block, metrics }: Props) {
     : ("default" as const);
 
   return (
-    <div className="rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] p-5 flex flex-col gap-4">
+    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-5 flex flex-col gap-4">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -85,7 +85,7 @@ export function DashboardBlockCard({ block, metrics }: Props) {
           {metrics.map((m) => (
             <div
               key={m.id}
-              className="bg-vitti-gray/[0.06] rounded-lg p-3 border border-vitti-gray/[0.14]"
+              className="bg-slate-100/60 rounded-lg p-3 border border-slate-200"
             >
               <p className="text-[10px] text-vitti-blue/50 font-light tracking-widest uppercase truncate">
                 {m.display_name ?? m.catalog?.name ?? "Métrica"}

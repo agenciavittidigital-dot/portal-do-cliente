@@ -12,7 +12,7 @@ export default async function AdminRelatoriosPage() {
 
       <div>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-vitti-gray/[0.08] border border-vitti-gray/[0.14] flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
             <FileText size={14} className="text-vitti-light/60" />
           </div>
           <div className="flex items-center gap-3">

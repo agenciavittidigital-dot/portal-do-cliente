@@ -77,24 +77,24 @@ function PlatformCard({
   ];
 
   return (
-    <div className="rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] p-5">
+    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-5">
       <div className="flex items-center gap-2 mb-5">
-        <div className="w-7 h-7 rounded-lg bg-vitti-gray/[0.10] border border-vitti-gray/[0.14] flex items-center justify-center shrink-0">
+        <div className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
           {icon}
         </div>
-        <span className="text-xs font-light text-vitti-blue/60">{label}</span>
+        <span className="text-xs font-medium text-vitti-fg-muted">{label}</span>
       </div>
       {summary === null ? (
-        <p className="text-xs font-light text-vitti-blue/40 italic">Sem dados no período</p>
+        <p className="text-xs text-vitti-fg-muted/60 italic">Sem dados no período</p>
       ) : (
         <div className="space-y-3">
           {rows.map((row) => (
             <div key={row.label} className="flex items-baseline justify-between gap-2">
-              <span className="text-[10px] font-light text-vitti-blue/50 shrink-0">{row.label}</span>
+              <span className="text-[10px] text-vitti-fg-muted shrink-0">{row.label}</span>
               {row.value !== null ? (
-                <span className="text-sm font-light text-vitti-blue tabular-nums">{row.value}</span>
+                <span className="text-sm font-medium text-vitti-blue tabular-nums">{row.value}</span>
               ) : (
-                <span className="text-xs font-light text-vitti-blue/35 italic">—</span>
+                <span className="text-xs text-vitti-fg-muted/50 italic">—</span>
               )}
             </div>
           ))}
@@ -123,13 +123,13 @@ function RecentCard({
 }) {
   return (
     <Link href={href} className="group block h-full">
-      <div className="rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] p-5 hover:border-vitti-gray/[0.25] hover:shadow-md transition-all h-full">
+      <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-5 group-hover:-translate-y-1 group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 h-full">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-vitti-gray/[0.10] border border-vitti-gray/[0.14] flex items-center justify-center shrink-0">
+            <div className="w-6 h-6 rounded-md bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
               {icon}
             </div>
-            <span className="text-[10px] font-light text-vitti-blue/45 uppercase tracking-widest">
+            <span className="text-[10px] font-medium text-vitti-fg-muted uppercase tracking-widest">
               {label}
             </span>
           </div>
@@ -140,11 +140,11 @@ function RecentCard({
         </div>
         {title ? (
           <div className="space-y-1.5">
-            <p className="text-sm font-light text-vitti-blue line-clamp-2 leading-snug">
+            <p className="text-sm text-vitti-fg line-clamp-2 leading-snug">
               {title}
             </p>
             {subtitle && (
-              <p className="text-[10px] font-light text-vitti-blue/50">{subtitle}</p>
+              <p className="text-[10px] text-vitti-fg-muted">{subtitle}</p>
             )}
             {extra && (
               <p className="text-xs font-light text-vitti-blue/70 tabular-nums">{extra}</p>
@@ -171,10 +171,10 @@ function QuickLink({
 }) {
   return (
     <Link href={href} className="group">
-      <div className="flex items-center justify-between px-4 py-3.5 rounded-xl border bg-vitti-gray/[0.08] border-vitti-gray/[0.14] backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-vitti-blue/25 hover:bg-vitti-blue/[0.06] transition-all">
+      <div className="flex items-center justify-between px-4 py-3.5 rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgb(0,0,0,0.10)] transition-all duration-200">
         <div className="flex items-center gap-2.5">
           {icon}
-          <span className="text-xs font-light text-vitti-blue/70 group-hover:text-vitti-blue transition-colors">
+          <span className="text-xs font-medium text-vitti-fg-muted group-hover:text-vitti-fg transition-colors">
             {label}
           </span>
         </div>
@@ -227,11 +227,11 @@ export default async function DashboardPage({
     return (
       <div className="space-y-6 max-w-6xl">
         <div>
-          <h2 className="text-xl font-light text-vitti-blue tracking-wide">Admin Vitti</h2>
-          <p className="text-sm text-vitti-blue/50 mt-0.5 font-light">Painel administrativo</p>
+          <h2 className="text-xl font-semibold tracking-tight text-vitti-fg">Admin Vitti</h2>
+          <p className="text-sm text-vitti-fg-muted mt-0.5">Painel administrativo</p>
         </div>
         <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-vitti-gray/[0.20]">
-          <div className="w-12 h-12 rounded-full bg-vitti-gray/[0.08] border border-vitti-gray/[0.14] flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200/60 flex items-center justify-center">
             <Users size={18} className="text-vitti-blue/25" />
           </div>
           <div className="text-center space-y-1.5">
@@ -299,10 +299,10 @@ export default async function DashboardPage({
     return (
       <div className="space-y-6 max-w-6xl">
         <div>
-          <h2 className="text-xl font-light text-vitti-blue tracking-wide">
+          <h2 className="text-xl font-semibold tracking-tight text-vitti-fg">
             Olá{userName}
           </h2>
-          <p className="text-sm text-vitti-blue/50 mt-0.5 font-light">Visão geral</p>
+          <p className="text-sm text-vitti-fg-muted mt-0.5">Visão geral</p>
         </div>
         <div className="flex flex-col items-center justify-center py-20 gap-3 rounded-xl border border-dashed border-vitti-gray/[0.20]">
           <p className="text-sm font-light text-vitti-blue/50">
@@ -321,17 +321,17 @@ export default async function DashboardPage({
     <div className="space-y-8 max-w-6xl">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-light text-vitti-blue tracking-wide">
+        <h2 className="text-xl font-semibold tracking-tight text-vitti-fg">
           Olá, {greeting}
         </h2>
-        <p className="text-sm text-vitti-blue/50 mt-0.5 font-light">
+        <p className="text-sm text-vitti-fg-muted mt-0.5">
           Visão geral · últimos 30 dias
         </p>
       </div>
 
       {/* Performance por plataforma */}
       <section>
-        <p className="text-[9px] text-vitti-blue/40 tracking-[0.2em] uppercase font-light mb-3">
+        <p className="text-sm font-semibold text-vitti-fg mb-3">
           Performance
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -350,7 +350,7 @@ export default async function DashboardPage({
 
       {/* Itens recentes */}
       <section>
-        <p className="text-[9px] text-vitti-blue/40 tracking-[0.2em] uppercase font-light mb-3">
+        <p className="text-sm font-semibold text-vitti-fg mb-3">
           Recentes
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -385,7 +385,7 @@ export default async function DashboardPage({
 
       {/* Atalhos rápidos */}
       <section>
-        <p className="text-[9px] text-vitti-blue/40 tracking-[0.2em] uppercase font-light mb-3">
+        <p className="text-sm font-semibold text-vitti-fg mb-3">
           Acessar
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
