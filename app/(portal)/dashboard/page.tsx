@@ -321,25 +321,20 @@ export default async function DashboardPage({
   return (
     <div className="space-y-6 max-w-6xl">
 
-      {/* Hero */}
-      <section className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#171F38] via-[#1c2a52] to-[#0d1220] p-8 shadow-[0_8px_40px_rgb(0,0,0,0.15)]">
-        <div className="max-w-2xl">
-          <h1 className="text-2xl font-semibold tracking-tight text-white mb-3 leading-snug">
-            Sua operação com a Vitti,<br className="hidden sm:block" /> em um só lugar.
-          </h1>
-          <p className="text-sm text-white/60 font-light leading-relaxed mb-4">
-            Acompanhe relatórios, métricas, notas fiscais e materiais estratégicos
-            com mais clareza, organização e praticidade.
-          </p>
-          <p className="text-xs text-white/35 font-light leading-relaxed">
-            Um ambiente exclusivo para manter sua comunicação com a agência mais
-            simples, transparente e conectada.
-          </p>
-        </div>
-      </section>
-
       {/* Carrossel */}
       <HomeCarousel />
+
+      {/* Hero */}
+      <section className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#171F38] via-[#1c2a52] to-[#0d1220] p-8 shadow-[0_8px_40px_rgb(0,0,0,0.15)]">
+        <h1 className="text-2xl font-semibold tracking-tight text-white mb-3 leading-snug whitespace-normal sm:whitespace-nowrap">
+          Sua operação com a Vitti, em um só lugar.
+        </h1>
+        <p className="text-sm text-white/60 font-light leading-relaxed max-w-2xl">
+          Acompanhe relatórios, métricas, notas fiscais e materiais estratégicos com mais
+          clareza, organização e praticidade, em um ambiente exclusivo para manter sua
+          comunicação com a agência mais simples, transparente e conectada.
+        </p>
+      </section>
 
       {/* Acesso Rápido */}
       <section>

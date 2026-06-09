@@ -34,10 +34,7 @@ export function HomeCarousel() {
   };
 
   return (
-    <div
-      className="relative w-full rounded-2xl overflow-hidden bg-[#0d1425]"
-      style={{ height: "clamp(200px, 22vw, 320px)" }}
-    >
+    <div className="relative w-full rounded-2xl overflow-hidden bg-[#0d1425] aspect-[1920/820]">
       {IMAGES.map((src, i) => (
         <div
           key={src}
@@ -48,7 +45,7 @@ export function HomeCarousel() {
             src={src}
             alt={`Slide ${i + 1}`}
             fill
-            className="object-cover"
+            className="object-contain"
             priority={i === 0}
           />
         </div>
