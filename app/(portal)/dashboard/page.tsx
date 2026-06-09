@@ -7,6 +7,7 @@ import { computeDateRange, loadPerformanceData } from "@/lib/data/performance";
 import { listClientInvoices } from "@/lib/data/invoices-client";
 import { listPublishedReports } from "@/lib/data/reports-client";
 import { listPublishedCalls } from "@/lib/data/calls-client";
+import { HomeCarousel } from "@/components/home/HomeCarousel";
 import {
   Target,
   Search,
@@ -158,30 +159,33 @@ function RecentCard({
   );
 }
 
-// ── QuickLink ──────────────────────────────────────────────────────────────────
+// ── AccessCard ─────────────────────────────────────────────────────────────────
 
-function QuickLink({
-  label,
+function AccessCard({
+  title,
+  description,
   href,
   icon,
 }: {
-  label: string;
+  title: string;
+  description: string;
   href: string;
   icon: ReactNode;
 }) {
   return (
-    <Link href={href} className="group">
-      <div className="flex items-center justify-between px-4 py-3.5 rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgb(0,0,0,0.10)] transition-all duration-200">
-        <div className="flex items-center gap-2.5">
-          {icon}
-          <span className="text-xs font-medium text-vitti-fg-muted group-hover:text-vitti-fg transition-colors">
-            {label}
-          </span>
+    <Link href={href} className="group block h-full">
+      <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-5 group-hover:-translate-y-1 group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 h-full">
+        <div className="flex items-start justify-between mb-4">
+          <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
+            {icon}
+          </div>
+          <ArrowRight
+            size={11}
+            className="text-vitti-blue/25 group-hover:text-vitti-blue/60 transition-colors mt-0.5 shrink-0"
+          />
         </div>
-        <ArrowRight
-          size={11}
-          className="text-vitti-blue/25 group-hover:text-vitti-blue/60 transition-colors"
-        />
+        <p className="text-sm font-semibold text-vitti-fg mb-1.5">{title}</p>
+        <p className="text-xs text-vitti-fg-muted font-light leading-relaxed">{description}</p>
       </div>
     </Link>
   );
@@ -291,16 +295,13 @@ export default async function DashboardPage({
       ? `?clientId=${encodeURIComponent(targetClientId)}`
       : "";
 
-  const greeting = targetClientName ?? (isAdmin ? "Admin" : "Bem-vindo");
-  const userName = ctx?.profile?.name ? `, ${ctx.profile.name.split(" ")[0]}` : "";
-
   // ── Sem cliente vinculado (cliente comum) ──────────────────────────────────
   if (!targetClientId) {
     return (
       <div className="space-y-6 max-w-6xl">
         <div>
           <h2 className="text-xl font-semibold tracking-tight text-vitti-fg">
-            Olá{userName}
+            Bem-vindo ao Portal
           </h2>
           <p className="text-sm text-vitti-fg-muted mt-0.5">Visão geral</p>
         </div>
@@ -318,37 +319,62 @@ export default async function DashboardPage({
 
   // ── Visão geral completa ───────────────────────────────────────────────────
   return (
-    <div className="space-y-8 max-w-6xl">
-      {/* Header */}
-      <div>
-        <h2 className="text-xl font-semibold tracking-tight text-vitti-fg">
-          Olá, {greeting}
-        </h2>
-        <p className="text-sm text-vitti-fg-muted mt-0.5">
-          Visão geral · últimos 30 dias
-        </p>
-      </div>
+    <div className="space-y-6 max-w-6xl">
 
-      {/* Performance por plataforma */}
+      {/* Hero */}
+      <section className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#171F38] via-[#1c2a52] to-[#0d1220] p-8 shadow-[0_8px_40px_rgb(0,0,0,0.15)]">
+        <div className="max-w-2xl">
+          <h1 className="text-2xl font-semibold tracking-tight text-white mb-3 leading-snug">
+            Sua operação com a Vitti,<br className="hidden sm:block" /> em um só lugar.
+          </h1>
+          <p className="text-sm text-white/60 font-light leading-relaxed mb-4">
+            Acompanhe relatórios, métricas, notas fiscais e materiais estratégicos
+            com mais clareza, organização e praticidade.
+          </p>
+          <p className="text-xs text-white/35 font-light leading-relaxed">
+            Um ambiente exclusivo para manter sua comunicação com a agência mais
+            simples, transparente e conectada.
+          </p>
+        </div>
+      </section>
+
+      {/* Carrossel */}
+      <HomeCarousel />
+
+      {/* Acesso Rápido */}
       <section>
         <p className="text-sm font-semibold text-vitti-fg mb-3">
-          Performance
+          Acesso Rápido
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <PlatformCard
-            label="Meta Ads"
-            icon={<Target size={12} className="text-vitti-light/60" />}
-            summary={metaAds}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <AccessCard
+            title="Dados e Métricas"
+            description="Acompanhe indicadores, campanhas e resultados da sua operação."
+            href={`/metricas${qp}`}
+            icon={<BarChart3 size={15} className="text-vitti-light/60" />}
           />
-          <PlatformCard
-            label="Google Ads"
-            icon={<Search size={12} className="text-vitti-light/60" />}
-            summary={googleAds}
+          <AccessCard
+            title="Relatórios"
+            description="Acesse os relatórios estratégicos enviados pela equipe Vitti."
+            href={`/relatorios${qp}`}
+            icon={<FileText size={15} className="text-vitti-light/60" />}
+          />
+          <AccessCard
+            title="Financeiro"
+            description="Consulte notas fiscais e informações financeiras da sua conta."
+            href={`/financeiro${qp}`}
+            icon={<CreditCard size={15} className="text-vitti-light/60" />}
+          />
+          <AccessCard
+            title="Calls"
+            description="Encontre registros, materiais e alinhamentos das reuniões realizadas."
+            href={`/calls${qp}`}
+            icon={<Phone size={15} className="text-vitti-light/60" />}
           />
         </div>
       </section>
 
-      {/* Itens recentes */}
+      {/* Recentes */}
       <section>
         <p className="text-sm font-semibold text-vitti-fg mb-3">
           Recentes
@@ -383,34 +409,25 @@ export default async function DashboardPage({
         </div>
       </section>
 
-      {/* Atalhos rápidos */}
+      {/* Performance */}
       <section>
         <p className="text-sm font-semibold text-vitti-fg mb-3">
-          Acessar
+          Performance · últimos 30 dias
         </p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <QuickLink
-            label="Métricas"
-            href={`/metricas${qp}`}
-            icon={<BarChart3 size={14} className="text-vitti-light/60" />}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <PlatformCard
+            label="Meta Ads"
+            icon={<Target size={12} className="text-vitti-light/60" />}
+            summary={metaAds}
           />
-          <QuickLink
-            label="Financeiro"
-            href={`/financeiro${qp}`}
-            icon={<CreditCard size={14} className="text-vitti-light/60" />}
-          />
-          <QuickLink
-            label="Relatórios"
-            href={`/relatorios${qp}`}
-            icon={<FileText size={14} className="text-vitti-light/60" />}
-          />
-          <QuickLink
-            label="Calls"
-            href={`/calls${qp}`}
-            icon={<Phone size={14} className="text-vitti-light/60" />}
+          <PlatformCard
+            label="Google Ads"
+            icon={<Search size={12} className="text-vitti-light/60" />}
+            summary={googleAds}
           />
         </div>
       </section>
+
     </div>
   );
 }
