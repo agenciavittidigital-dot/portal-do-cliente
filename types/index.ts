@@ -127,6 +127,7 @@ export interface PerformanceRow {
   engagements: number;
   video_views_25: number;
   video_views_75: number;
+  landing_page_views: number;
   ctr: number | null;
   cpc: number | null;
   cpm: number | null;

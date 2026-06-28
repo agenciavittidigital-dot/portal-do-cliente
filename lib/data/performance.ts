@@ -59,7 +59,7 @@ export async function loadPerformanceData(
     const { data: rawRows, error } = await admin
       .from("performance_daily")
       .select(
-        "date, spend, impressions, reach, clicks, ctr, cpc, cpm, messages_started, leads, purchases, purchase_value, roas, engagements, video_views_25, video_views_75, frequency"
+        "date, spend, impressions, reach, clicks, ctr, cpc, cpm, messages_started, leads, purchases, purchase_value, roas, engagements, video_views_25, video_views_75, frequency, landing_page_views"
       )
       .eq("client_id", clientId)
       .eq("channel", channel)
@@ -82,6 +82,7 @@ export async function loadPerformanceData(
     const totalMessages = s("messages_started");
     const totalPurchases = s("purchases");
     const totalPurchaseValue = s("purchase_value");
+    const totalLandingPageViews = s("landing_page_views");
 
     // ROAS: média ponderada por spend dos valores armazenados pela Windsor.
     // Quando purchase_value = 0 mas Windsor retornou roas escalar, usa o valor Windsor.
@@ -116,6 +117,7 @@ export async function loadPerformanceData(
       engagements: s("engagements"),
       video_views_25: s("video_views_25"),
       video_views_75: s("video_views_75"),
+      landing_page_views: totalLandingPageViews > 0 ? totalLandingPageViews : null,
     };
 
     // Agrega múltiplas linhas por data (uma por campanha após Windsor sync)
@@ -137,6 +139,7 @@ export async function loadPerformanceData(
       const engagements = Number(r.engagements) || 0;
       const video_views_25 = Number(r.video_views_25) || 0;
       const video_views_75 = Number(r.video_views_75) || 0;
+      const landing_page_views = Number(r.landing_page_views) || 0;
 
       const existing = byDate.get(date);
       if (existing) {
@@ -151,6 +154,7 @@ export async function loadPerformanceData(
         existing.engagements += engagements;
         existing.video_views_25 += video_views_25;
         existing.video_views_75 += video_views_75;
+        existing.landing_page_views += landing_page_views;
         // Recalcula derivadas com os totais acumulados do dia
         existing.ctr = existing.impressions > 0 ? (existing.clicks / existing.impressions) * 100 : null;
         existing.cpc = existing.clicks > 0 ? existing.spend / existing.clicks : null;
@@ -171,6 +175,7 @@ export async function loadPerformanceData(
           engagements,
           video_views_25,
           video_views_75,
+          landing_page_views,
           ctr: impressions > 0 ? (clicks / impressions) * 100 : null,
           cpc: clicks > 0 ? spend / clicks : null,
           cpm: impressions > 0 ? (spend / impressions) * 1000 : null,

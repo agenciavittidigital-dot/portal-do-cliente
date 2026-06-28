@@ -51,6 +51,8 @@ export const WINDSOR_SYNC_FIELDS = [
   // Granularidade de anúncio individual
   "ad_id",
   "ad_name",
+  // Page Views (aterrissagem confirmada no site)
+  "actions_landing_page_view",
 ] as const;
 
 // Campos para o sync de breakdown demográfico (gênero e faixa etária)

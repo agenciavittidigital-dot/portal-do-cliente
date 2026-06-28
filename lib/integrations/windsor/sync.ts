@@ -60,6 +60,7 @@ interface AggregatedRecord {
   engagements: number;
   video_views_25: number;
   video_views_75: number;
+  landing_page_views: number;
   // ROAS: soma ponderada por spend para calcular média ponderada ao final
   roasWeightedSum: number;
   groupedCount: number;
@@ -236,6 +237,7 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
       existing.engagements += safeNum(raw.engagements);
       existing.video_views_25 += safeNum(raw.video_views_25);
       existing.video_views_75 += safeNum(raw.video_views_75);
+      existing.landing_page_views += safeNum(raw.actions_landing_page_view);
       existing.roasWeightedSum += safeNum(raw.roas) * rawSpend;
       existing.groupedCount++;
       if (!existing.thumbnail_url) existing.thumbnail_url = safeStr(raw.thumbnail_url);
@@ -260,6 +262,7 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
         engagements: safeNum(raw.engagements),
         video_views_25: safeNum(raw.video_views_25),
         video_views_75: safeNum(raw.video_views_75),
+        landing_page_views: safeNum(raw.actions_landing_page_view),
         roasWeightedSum: safeNum(raw.roas) * rawSpend,
         groupedCount: 1,
         rawSample: raw as Record<string, unknown>,
@@ -364,6 +367,7 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
       engagements: rec.engagements,
       video_views_25: rec.video_views_25,
       video_views_75: rec.video_views_75,
+      landing_page_views: rec.landing_page_views,
       thumbnail_url: rec.thumbnail_url,
       raw_data: {
         windsor_raw_sample: rec.rawSample,

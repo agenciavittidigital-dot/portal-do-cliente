@@ -1031,6 +1031,10 @@ export function MetaAdsView({
             value={fmtSummaryVal(summary, "ctr", "percentage")}
           />
           <SmallKpiCard
+            label="Page Views"
+            value={fmtSummaryVal(summary, "landing_page_views", "integer")}
+          />
+          <SmallKpiCard
             label="CPM"
             value={fmtSummaryVal(summary, "cpm", "currency_brl")}
           />
