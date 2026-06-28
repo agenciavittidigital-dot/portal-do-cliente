@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BarChart3, Calendar, ChevronDown } from "lucide-react";
+import { BarChart3, Calendar, ChevronDown, Search } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { PerformanceData, PerformanceRow } from "@/types";
 import type { GoogleAdsCampaignRow } from "@/lib/data/performance";
+import type { GoogleAdsKeywordRow } from "@/lib/data/keywords";
 
 // ── Filtro de período ─────────────────────────────────────────────────────────
 
@@ -174,7 +175,7 @@ function fmtAxisCount(v: number): string {
   return String(Math.round(v));
 }
 
-// ── Sparkline (mesmo padrão do MetaAdsView) ───────────────────────────────────
+// ── Sparkline ─────────────────────────────────────────────────────────────────
 
 function Sparkline({
   data,
@@ -210,7 +211,7 @@ function Sparkline({
   );
 }
 
-// ── KPI Card (mesmo padrão visual do MetaAdsView) ─────────────────────────────
+// ── KPI Card principal ────────────────────────────────────────────────────────
 
 interface KpiCardProps {
   label: string;
@@ -257,7 +258,25 @@ function KpiCard({
   );
 }
 
-// ── Tooltip do gráfico (mesmo padrão do MetaAdsView) ─────────────────────────
+// ── KPI Card secundário (compacto, sem sparkline) ─────────────────────────────
+
+function SmallKpiCard({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div className="rounded-xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_4px_16px_rgb(0,0,0,0.05)] p-4 flex flex-col gap-1">
+      <p className="text-[11px] text-[#171f38]/70 font-light tracking-wide">{label}</p>
+      <p
+        className={cn(
+          "text-lg font-bold tabular-nums leading-tight",
+          value !== null ? "text-[#455cab]" : "text-[#455cab]/30"
+        )}
+      >
+        {value ?? "—"}
+      </p>
+    </div>
+  );
+}
+
+// ── Tooltip do gráfico ────────────────────────────────────────────────────────
 
 const CHART_LABEL_MAP: Record<string, string> = {
   spend:  "Investimento",
@@ -299,7 +318,7 @@ function ChartTooltip({
   );
 }
 
-// ── Gráfico de evolução (padrão AreaChart do MetaAdsView) ─────────────────────
+// ── Gráfico de evolução ───────────────────────────────────────────────────────
 
 interface EvoSeries {
   key: string;
@@ -326,12 +345,12 @@ function EvolutionChart({
   if (rows.length === 0) {
     return (
       <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col">
-        <h4 className="text-[11px] font-light text-[#455cab] tracking-wide mb-1">
+        <h4 className="text-[12px] font-medium text-[#171f38]/75 tracking-wide mb-1">
           Evolução no período
         </h4>
-        <div className="min-h-[160px] flex flex-col items-center justify-center gap-2">
-          <BarChart3 size={16} className="text-[#455cab]/20" />
-          <p className="text-[10px] text-[#171f38]/30 font-light">
+        <div className="min-h-[200px] flex flex-col items-center justify-center gap-2">
+          <BarChart3 size={16} className="text-[#455cab]/30" />
+          <p className="text-[11px] text-[#171f38]/50 font-light">
             Aguardando sincronização
           </p>
         </div>
@@ -340,22 +359,22 @@ function EvolutionChart({
   }
 
   return (
-    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col">
-      <h4 className="text-[11px] font-light text-[#455cab] tracking-wide mb-3">
+    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col h-full">
+      <h4 className="text-[12px] font-medium text-[#171f38]/75 tracking-wide mb-3">
         Evolução no período
       </h4>
-      {/* Legenda — mesmo padrão do MetaAdsView */}
+      {/* Legenda */}
       <div className="flex flex-wrap gap-4 mb-3">
         {series.map(({ key, label, color }) => (
           <div key={key} className="flex items-center gap-1.5">
             <div className="w-3 h-[2px] rounded" style={{ backgroundColor: color }} />
-            <span className="text-[9px] text-[#171f38]/55 font-light">{label}</span>
+            <span className="text-[10px] text-[#171f38]/65 font-light">{label}</span>
           </div>
         ))}
       </div>
       {/* Gráfico */}
-      <div className="flex-1 min-h-[160px]">
-        <ResponsiveContainer width="100%" height={220}>
+      <div className="flex-1 min-h-[220px]">
+        <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={rows} margin={{ top: 4, right: 8, bottom: 4, left: 0 }}>
             <defs>
               {series.map(({ key, color }) => (
@@ -369,7 +388,7 @@ function EvolutionChart({
             <XAxis
               dataKey="date"
               tickFormatter={fmtAxisDate}
-              tick={{ fill: "#171f38", fontSize: 8, fontWeight: 300 }}
+              tick={{ fill: "rgba(23,31,56,0.60)", fontSize: 9, fontWeight: 300 }}
               axisLine={false}
               tickLine={false}
               dy={4}
@@ -377,7 +396,7 @@ function EvolutionChart({
             <YAxis
               yAxisId="left"
               tickFormatter={fmtAxisSpend}
-              tick={{ fill: "rgba(0,0,0,0.22)", fontSize: 7, fontWeight: 300 }}
+              tick={{ fill: "rgba(23,31,56,0.45)", fontSize: 8, fontWeight: 300 }}
               axisLine={false}
               tickLine={false}
               width={38}
@@ -386,7 +405,7 @@ function EvolutionChart({
               yAxisId="right"
               orientation="right"
               tickFormatter={fmtAxisCount}
-              tick={{ fill: "rgba(0,0,0,0.22)", fontSize: 7, fontWeight: 300 }}
+              tick={{ fill: "rgba(23,31,56,0.45)", fontSize: 8, fontWeight: 300 }}
               axisLine={false}
               tickLine={false}
               width={26}
@@ -416,12 +435,153 @@ function EvolutionChart({
   );
 }
 
+// ── Tabela de campanhas ───────────────────────────────────────────────────────
+
+function CampaignsTable({ campaigns }: { campaigns: GoogleAdsCampaignRow[] }) {
+  if (!campaigns.length) return null;
+
+  return (
+    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-hidden">
+      <div className="px-5 py-3.5 border-b border-slate-200/60">
+        <h4 className="text-[12px] font-medium text-[#171f38]/80 tracking-wide">Campanhas</h4>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs font-light">
+          <thead>
+            <tr className="border-b border-slate-200/70 bg-slate-50/70">
+              <th className="text-left px-5 py-3 text-[11px] text-[#171f38]/50 font-medium">
+                Campanha
+              </th>
+              <th className="text-right px-4 py-3 text-[11px] text-[#171f38]/50 font-medium whitespace-nowrap">
+                Investimento
+              </th>
+              <th className="text-right px-4 py-3 text-[11px] text-[#171f38]/50 font-medium">
+                Conversões
+              </th>
+              <th className="text-right px-4 py-3 text-[11px] text-[#171f38]/50 font-medium whitespace-nowrap">
+                Custo / Conv.
+              </th>
+              <th className="text-right px-4 py-3 text-[11px] text-[#171f38]/50 font-medium whitespace-nowrap">
+                Taxa Conv.
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {campaigns.map((camp, idx) => {
+              const convRate =
+                camp.clicks > 0 ? (camp.leads / camp.clicks) * 100 : null;
+              const isLast = idx === campaigns.length - 1;
+              return (
+                <tr
+                  key={camp.campaignId}
+                  className={cn(
+                    "hover:bg-slate-50/80 transition-colors",
+                    !isLast && "border-b border-slate-200/60"
+                  )}
+                >
+                  <td className="px-5 py-3.5 text-[#171f38]/90 max-w-[260px]">
+                    <div className="truncate">{camp.campaignName ?? "—"}</div>
+                  </td>
+                  <td className="px-4 py-3.5 text-right text-[#455cab] tabular-nums font-semibold">
+                    {fmtCurrency(camp.spend)}
+                  </td>
+                  <td className="px-4 py-3.5 text-right text-[#171f38]/75 tabular-nums">
+                    {camp.leads > 0 ? fmtNum(camp.leads) : "—"}
+                  </td>
+                  <td className="px-4 py-3.5 text-right text-[#171f38]/75 tabular-nums">
+                    {camp.costPerLead !== null ? fmtCurrency(camp.costPerLead) : "—"}
+                  </td>
+                  <td className="px-4 py-3.5 text-right text-[#171f38]/75 tabular-nums">
+                    {convRate !== null ? fmtPct(convRate) : "—"}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ── Card de palavras-chave ────────────────────────────────────────────────────
+
+function KeywordsCard({ keywords }: { keywords: GoogleAdsKeywordRow[] }) {
+  const rows = keywords.slice(0, 20);
+  const hasData = rows.length > 0;
+
+  return (
+    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] flex flex-col overflow-hidden h-[272px]">
+      {/* Cabeçalho fixo */}
+      <div className="px-4 pt-4 pb-3 border-b border-slate-200/60 shrink-0">
+        <h4 className="text-[12px] font-medium text-[#171f38]/75 tracking-wide">
+          Palavras-chave
+        </h4>
+      </div>
+
+      {hasData ? (
+        /* Área com scroll interno — não cresce além da altura do card */
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          <table className="w-full text-xs font-light">
+            <thead className="sticky top-0 z-10">
+              <tr className="border-b border-slate-200/70 bg-white/95 backdrop-blur-sm">
+                <th className="text-left px-4 py-2.5 text-[11px] text-[#171f38]/50 font-medium">
+                  Palavra-chave
+                </th>
+                <th className="text-right px-3 py-2.5 text-[11px] text-[#171f38]/50 font-medium whitespace-nowrap">
+                  Impressões
+                </th>
+                <th className="text-right px-4 py-2.5 text-[11px] text-[#171f38]/50 font-medium">
+                  Cliques
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((kw, idx) => {
+                const isLast = idx === rows.length - 1;
+                return (
+                  <tr
+                    key={kw.keywordText}
+                    className={cn(
+                      "hover:bg-slate-50/80 transition-colors",
+                      !isLast && "border-b border-slate-200/60"
+                    )}
+                  >
+                    <td className="px-4 py-2 text-[#171f38]/85 max-w-[140px]">
+                      <div className="truncate" title={kw.keywordText}>
+                        {kw.keywordText}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 text-right text-[#171f38]/70 tabular-nums">
+                      {kw.impressions.toLocaleString("pt-BR")}
+                    </td>
+                    <td className="px-4 py-2 text-right text-[#455cab] tabular-nums font-semibold">
+                      {kw.clicks.toLocaleString("pt-BR")}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="flex-1 flex flex-col items-center justify-center gap-2.5 text-center m-4 border border-dashed border-slate-200/80 rounded-xl bg-slate-50/40">
+          <Search size={18} className="text-[#455cab]/35" />
+          <p className="text-[11px] text-[#171f38]/55 font-light leading-relaxed max-w-[180px]">
+            Nenhuma palavra-chave no período selecionado
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ── GoogleAdsView ─────────────────────────────────────────────────────────────
 
 interface Props {
   performance?: PerformanceData | null;
   campaigns?: GoogleAdsCampaignRow[];
+  keywords?: GoogleAdsKeywordRow[];
   initialPeriod?: string;
   initialStartDate?: string;
   initialEndDate?: string;
@@ -429,7 +589,8 @@ interface Props {
 
 export function GoogleAdsView({
   performance,
-  campaigns: _campaigns = [],
+  campaigns = [],
+  keywords = [],
   initialPeriod = "last_7_days",
   initialStartDate = "",
   initialEndDate = "",
@@ -458,6 +619,7 @@ export function GoogleAdsView({
     router.replace(url.pathname + url.search, { scroll: false });
   }
 
+  // ── Estado vazio ────────────────────────────────────────────────────────────
   if (!performance) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-slate-200">
@@ -476,6 +638,7 @@ export function GoogleAdsView({
     );
   }
 
+  // ── Métricas calculadas ────────────────────────────────────────────────────
   const s    = performance.summary;
   const rows = performance.rows;
 
@@ -488,10 +651,15 @@ export function GoogleAdsView({
   const hasConversions = conversions !== null && conversions > 0;
   const costPerConversion =
     hasConversions && spend !== null ? spend / conversions! : null;
+  const taxaConversao =
+    clicks !== null && clicks > 0 && conversions !== null
+      ? (conversions / clicks) * 100
+      : null;
 
   return (
     <div className="space-y-5">
-      {/* ── Cabeçalho + filtro de período ───────────────────────── */}
+
+      {/* ── Cabeçalho + filtro de período ──────────────────────────────────── */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <h3 className="text-sm font-light text-[#455cab] tracking-wide">
           Visão geral de performance
@@ -504,8 +672,8 @@ export function GoogleAdsView({
         />
       </div>
 
-      {/* ── KPIs ────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-7 gap-3">
+      {/* ── 5 KPI cards principais ─────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <KpiCard
           label="Investimento"
           value={spend !== null ? fmtCurrency(spend) : null}
@@ -524,9 +692,9 @@ export function GoogleAdsView({
         <KpiCard
           label="Custo / Conv."
           value={costPerConversion !== null ? fmtCurrency(costPerConversion) : null}
-          pending={!hasConversions}
+          pending={costPerConversion === null}
           rows={rows}
-          sparkKey={hasConversions ? "cost_per_lead" : undefined}
+          sparkKey={costPerConversion !== null ? "cost_per_lead" : undefined}
           sparkColor="#7b27fa"
         />
         <KpiCard
@@ -543,27 +711,43 @@ export function GoogleAdsView({
           sparkKey="impressions"
           sparkColor="#fdce21"
         />
-        <KpiCard
-          label="CPC"
-          value={cpc !== null ? fmtCurrency(cpc) : null}
-          rows={rows}
-          sparkKey="cpc"
-          sparkColor="#f43f5e"
-        />
-        <KpiCard
-          label="CTR"
-          value={ctr !== null ? fmtPct(ctr) : null}
-          rows={rows}
-          sparkKey="ctr"
-          sparkColor="#f97316"
-        />
       </div>
 
-      {/* ── Divisor ─────────────────────────────────────────────── */}
+      {/* ── Divisor ────────────────────────────────────────────────────────── */}
       <div className="border-t border-slate-200/60" />
 
-      {/* ── Gráfico de evolução ──────────────────────────────────── */}
-      <EvolutionChart rows={rows} hasConversions={hasConversions} />
+      {/* ── Layout: Palavras-chave + métricas secundárias | Gráfico ─────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[5fr_7fr] gap-5 items-stretch">
+
+        {/* Coluna esquerda */}
+        <div className="flex flex-col gap-4">
+
+          {/* Card de palavras-chave */}
+          <KeywordsCard keywords={keywords} />
+
+          {/* Métricas secundárias: CPC, CTR, Taxa de Conversão */}
+          <div className="grid grid-cols-3 gap-3">
+            <SmallKpiCard
+              label="CPC"
+              value={cpc !== null ? fmtCurrency(cpc) : null}
+            />
+            <SmallKpiCard
+              label="CTR"
+              value={ctr !== null ? fmtPct(ctr) : null}
+            />
+            <SmallKpiCard
+              label="Taxa Conv."
+              value={taxaConversao !== null ? fmtPct(taxaConversao) : null}
+            />
+          </div>
+        </div>
+
+        {/* Gráfico de evolução */}
+        <EvolutionChart rows={rows} hasConversions={hasConversions} />
+      </div>
+
+      {/* ── Tabela de campanhas ─────────────────────────────────────────────── */}
+      <CampaignsTable campaigns={campaigns} />
 
     </div>
   );
