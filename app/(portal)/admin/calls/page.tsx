@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/Badge";
-import { CallsAdminPanel, BackToAdmin } from "@/components/admin/CallsAdminPanel";
+import { BackToAdmin } from "@/components/admin/CallsAdminPanel";
+import { CallsAdminTabs } from "@/components/admin/CallsAdminTabs";
 import { listAdminClients } from "@/lib/data/clients-admin";
 import { Phone } from "lucide-react";
 
@@ -21,11 +22,11 @@ export default async function AdminCallsPage() {
           </div>
         </div>
         <p className="text-sm text-vitti-blue/50 mt-1.5 font-light">
-          Gerencie calls por cliente — cadastro manual com link de gravação e resumo.
+          Gerencie solicitações de reunião, agendamentos e gravações por cliente.
         </p>
       </div>
 
-      <CallsAdminPanel allClients={clients} />
+      <CallsAdminTabs allClients={clients} />
     </div>
   );
 }
