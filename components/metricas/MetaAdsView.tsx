@@ -22,7 +22,7 @@ import type {
   PerformanceRow,
   PerformanceSummary,
 } from "@/types";
-import type { CreativeRow } from "@/lib/data/performance";
+import type { CreativeRow, MetaAdsCampaignRow } from "@/lib/data/performance";
 import type { RegionRow, DemographicRow } from "@/lib/data/performance-breakdowns";
 import { RegionHeatmap } from "./RegionHeatmap";
 
@@ -268,13 +268,13 @@ function FixedKpiCard({
   const hasData = value !== null;
 
   return (
-    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] pt-4 px-4 pb-0 flex flex-col gap-1 min-w-0 overflow-hidden">
-      <p className="text-[11px] text-[#171f38] font-light tracking-wide truncate">
+    <div className="group/mc rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] pt-4 px-4 pb-0 flex flex-col gap-1 min-w-0 overflow-hidden transition-colors duration-200 hover:[background-image:url('/assets/metric-card-hover-bg.jpg')] hover:bg-cover hover:bg-center">
+      <p className="text-[11px] text-[#171f38] font-light tracking-wide truncate transition-colors duration-200 group-hover/mc:text-white/70">
         {kpi.label}
       </p>
       <p
         className={cn(
-          "text-xl font-bold tabular-nums leading-none mt-0.5",
+          "text-xl font-bold tabular-nums leading-none mt-0.5 transition-colors duration-200 group-hover/mc:text-white",
           hasData ? "text-[#455cab]" : "text-[#455cab]/30"
         )}
       >
@@ -406,9 +406,9 @@ function FunnelChart({
 
 function SmallKpiCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] px-3 py-2.5 flex flex-col gap-0.5">
-      <p className="text-[9px] text-[#171f38] font-light tracking-wide truncate">{label}</p>
-      <p className="text-sm font-bold text-[#455cab] tabular-nums leading-tight">{value}</p>
+    <div className="group/mc rounded-xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] px-3 py-2.5 flex flex-col gap-0.5 transition-colors duration-200 hover:[background-image:url('/assets/metric-card-hover-bg.jpg')] hover:bg-cover hover:bg-center">
+      <p className="text-[9px] text-[#171f38] font-light tracking-wide truncate transition-colors duration-200 group-hover/mc:text-white/70">{label}</p>
+      <p className="text-sm font-bold text-[#455cab] tabular-nums leading-tight transition-colors duration-200 group-hover/mc:text-white">{value}</p>
     </div>
   );
 }
@@ -874,11 +874,96 @@ function BestAdsSection({ creatives }: { creatives: CreativeRow[] }) {
   );
 }
 
+// ── Tabela de campanhas Meta Ads ──────────────────────────────────────────────
+
+function MetaCampaignsTable({ campaigns }: { campaigns: MetaAdsCampaignRow[] }) {
+  if (campaigns.length === 0) return null;
+
+  const totalLeads    = campaigns.reduce((s, c) => s + c.leads, 0);
+  const totalMessages = campaigns.reduce((s, c) => s + c.messages_started, 0);
+  const totalPurchases = campaigns.reduce((s, c) => s + c.purchases, 0);
+
+  const resultKey: "leads" | "messages_started" | "purchases" =
+    totalLeads > 0 ? "leads" :
+    totalMessages > 0 ? "messages_started" :
+    "purchases";
+  const resultLabel =
+    resultKey === "leads" ? "Leads" :
+    resultKey === "messages_started" ? "Mensagens" :
+    "Compras";
+
+  function getResult(c: MetaAdsCampaignRow): number {
+    return resultKey === "leads" ? c.leads :
+           resultKey === "messages_started" ? c.messages_started :
+           c.purchases;
+  }
+
+  function getCostPerResult(c: MetaAdsCampaignRow): number | null {
+    const r = getResult(c);
+    return r > 0 ? c.spend / r : null;
+  }
+
+  const fmtBRL = (v: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 }).format(v);
+  const fmtInt = (v: number) => new Intl.NumberFormat("pt-BR").format(Math.round(v));
+  const fmtPct = (v: number | null) => v != null ? `${v.toFixed(2)}%` : "—";
+
+  return (
+    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4">
+      <h4 className="text-[11px] font-light text-[#455cab] tracking-wide mb-3">
+        Campanhas
+      </h4>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="border-b border-slate-200/70">
+              <th className="pb-2 pr-4 text-[9px] font-light text-[#171f38]/45 tracking-wider uppercase whitespace-nowrap">Campanha</th>
+              <th className="pb-2 pr-4 text-[9px] font-light text-[#171f38]/45 tracking-wider uppercase whitespace-nowrap text-right">Investimento</th>
+              <th className="pb-2 pr-4 text-[9px] font-light text-[#171f38]/45 tracking-wider uppercase whitespace-nowrap text-right">{resultLabel}</th>
+              <th className="pb-2 pr-4 text-[9px] font-light text-[#171f38]/45 tracking-wider uppercase whitespace-nowrap text-right">Custo / {resultLabel}</th>
+              <th className="pb-2 text-[9px] font-light text-[#171f38]/45 tracking-wider uppercase whitespace-nowrap text-right">CTR</th>
+            </tr>
+          </thead>
+          <tbody>
+            {campaigns.map((c) => {
+              const result = getResult(c);
+              const costPerResult = getCostPerResult(c);
+              return (
+                <tr
+                  key={c.campaignId}
+                  className="border-b border-slate-100/70 hover:bg-slate-50/80 transition-colors"
+                >
+                  <td className="py-2.5 pr-4 text-[11px] font-light text-[#171f38]/75 max-w-[220px] truncate">
+                    {c.campaignName ?? "—"}
+                  </td>
+                  <td className="py-2.5 pr-4 text-[11px] font-bold text-[#455cab] tabular-nums text-right whitespace-nowrap">
+                    {fmtBRL(c.spend)}
+                  </td>
+                  <td className="py-2.5 pr-4 text-[11px] font-light text-[#171f38]/75 tabular-nums text-right">
+                    {result > 0 ? fmtInt(result) : "—"}
+                  </td>
+                  <td className="py-2.5 pr-4 text-[11px] font-bold text-[#455cab] tabular-nums text-right whitespace-nowrap">
+                    {costPerResult != null ? fmtBRL(costPerResult) : "—"}
+                  </td>
+                  <td className="py-2.5 text-[11px] font-light text-[#171f38]/75 tabular-nums text-right">
+                    {fmtPct(c.ctr)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 // ── MetaAdsView ───────────────────────────────────────────────────────────────
 
 interface MetaAdsViewProps {
   blocks: BlockWithMetrics[];
   performance?: PerformanceData | null;
+  campaigns?: MetaAdsCampaignRow[] | null;
   creatives?: CreativeRow[] | null;
   regionBreakdown?: RegionRow[] | null;
   demographicBreakdown?: DemographicRow[] | null;
@@ -890,6 +975,7 @@ interface MetaAdsViewProps {
 export function MetaAdsView({
   blocks,
   performance,
+  campaigns,
   creatives,
   regionBreakdown,
   demographicBreakdown,
@@ -1096,6 +1182,11 @@ export function MetaAdsView({
         </div>
         <RegionHeatmap rows={regionBreakdown ?? []} isLeads={isLeads} />
       </div>
+
+      {/* ── Tabela de campanhas ──────────────────────────────────── */}
+      {campaigns && campaigns.length > 0 && (
+        <MetaCampaignsTable campaigns={campaigns} />
+      )}
     </div>
   );
 }

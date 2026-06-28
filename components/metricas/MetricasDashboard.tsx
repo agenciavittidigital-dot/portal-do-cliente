@@ -8,7 +8,7 @@ import { DashboardBlockCard } from "./DashboardBlockCard";
 import { MetaAdsView } from "./MetaAdsView";
 import { GoogleAdsView } from "./GoogleAdsView";
 import type { DashboardWithBlocks, PerformanceData, PlatformKey } from "@/types";
-import type { GoogleAdsCampaignRow, CreativeRow } from "@/lib/data/performance";
+import type { GoogleAdsCampaignRow, MetaAdsCampaignRow, CreativeRow } from "@/lib/data/performance";
 import type { RegionRow, DemographicRow } from "@/lib/data/performance-breakdowns";
 import type { GoogleAdsKeywordRow } from "@/lib/data/keywords";
 
@@ -29,6 +29,7 @@ interface Props {
   performanceGoogleAds?: PerformanceData | null;
   googleAdsCampaigns?: GoogleAdsCampaignRow[];
   googleAdsKeywords?: GoogleAdsKeywordRow[];
+  metaAdsCampaigns?: MetaAdsCampaignRow[];
   creativesMetaAds?: CreativeRow[] | null;
   regionBreakdown?: RegionRow[] | null;
   demographicBreakdown?: DemographicRow[] | null;
@@ -43,6 +44,7 @@ export function MetricasDashboard({
   performanceGoogleAds,
   googleAdsCampaigns,
   googleAdsKeywords = [],
+  metaAdsCampaigns,
   creativesMetaAds,
   regionBreakdown,
   demographicBreakdown,
@@ -120,6 +122,7 @@ export function MetricasDashboard({
           <MetaAdsView
             blocks={blocksForChannel}
             performance={performance}
+            campaigns={metaAdsCampaigns}
             creatives={creativesMetaAds}
             regionBreakdown={regionBreakdown}
             demographicBreakdown={demographicBreakdown}

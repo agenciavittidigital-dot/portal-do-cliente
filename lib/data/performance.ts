@@ -304,6 +304,99 @@ export async function loadCreativesData(
   }
 }
 
+// ── Loader de campanhas Meta Ads ──────────────────────────────────────────────
+
+export interface MetaAdsCampaignRow {
+  campaignId: string;
+  campaignName: string | null;
+  spend: number;
+  impressions: number;
+  clicks: number;
+  leads: number;
+  messages_started: number;
+  purchases: number;
+  ctr: number | null;
+}
+
+export async function loadMetaAdsCampaigns(
+  clientId: string,
+  startDate: string,
+  endDate: string
+): Promise<MetaAdsCampaignRow[]> {
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("performance_daily")
+      .select("campaign_id, campaign_name, spend, impressions, clicks, leads, messages_started, purchases")
+      .eq("client_id", clientId)
+      .eq("channel", "meta_ads")
+      .gte("date", startDate)
+      .lte("date", endDate)
+      .not("account_name", "ilike", "%demo%")
+      .not("campaign_id", "ilike", "%demo%");
+
+    if (error || !data?.length) return [];
+
+    const byId = new Map<string, {
+      campaignName: string | null;
+      spend: number;
+      impressions: number;
+      clicks: number;
+      leads: number;
+      messages_started: number;
+      purchases: number;
+    }>();
+
+    for (const row of data) {
+      const r = row as Record<string, unknown>;
+      const id = String(r.campaign_id ?? "unknown");
+      const name = r.campaign_name;
+      const spend = Number(r.spend) || 0;
+      const impressions = Number(r.impressions) || 0;
+      const clicks = Number(r.clicks) || 0;
+      const leads = Number(r.leads) || 0;
+      const messages_started = Number(r.messages_started) || 0;
+      const purchases = Number(r.purchases) || 0;
+
+      const existing = byId.get(id);
+      if (existing) {
+        existing.spend += spend;
+        existing.impressions += impressions;
+        existing.clicks += clicks;
+        existing.leads += leads;
+        existing.messages_started += messages_started;
+        existing.purchases += purchases;
+      } else {
+        byId.set(id, {
+          campaignName: typeof name === "string" && name ? name : null,
+          spend,
+          impressions,
+          clicks,
+          leads,
+          messages_started,
+          purchases,
+        });
+      }
+    }
+
+    return [...byId.entries()]
+      .map(([campaignId, c]) => ({
+        campaignId,
+        campaignName: c.campaignName,
+        spend: c.spend,
+        impressions: c.impressions,
+        clicks: c.clicks,
+        leads: c.leads,
+        messages_started: c.messages_started,
+        purchases: c.purchases,
+        ctr: c.impressions > 0 ? (c.clicks / c.impressions) * 100 : null,
+      }))
+      .sort((a, b) => b.spend - a.spend);
+  } catch {
+    return [];
+  }
+}
+
 // ── Loader de campanhas Google Ads ────────────────────────────────────────────
 
 export interface GoogleAdsCampaignRow {

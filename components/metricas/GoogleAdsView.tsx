@@ -236,14 +236,14 @@ function KpiCard({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] flex flex-col gap-1 min-w-0 overflow-hidden",
+        "group/mc rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] flex flex-col gap-1 min-w-0 overflow-hidden transition-colors duration-200 hover:[background-image:url('/assets/metric-card-hover-bg.jpg')] hover:bg-cover hover:bg-center",
         hasSparkline ? "pt-4 px-4 pb-0" : "p-4"
       )}
     >
-      <p className="text-[11px] text-[#171f38] font-light tracking-wide truncate">{label}</p>
+      <p className="text-[11px] text-[#171f38] font-light tracking-wide truncate transition-colors duration-200 group-hover/mc:text-white/70">{label}</p>
       <p
         className={cn(
-          "text-xl font-bold tabular-nums leading-none mt-0.5",
+          "text-xl font-bold tabular-nums leading-none mt-0.5 transition-colors duration-200 group-hover/mc:text-white",
           hasData ? "text-[#455cab]" : "text-[#455cab]/30"
         )}
       >
@@ -262,11 +262,11 @@ function KpiCard({
 
 function SmallKpiCard({ label, value }: { label: string; value: string | null }) {
   return (
-    <div className="rounded-xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_4px_16px_rgb(0,0,0,0.05)] p-4 flex flex-col gap-1">
-      <p className="text-[11px] text-[#171f38]/70 font-light tracking-wide">{label}</p>
+    <div className="group/mc rounded-xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_4px_16px_rgb(0,0,0,0.05)] p-4 flex flex-col gap-1 transition-colors duration-200 hover:[background-image:url('/assets/metric-card-hover-bg.jpg')] hover:bg-cover hover:bg-center">
+      <p className="text-[11px] text-[#171f38]/70 font-light tracking-wide transition-colors duration-200 group-hover/mc:text-white/70">{label}</p>
       <p
         className={cn(
-          "text-lg font-bold tabular-nums leading-tight",
+          "text-lg font-bold tabular-nums leading-tight transition-colors duration-200 group-hover/mc:text-white",
           value !== null ? "text-[#455cab]" : "text-[#455cab]/30"
         )}
       >
