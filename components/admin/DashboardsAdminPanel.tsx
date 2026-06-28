@@ -704,6 +704,139 @@ function ClientInfoSection({
   );
 }
 
+// ── Seção de Plataformas Ativas ───────────────────────────────────────────────
+
+const PLATFORM_OPTIONS = [
+  { key: "meta_ads",    label: "Meta Ads",    desc: "Facebook / Instagram Ads" },
+  { key: "google_ads",  label: "Google Ads",  desc: "Search, Display, YouTube" },
+] as const;
+
+type PlatformKey = (typeof PLATFORM_OPTIONS)[number]["key"];
+
+function PlatformsConfigSection({
+  config,
+  onPatchDashboard,
+}: {
+  config: ClientDashboardConfig;
+  onPatchDashboard: (id: string, patch: Record<string, unknown>) => Promise<void>;
+}) {
+  const primaryDash = config.dashboards[0];
+  if (!primaryDash) return null;
+
+  // Empty array = não configurado = todas ativas (compatibilidade com clientes existentes)
+  const raw = primaryDash.available_channels;
+  const initialChannels: PlatformKey[] =
+    raw.length > 0
+      ? (raw.filter((c): c is PlatformKey => c === "meta_ads" || c === "google_ads"))
+      : ["meta_ads", "google_ads"];
+
+  const [channels, setChannels] = useState<PlatformKey[]>(initialChannels);
+  const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+
+  function flash(type: "success" | "error", msg: string) {
+    setFeedback({ type, msg });
+    setTimeout(() => setFeedback(null), 3000);
+  }
+
+  async function toggle(key: PlatformKey) {
+    const isActive = channels.includes(key);
+    if (isActive && channels.length === 1) return; // mínimo 1 plataforma
+
+    const next: PlatformKey[] = isActive
+      ? channels.filter((c) => c !== key)
+      : [...channels, key];
+
+    const prev = channels;
+    setChannels(next);
+    setSaving(true);
+    try {
+      await onPatchDashboard(primaryDash.id, { available_channels: next });
+      flash("success", "Salvo");
+    } catch {
+      setChannels(prev);
+      flash("error", "Erro ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-[#455cab]/15 bg-[#455cab]/[0.025] overflow-hidden">
+      {/* Cabeçalho */}
+      <div className="px-5 py-4 border-b border-[#455cab]/10 flex items-center gap-3">
+        <div className="w-7 h-7 rounded-lg bg-[#455cab]/10 border border-[#455cab]/15 flex items-center justify-center shrink-0">
+          <LayoutDashboard size={13} className="text-[#455cab]/60" />
+        </div>
+        <div>
+          <p className="text-sm font-light text-[#455cab] tracking-wide">
+            Plataformas ativas
+          </p>
+          <p className="text-[10px] text-[#5F6368]/45 mt-0.5 font-light">
+            Define quais abas de plataforma este cliente pode acessar.
+          </p>
+        </div>
+        <div className="ml-auto flex items-center gap-2 min-w-[80px] justify-end">
+          {saving ? (
+            <Loader2 size={12} className="animate-spin text-[#5F6368]/60" />
+          ) : feedback ? (
+            <FeedbackLine {...feedback} />
+          ) : null}
+        </div>
+      </div>
+
+      {/* Corpo */}
+      <div className="px-5 py-4 flex flex-col gap-3">
+        {PLATFORM_OPTIONS.map(({ key, label, desc }) => {
+          const active = channels.includes(key);
+          const onlyOne = channels.length === 1 && active;
+          return (
+            <div key={key} className="flex items-center justify-between gap-4">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[11px] font-light text-[#111111]/80">{label}</span>
+                <span className="text-[9px] text-[#5F6368]/45 font-light">{desc}</span>
+              </div>
+              <button
+                onClick={() => toggle(key)}
+                disabled={saving || onlyOne}
+                title={onlyOne ? "Pelo menos uma plataforma deve ficar ativa" : undefined}
+                className={cn(
+                  "relative inline-flex w-9 h-5 rounded-full border transition-all duration-200 shrink-0",
+                  active
+                    ? "bg-[#455cab]/80 border-[#455cab]/60"
+                    : "bg-black/[0.05] border-black/[0.12]",
+                  (saving || onlyOne) && "opacity-40 cursor-not-allowed"
+                )}
+              >
+                <span
+                  className={cn(
+                    "absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-200",
+                    active ? "left-[calc(100%-18px)]" : "left-0.5"
+                  )}
+                />
+              </button>
+            </div>
+          );
+        })}
+
+        <p className="text-[9px] text-[#5F6368]/40 font-light leading-relaxed mt-1">
+          Plataforma desativada não aparece para o cliente, mesmo que existam dados.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Opções de conversão Meta Ads ──────────────────────────────────────────────
+
+const CONVERSION_OPTIONS = [
+  { key: "lead",     label: "Lead",     desc: "Formulários e landing pages" },
+  { key: "message",  label: "Mensagem", desc: "WhatsApp / Messenger" },
+  { key: "purchase", label: "Venda",    desc: "Compras e conversões no site" },
+] as const;
+
+type ConversionKey = (typeof CONVERSION_OPTIONS)[number]["key"];
+
 // ── Seção de Configurações Meta Ads ──────────────────────────────────────────
 
 function MetaAdsConfigSection({
@@ -726,6 +859,19 @@ function MetaAdsConfigSection({
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null);
 
+  // enabled_conversions: array já salvo (inclusive []) → usar exatamente como está.
+  // Chave ausente (undefined) → default retrocompatível ["lead", "message"].
+  const rawConv = metaBlock?.settings?.enabled_conversions;
+  const initialConversions: ConversionKey[] = Array.isArray(rawConv)
+    ? (rawConv as string[]).filter(
+        (v): v is ConversionKey => v === "lead" || v === "message" || v === "purchase"
+      )
+    : ["lead", "message"];
+
+  const [conversions, setConversions] = useState<ConversionKey[]>(initialConversions);
+  const [savingConv, setSavingConv] = useState(false);
+  const [feedbackConv, setFeedbackConv] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+
   if (!metaBlock) return null;
   // Re-atribuição para que closures abaixo enxerguem o tipo sem undefined
   const block = metaBlock;
@@ -733,6 +879,33 @@ function MetaAdsConfigSection({
   function flash(type: "success" | "error", msg: string) {
     setFeedback({ type, msg });
     setTimeout(() => setFeedback(null), 3000);
+  }
+
+  function flashConv(type: "success" | "error", msg: string) {
+    setFeedbackConv({ type, msg });
+    setTimeout(() => setFeedbackConv(null), 3000);
+  }
+
+  async function toggleConversion(key: ConversionKey) {
+    const isActive = conversions.includes(key);
+    const next: ConversionKey[] = isActive
+      ? conversions.filter((c) => c !== key)
+      : [...conversions, key];
+
+    const prev = conversions;
+    setConversions(next);
+    setSavingConv(true);
+    try {
+      await onPatchBlock(block.id, {
+        settingsPatch: { enabled_conversions: next },
+      });
+      flashConv("success", next.length === 0 ? "Nenhuma ativa" : "Salvo");
+    } catch {
+      setConversions(prev);
+      flashConv("error", "Erro ao salvar");
+    } finally {
+      setSavingConv(false);
+    }
   }
 
   async function toggleMetric(key: string) {
@@ -786,7 +959,67 @@ function MetaAdsConfigSection({
       </div>
 
       {/* Corpo */}
-      <div className="px-5 py-5">
+      <div className="px-5 py-5 space-y-6">
+
+        {/* Campo: Tipos de conversão */}
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <p className="text-[11px] font-light text-[#111111]/80">
+              Tipos de conversão
+            </p>
+            <div className="flex items-center gap-1.5 ml-auto">
+              {savingConv ? (
+                <Loader2 size={10} className="animate-spin text-[#5F6368]/60" />
+              ) : feedbackConv ? (
+                <FeedbackLine {...feedbackConv} />
+              ) : null}
+            </div>
+          </div>
+          <p className="text-[9px] text-[#5F6368]/45 font-light mb-3 leading-relaxed">
+            Define quais conversões são monitoradas no dashboard Meta Ads deste cliente.
+            <br />
+            Deixar tudo desmarcado exibe &quot;Resultados —&quot; sem valor de conversão.
+          </p>
+
+          <div className="flex flex-wrap gap-2">
+            {CONVERSION_OPTIONS.map(({ key, label }) => {
+              const active = conversions.includes(key);
+              return (
+                <button
+                  key={key}
+                  onClick={() => toggleConversion(key)}
+                  disabled={savingConv}
+                  className={cn(
+                    "flex items-center gap-1.5 text-[10px] px-3 py-1.5 rounded-lg border transition-all",
+                    active
+                      ? "bg-[#455cab]/10 border-[#455cab]/35 text-[#455cab] font-medium"
+                      : "bg-black/[0.02] border-black/[0.08] text-[#5F6368]/65 hover:border-[#455cab]/25 hover:text-[#5F6368]/85",
+                    savingConv && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  {active && <Check size={9} className="shrink-0" />}
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-3">
+            {conversions.length > 0 ? (
+              <p className="text-[9px] text-[#455cab]/60 font-light">
+                Ativos:{" "}
+                {conversions
+                  .map((k) => CONVERSION_OPTIONS.find((c) => c.key === k)?.label ?? k)
+                  .join(", ")}
+              </p>
+            ) : (
+              <p className="text-[9px] text-amber-600/55 font-light">
+                Nenhuma conversão ativa — dashboard exibirá &quot;Resultados —&quot;.
+              </p>
+            )}
+          </div>
+        </div>
+
         {/* Campo: Métricas do gráfico de evolução */}
         <div>
           <div className="flex items-baseline gap-2 mb-1">
@@ -981,7 +1214,14 @@ export function DashboardsAdminPanel({
         <div className="space-y-5">
           <ClientInfoSection client={config.client} />
 
-          {/* Configurações específicas por canal — aparece antes dos blocos */}
+          {/* Plataformas ativas — aparece antes das demais config */}
+          <PlatformsConfigSection
+            key={`platforms-${config.client.id}`}
+            config={config}
+            onPatchDashboard={patchDashboard}
+          />
+
+          {/* Configurações específicas por canal */}
           <MetaAdsConfigSection
             key={config.client.id}
             config={config}

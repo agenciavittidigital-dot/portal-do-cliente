@@ -228,12 +228,17 @@ export async function listClientDashboardConfig(
 
 export async function updateAdminDashboard(
   id: string,
-  patch: { status?: "published" | "draft"; settingsPatch?: Record<string, unknown> }
+  patch: {
+    status?: "published" | "draft";
+    settingsPatch?: Record<string, unknown>;
+    available_channels?: string[];
+  }
 ): Promise<void> {
   const admin = mkAdmin();
   const update: Record<string, unknown> = {};
 
   if (patch.status !== undefined) update.status = patch.status;
+  if (patch.available_channels !== undefined) update.available_channels = patch.available_channels;
 
   // settingsPatch is intentionally ignored — client_dashboards has no settings column
 

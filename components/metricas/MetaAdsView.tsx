@@ -258,12 +258,14 @@ function FixedKpiCard({
   kpi,
   summary,
   rows,
+  overrideNull = false,
 }: {
   kpi: KpiDef;
   summary: PerformanceSummary | null;
   rows: PerformanceRow[];
+  overrideNull?: boolean;
 }) {
-  const raw = summary?.[kpi.key as string];
+  const raw = overrideNull ? null : summary?.[kpi.key as string];
   const value = typeof raw === "number" ? raw : null;
   const hasData = value !== null;
 
@@ -282,6 +284,38 @@ function FixedKpiCard({
       </p>
       <div className="-mx-4 mt-2">
         <Sparkline data={rows} dataKey={kpi.key} color={kpi.sparkColor} />
+      </div>
+    </div>
+  );
+}
+
+// ── Card de Valor de venda / ROAS ────────────────────────────────────────────
+
+function SaleKpiCard({
+  label,
+  value,
+  rows,
+}: {
+  label: string;
+  value: string;
+  rows: PerformanceRow[];
+}) {
+  const hasData = value !== "—";
+  return (
+    <div className="group/mc rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] pt-4 px-4 pb-0 flex flex-col gap-1 min-w-0 overflow-hidden transition-colors duration-200 hover:[background-image:url('/assets/metric-card-hover-bg.jpg')] hover:bg-cover hover:bg-center">
+      <p className="text-[11px] text-[#171f38] font-light tracking-wide truncate transition-colors duration-200 group-hover/mc:text-white/70">
+        {label}
+      </p>
+      <p
+        className={cn(
+          "text-xl font-bold tabular-nums leading-none mt-0.5 transition-colors duration-200 group-hover/mc:text-white",
+          hasData ? "text-[#455cab]" : "text-[#455cab]/30"
+        )}
+      >
+        {value}
+      </p>
+      <div className="-mx-4 mt-2">
+        <Sparkline data={rows} dataKey="purchase_value" color="#fd7e14" />
       </div>
     </div>
   );
@@ -988,6 +1022,8 @@ export function MetaAdsView({
   const [period, setPeriod] = useState(initialPeriod);
   const [customStart, setCustomStart] = useState(initialStartDate);
   const [customEnd, setCustomEnd] = useState(initialEndDate);
+  const [carouselIdx, setCarouselIdx] = useState(0);
+  const [saleCardIdx, setSaleCardIdx] = useState(0);
 
   function handlePeriodChange(p: string, start: string, end: string) {
     setPeriod(p);
@@ -1045,17 +1081,72 @@ export function MetaAdsView({
     isLeads ? "leads" : "messages_started",
   ];
 
+  // Tipos de conversão ativos lidos de block.settings.enabled_conversions.
+  // Array já salvo (inclusive []) → usar exatamente. Chave ausente → default retrocompatível.
+  const activeConversions = (() => {
+    for (const { block } of blocks) {
+      const raw = (block.settings as Record<string, unknown> | null)?.enabled_conversions;
+      if (Array.isArray(raw)) {
+        return (raw as string[]).filter(
+          (v): v is "lead" | "message" | "purchase" =>
+            v === "lead" || v === "message" || v === "purchase"
+        );
+      }
+    }
+    return ["lead", "message"] as Array<"lead" | "message" | "purchase">;
+  })();
+
+  const activeConvKey =
+    activeConversions.length > 0
+      ? activeConversions[carouselIdx % activeConversions.length]
+      : null;
+
+  useEffect(() => {
+    if (activeConversions.length <= 1) {
+      setCarouselIdx(0);
+      return;
+    }
+    const id = setInterval(() => {
+      setCarouselIdx((prev) => (prev + 1) % activeConversions.length);
+    }, 3000);
+    return () => clearInterval(id);
+  }, [activeConversions.length]);
+
+  const showSaleCard = activeConversions.includes("purchase");
+
+  useEffect(() => {
+    if (!showSaleCard) {
+      setSaleCardIdx(0);
+      return;
+    }
+    const id = setInterval(() => {
+      setSaleCardIdx((prev) => (prev + 1) % 2);
+    }, 5000);
+    return () => clearInterval(id);
+  }, [showSaleCard]);
+
+  const roasVal = (() => {
+    const pv = typeof summary?.purchase_value === "number" ? (summary.purchase_value as number) : null;
+    const sp = typeof summary?.spend === "number" ? (summary.spend as number) : null;
+    if (pv === null || sp === null || sp === 0) return null;
+    return pv / sp;
+  })();
+
+  const convKpiEntry: KpiDef =
+    activeConvKey === "lead"
+      ? { key: "leads",            label: "Leads",      format: "integer", sparkColor: "#28b52e" }
+      : activeConvKey === "message"
+      ? { key: "messages_started", label: "Mensagens",  format: "integer", sparkColor: "#0b72fb" }
+      : activeConvKey === "purchase"
+      ? { key: "purchases",        label: "Vendas",     format: "integer", sparkColor: "#28b52e" }
+      : { key: "leads",            label: "Resultados", format: "integer", sparkColor: "#28b52e" };
+
   const KPIS: KpiDef[] = [
-    { key: "spend", label: "Investimento", format: "currency_brl", sparkColor: "#fb251d" },
-    {
-      key: isLeads ? "leads" : "messages_started",
-      label: isLeads ? "Leads" : "Mensagens",
-      format: "integer",
-      sparkColor: "#28b52e",
-    },
-    { key: "clicks", label: "Cliques", format: "integer", sparkColor: "#0b72fb" },
-    { key: "reach", label: "Alcance", format: "integer", sparkColor: "#7b27fa" },
-    { key: "impressions", label: "Impressões", format: "integer", sparkColor: "#fdce21" },
+    { key: "spend",       label: "Investimento", format: "currency_brl", sparkColor: "#fb251d" },
+    convKpiEntry,
+    { key: "clicks",      label: "Cliques",      format: "integer",      sparkColor: "#0b72fb" },
+    { key: "reach",       label: "Alcance",      format: "integer",      sparkColor: "#7b27fa" },
+    { key: "impressions", label: "Impressões",   format: "integer",      sparkColor: "#fdce21" },
   ];
 
   return (
@@ -1074,15 +1165,34 @@ export function MetaAdsView({
           />
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-          {KPIS.map((kpi) => (
+        <div className={cn(
+          "grid gap-3",
+          showSaleCard
+            ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-6"
+            : "grid-cols-2 sm:grid-cols-3 md:grid-cols-5"
+        )}>
+          {KPIS.map((kpi, idx) => (
             <FixedKpiCard
-              key={kpi.key as string}
+              key={idx === 1 ? "conv" : (kpi.key as string)}
               kpi={kpi}
               summary={summary}
               rows={rows}
+              overrideNull={idx === 1 && activeConvKey === null}
             />
           ))}
+          {showSaleCard && (
+            <SaleKpiCard
+              label={saleCardIdx === 0 ? "Valor de venda" : "ROAS"}
+              value={
+                saleCardIdx === 0
+                  ? fmtSummaryVal(summary, "purchase_value", "currency_brl")
+                  : roasVal !== null
+                  ? `${roasVal.toFixed(2)}x`
+                  : "—"
+              }
+              rows={rows}
+            />
+          )}
         </div>
       </div>
 
@@ -1129,12 +1239,18 @@ export function MetaAdsView({
             value={fmtSummaryVal(summary, "cpc", "currency_brl")}
           />
           <SmallKpiCard
-            label={isLeads ? "CPL" : "CP Mensagem"}
-            value={fmtSummaryVal(
-              summary,
-              isLeads ? "cost_per_lead" : "cost_per_message",
-              "currency_brl"
-            )}
+            label={
+              activeConvKey === "lead"     ? "CPL"          :
+              activeConvKey === "message"  ? "CP Mensagem"  :
+              activeConvKey === "purchase" ? "CP Venda"     :
+              "Custo/Resultado"
+            }
+            value={
+              activeConvKey === "lead"     ? fmtSummaryVal(summary, "cost_per_lead",     "currency_brl") :
+              activeConvKey === "message"  ? fmtSummaryVal(summary, "cost_per_message",  "currency_brl") :
+              activeConvKey === "purchase" ? fmtSummaryVal(summary, "cost_per_purchase", "currency_brl") :
+              "—"
+            }
           />
         </div>
 

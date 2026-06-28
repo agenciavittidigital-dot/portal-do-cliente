@@ -60,7 +60,7 @@ export async function PATCH(
     );
   }
 
-  const { status, settingsPatch } = body as Record<string, unknown>;
+  const { status, settingsPatch, available_channels } = body as Record<string, unknown>;
 
   const patch: Parameters<typeof updateAdminDashboard>[1] = {};
 
@@ -70,6 +70,11 @@ export async function PATCH(
 
   if (settingsPatch && typeof settingsPatch === "object" && !Array.isArray(settingsPatch)) {
     patch.settingsPatch = settingsPatch as Record<string, unknown>;
+  }
+
+  if (Array.isArray(available_channels)) {
+    patch.available_channels = (available_channels as unknown[])
+      .filter((v) => v === "meta_ads" || v === "google_ads");
   }
 
   try {

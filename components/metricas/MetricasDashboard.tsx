@@ -52,7 +52,22 @@ export function MetricasDashboard({
   initialStartDate,
   initialEndDate,
 }: Props) {
-  const initialChannel = (dashboards[0]?.dashboard.platform ?? "meta_ads") as PlatformKey;
+  // Plataformas habilitadas: lê available_channels de todos os dashboards e filtra PLATFORMS.
+  // Array vazio = não configurado = mostrar todas (compatibilidade retroativa).
+  const enabledChannels = (() => {
+    const all = [...new Set(dashboards.flatMap((d) => d.dashboard.available_channels))];
+    return all.length > 0 ? all : null;
+  })();
+  const visiblePlatforms = enabledChannels
+    ? PLATFORMS.filter((p) => enabledChannels.includes(p.key))
+    : PLATFORMS;
+
+  const initialChannel = (() => {
+    const preferred = (dashboards[0]?.dashboard.platform ?? "meta_ads") as PlatformKey;
+    if (visiblePlatforms.some((p) => p.key === preferred)) return preferred;
+    return (visiblePlatforms[0]?.key ?? "meta_ads") as PlatformKey;
+  })();
+
   const [selected, setSelected] = useState<PlatformKey>(initialChannel);
 
   if (dashboards.length === 0) {
@@ -81,7 +96,7 @@ export function MetricasDashboard({
     <div className="space-y-6">
       {/* ── Seletor de plataforma ─────────────────────────────── */}
       <div className="flex gap-2 flex-wrap">
-        {PLATFORMS.map(({ key, label, logoSrc }) => {
+        {visiblePlatforms.map(({ key, label, logoSrc }) => {
           const isActive = selected === key;
           return (
             <button
