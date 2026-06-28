@@ -3,8 +3,15 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { syncWindsorMappedAccounts } from "@/lib/integrations/windsor/sync";
 import { syncGoogleAdsMappedAccounts } from "@/lib/integrations/windsor/google-ads-sync";
+import { syncWindsorDemographicBreakdown } from "@/lib/integrations/windsor/demographic-sync";
+import { syncWindsorRegionalBreakdown } from "@/lib/integrations/windsor/regional-sync";
 import type { SyncResult } from "@/lib/integrations/windsor/sync";
 import type { GoogleAdsSyncResult } from "@/lib/integrations/windsor/google-ads-sync";
+import type { DemographicSyncResult } from "@/lib/integrations/windsor/demographic-sync";
+import type { RegionalSyncResult } from "@/lib/integrations/windsor/regional-sync";
+
+// Permite até 300s no Vercel Pro — necessário para 4 syncs paralelos com last_30d.
+export const maxDuration = 300;
 
 // ── Tipos de resposta ──────────────────────────────────────────────────────────
 
@@ -13,6 +20,8 @@ export interface CronSyncResponse {
   executedAt: string;
   meta: SyncResult | null;
   googleAds: GoogleAdsSyncResult | null;
+  demographic: DemographicSyncResult | null;
+  regional: RegionalSyncResult | null;
   error?: string;
 }
 
@@ -53,6 +62,37 @@ function googleAdsFallback(cause: unknown): GoogleAdsSyncResult {
   };
 }
 
+function demographicFallback(cause: unknown): DemographicSyncResult {
+  return {
+    success: false,
+    totalFetched: 0,
+    genderRecords: 0,
+    ageRecords: 0,
+    upserted: 0,
+    skippedUnmapped: 0,
+    unmappedAccounts: [],
+    error: cause instanceof Error ? cause.message : "Erro inesperado durante sync demográfico.",
+  };
+}
+
+function regionalFallback(cause: unknown): RegionalSyncResult {
+  return {
+    success: false,
+    totalFetched: 0,
+    mappedRecords: 0,
+    groupedRecords: 0,
+    skippedUnmapped: 0,
+    skippedNoRegion: 0,
+    upserted: 0,
+    errors: 1,
+    datePreset: "last_7d",
+    fieldsSynced: [],
+    unmappedAccounts: [],
+    sampleSaved: [],
+    error: cause instanceof Error ? cause.message : "Erro inesperado durante sync regional.",
+  };
+}
+
 // ── Handler principal (GET — compatível com Vercel Cron e chamadas externas) ──
 //
 // Autenticação: Authorization: Bearer <WINDSOR_CRON_SECRET>
@@ -75,6 +115,8 @@ export async function GET(request: NextRequest): Promise<Response> {
         executedAt: new Date().toISOString(),
         meta: null,
         googleAds: null,
+        demographic: null,
+        regional: null,
         error: "Não autorizado.",
       },
       { status: 401 }
@@ -83,12 +125,15 @@ export async function GET(request: NextRequest): Promise<Response> {
 
   const executedAt = new Date().toISOString();
 
-  // Executa Meta Ads e Google Ads em paralelo.
-  // Promise.allSettled garante que uma falha não cancela a outra.
-  const [metaSettled, googleSettled] = await Promise.allSettled([
-    syncWindsorMappedAccounts(),
-    syncGoogleAdsMappedAccounts(),
-  ]);
+  // Executa os 4 syncs em paralelo.
+  // Promise.allSettled garante que uma falha não cancela os demais.
+  const [metaSettled, googleSettled, demographicSettled, regionalSettled] =
+    await Promise.allSettled([
+      syncWindsorMappedAccounts(),
+      syncGoogleAdsMappedAccounts(),
+      syncWindsorDemographicBreakdown(),
+      syncWindsorRegionalBreakdown(),
+    ]);
 
   const meta: SyncResult =
     metaSettled.status === "fulfilled"
@@ -100,11 +145,22 @@ export async function GET(request: NextRequest): Promise<Response> {
       ? googleSettled.value
       : googleAdsFallback(googleSettled.reason);
 
-  const overallSuccess = meta.success && googleAds.success;
+  const demographic: DemographicSyncResult =
+    demographicSettled.status === "fulfilled"
+      ? demographicSettled.value
+      : demographicFallback(demographicSettled.reason);
 
-  // 200 → ambos OK; 207 → ao menos um falhou (partial success)
+  const regional: RegionalSyncResult =
+    regionalSettled.status === "fulfilled"
+      ? regionalSettled.value
+      : regionalFallback(regionalSettled.reason);
+
+  const overallSuccess =
+    meta.success && googleAds.success && demographic.success && regional.success;
+
+  // 200 → todos OK; 207 → ao menos um falhou (partial success)
   return NextResponse.json<CronSyncResponse>(
-    { success: overallSuccess, executedAt, meta, googleAds },
+    { success: overallSuccess, executedAt, meta, googleAds, demographic, regional },
     { status: overallSuccess ? 200 : 207 }
   );
 }
