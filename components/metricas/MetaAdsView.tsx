@@ -12,6 +12,9 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 import type {
   BlockWithMetrics,
@@ -303,25 +306,29 @@ function FunnelChart({
   }
 
   const stages = [
-    { key: "impressions", label: "Impressões", color: "#2d5f92" },
-    { key: "reach",       label: "Alcance",    color: "#4a88be" },
-    { key: "clicks",      label: "Cliques",    color: "#7470b6" },
-    { key: convKey,       label: convLabel,    color: "#8aacd8" },
+    { key: "impressions", label: "Impressões" },
+    { key: "reach",       label: "Alcance"    },
+    { key: "clicks",      label: "Cliques"    },
+    { key: convKey,       label: convLabel    },
   ];
 
-  // viewBox: 200 units wide. 5 boundary levels define the 4 trapezoids.
-  // Top (level 0) is nearly full width; bottom (level 4) stays wide enough for readability.
+  // viewBox: 200 units wide, separated stages with GAP between them
   const W = 200;
-  const SH = 58; // height per stage in SVG units
-  const levels: [number, number][] = [
-    [1,  199], // top of stage 1
-    [18, 182], // boundary 1→2
-    [33, 167], // boundary 2→3
-    [47, 153], // boundary 3→4
-    [59, 141], // bottom of stage 4
-  ];
-  const totalH = SH * stages.length;
+  const SH = 52;  // height per stage
+  const GAP = 7;  // gap between stages (creates the separated look)
+  const totalH = stages.length * SH + (stages.length - 1) * GAP;
   const cx = W / 2;
+
+  // Left/right edge x-positions at each boundary (narrows toward bottom)
+  const edges: [number, number][] = [
+    [4,  196],  // top of stage 0
+    [22, 178],  // bottom of stage 0 / top of stage 1
+    [38, 162],  // bottom of stage 1 / top of stage 2
+    [52, 148],  // bottom of stage 2 / top of stage 3
+    [64, 136],  // bottom of stage 3
+  ];
+
+  const STROKE = "#638acc";
 
   return (
     <svg
@@ -330,41 +337,61 @@ function FunnelChart({
       preserveAspectRatio="xMidYMid meet"
       style={{ display: "block" }}
     >
+      <defs>
+        {/* Single shared gradient for all stage fills */}
+        <linearGradient id="funGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stopColor="#638acc" stopOpacity={0.06} />
+          <stop offset="100%" stopColor="#455cab" stopOpacity={0.13} />
+        </linearGradient>
+      </defs>
+
       {stages.map((stage, i) => {
-        const y = i * SH;
-        const [lTop, rTop] = levels[i];
-        const [lBot, rBot] = levels[i + 1];
-        const d = `M ${lTop} ${y} L ${rTop} ${y} L ${rBot} ${y + SH} L ${lBot} ${y + SH} Z`;
-        const cy = y + SH / 2;
+        const yTop = i * (SH + GAP);
+        const yBot = yTop + SH;
+        const [lTop, rTop] = edges[i];
+        const [lBot, rBot] = edges[i + 1];
+        const midY = yTop + SH / 2;
+        const isLast = i === stages.length - 1;
+        const d = `M ${lTop} ${yTop} L ${rTop} ${yTop} L ${rBot} ${yBot} L ${lBot} ${yBot} Z`;
         const valStr = fmt(stage.key);
-        // pill width: 6.8 units per char, minimum 32
-        const pillW = Math.max(valStr.length * 6.8, 32);
 
         return (
           <g key={stage.key}>
-            {/* trapezoid — stroke matches card bg to create clean stage separator */}
-            <path d={d} fill={stage.color} stroke="#f1f1f1" strokeWidth="1.5" />
-            {/* metric name */}
+            {/* Trapezoid — translucent fill */}
+            <path d={d} fill="url(#funGrad)" />
+            {/* Trapezoid — blue outline */}
+            <path d={d} fill="none" stroke={STROKE} strokeWidth="0.9" />
+
+            {/* Thin connector lines bridging the gap to the next stage */}
+            {!isLast && (
+              <>
+                <line
+                  x1={lBot} y1={yBot} x2={lBot} y2={yBot + GAP}
+                  stroke={STROKE} strokeWidth="0.6" strokeOpacity="0.40"
+                />
+                <line
+                  x1={rBot} y1={yBot} x2={rBot} y2={yBot + GAP}
+                  stroke={STROKE} strokeWidth="0.6" strokeOpacity="0.40"
+                />
+              </>
+            )}
+
+            {/* Stage label — small, spaced, elegant */}
             <text
-              x={cx} y={cy - 11}
+              x={cx} y={midY - 9}
               textAnchor="middle" dominantBaseline="middle"
-              fill="rgba(255,255,255,0.82)"
-              fontSize="7" fontWeight="300" letterSpacing="1.5"
+              fill="rgba(23,31,56,0.45)"
+              fontSize="6" fontWeight="300" letterSpacing="2"
             >
               {stage.label.toUpperCase()}
             </text>
-            {/* value pill */}
-            <rect
-              x={cx - pillW / 2} y={cy + 1}
-              width={pillW} height={14}
-              rx={4}
-              fill="rgba(255,255,255,0.52)"
-            />
+
+            {/* Value — brand blue, prominent */}
             <text
-              x={cx} y={cy + 8}
+              x={cx} y={midY + 8}
               textAnchor="middle" dominantBaseline="middle"
               fill="#455cab"
-              fontSize="10" fontWeight="700"
+              fontSize="12" fontWeight="700"
             >
               {valStr}
             </text>
@@ -650,47 +677,69 @@ function DonutCard({
   metricLabel?: string;
 }) {
   const hasData = slices && slices.length > 0;
-  const maxVal  = hasData ? Math.max(...slices!.map((s) => s.value)) : 0;
 
   return (
     <div className={cn("rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col", className)}>
-      <div className="flex items-center justify-between mb-2">
-        <h5 className="text-[11px] font-light text-[#455cab] tracking-wide">{title}</h5>
+      {/* Cabeçalho */}
+      <div className="flex items-center justify-between mb-3">
+        <h5 className="text-[11px] font-medium text-[#171f38]/75 tracking-wide">{title}</h5>
         {hasData && metricLabel && (
           <span className="text-[8px] text-[#455cab]/40 font-light uppercase tracking-wider">
             {metricLabel}
           </span>
         )}
       </div>
-      <div className="flex-1 flex flex-col justify-center">
+
+      {/* Conteúdo: donut à esquerda, legenda à direita */}
+      <div className="flex-1 flex items-center">
         {hasData ? (
-          <div className="flex flex-col gap-[6px]">
-            {slices!.map((s) => (
-              <div key={s.label}>
-                <div className="flex items-center justify-between gap-1 mb-[3px]">
+          <div className="flex items-center gap-2.5 w-full">
+
+            {/* Gráfico de rosca */}
+            <div className="shrink-0">
+              <PieChart width={70} height={70}>
+                <Pie
+                  data={slices!}
+                  cx={35}
+                  cy={35}
+                  innerRadius={19}
+                  outerRadius={33}
+                  startAngle={90}
+                  endAngle={-270}
+                  dataKey="value"
+                  stroke="none"
+                  isAnimationActive={false}
+                  paddingAngle={slices!.length > 1 ? 2 : 0}
+                >
+                  {slices!.map((s, i) => (
+                    <Cell key={i} fill={s.color} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </div>
+
+            {/* Legenda sem truncamento */}
+            <div className="flex flex-col gap-1 flex-1 min-w-0">
+              {slices!.map((s) => (
+                <div key={s.label} className="flex items-center justify-between gap-1">
                   <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
-                    <span className="text-[9px] text-[#171f38]/65 font-light">{s.label}</span>
+                    <div
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{ backgroundColor: s.color }}
+                    />
+                    <span className="text-[9px] text-[#171f38]/70 font-light whitespace-nowrap">
+                      {s.label}
+                    </span>
                   </div>
-                  <span className="text-[9px] text-[#171f38]/70 font-light tabular-nums">
+                  <span className="text-[9px] text-[#171f38]/60 font-light tabular-nums shrink-0">
                     {s.value.toFixed(1)}%
                   </span>
                 </div>
-                <div className="h-[2px] rounded-full bg-[#455cab]/[0.08] overflow-hidden ml-3.5">
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${maxVal > 0 ? (s.value / maxVal) * 100 : 0}%`,
-                      backgroundColor: s.color,
-                      opacity: 0.65,
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         ) : (
-          <p className="text-[9px] text-[#171f38]/30 font-light text-center leading-relaxed">
+          <p className="text-[9px] text-[#171f38]/35 font-light text-center leading-relaxed w-full">
             Sem dados
             <br />
             no período
