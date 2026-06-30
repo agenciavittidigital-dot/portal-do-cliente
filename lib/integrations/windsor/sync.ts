@@ -97,6 +97,13 @@ export interface SyncResult {
 // ── Core sync ─────────────────────────────────────────────────────────────────
 
 export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
+  const today = new Date();
+  const dateTo = today.toISOString().slice(0, 10);
+  const fromDay = new Date(today);
+  fromDay.setUTCDate(fromDay.getUTCDate() - 6);
+  const dateFrom = fromDay.toISOString().slice(0, 10);
+  const dateRange = `${dateFrom}/${dateTo}`;
+
   const base: SyncResult = {
     success: false,
     totalFetched: 0,
@@ -105,7 +112,7 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
     skippedUnmapped: 0,
     upserted: 0,
     errors: 0,
-    datePreset: "last_7d",
+    datePreset: dateRange,
     fieldsSynced: [...WINDSOR_SYNC_FIELDS],
     unmappedAccounts: [],
     sampleSaved: [],
@@ -373,7 +380,7 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
         windsor_raw_sample: rec.rawSample,
         sync_meta: {
           synced_at: syncedAt,
-          date_preset: "last_7d",
+          date_preset: dateRange,
           integration_id: rec.integration.integrationId,
           matched_by: "account_name",
           grouped_count: rec.groupedCount,

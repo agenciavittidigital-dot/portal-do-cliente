@@ -113,7 +113,7 @@ export interface GoogleAdsSyncResult {
 
 // ── Fetch Windsor ─────────────────────────────────────────────────────────────
 
-async function fetchGoogleAdsData(): Promise<{
+async function fetchGoogleAdsData(dates: { dateFrom: string; dateTo: string }): Promise<{
   data?: Record<string, unknown>[];
   fieldsSynced: string[];
   error?: string;
@@ -131,7 +131,8 @@ async function fetchGoogleAdsData(): Promise<{
     const url = new URL(WINDSOR_ALL_ENDPOINT);
     url.searchParams.set("api_key", apiKey);
     url.searchParams.set("fields", fields.join(","));
-    url.searchParams.set("date_preset", "last_7d");
+    url.searchParams.set("date_from", dates.dateFrom);
+    url.searchParams.set("date_to", dates.dateTo);
 
     try {
       const res = await fetch(url.toString(), {
@@ -164,6 +165,13 @@ async function fetchGoogleAdsData(): Promise<{
 // ── Sync principal ────────────────────────────────────────────────────────────
 
 export async function syncGoogleAdsMappedAccounts(): Promise<GoogleAdsSyncResult> {
+  const today = new Date();
+  const dateTo = today.toISOString().slice(0, 10);
+  const fromDay = new Date(today);
+  fromDay.setUTCDate(fromDay.getUTCDate() - 6);
+  const dateFrom = fromDay.toISOString().slice(0, 10);
+  const dateRange = `${dateFrom}/${dateTo}`;
+
   const base: GoogleAdsSyncResult = {
     success: false,
     totalFetched: 0,
@@ -173,14 +181,14 @@ export async function syncGoogleAdsMappedAccounts(): Promise<GoogleAdsSyncResult
     skippedUnmapped: 0,
     upserted: 0,
     errors: 0,
-    datePreset: "last_7d",
+    datePreset: dateRange,
     fieldsSynced: [],
     unmappedAccounts: [],
     sampleSaved: [],
   };
 
   // ── 1. Fetch Windsor ──────────────────────────────────────────────────────
-  const { data: allData, fieldsSynced, error: fetchError } = await fetchGoogleAdsData();
+  const { data: allData, fieldsSynced, error: fetchError } = await fetchGoogleAdsData({ dateFrom, dateTo });
 
   if (fetchError || !allData) {
     return { ...base, error: fetchError ?? "Sem dados retornados pela Windsor." };
@@ -331,7 +339,7 @@ export async function syncGoogleAdsMappedAccounts(): Promise<GoogleAdsSyncResult
         google_ads_raw_sample: rec.rawSample,
         sync_meta: {
           synced_at: syncedAt,
-          date_preset: "last_7d",
+          date_preset: dateRange,
           integration_id: rec.integration.integrationId,
           channel: "google_ads",
           matched_by: "account_name",

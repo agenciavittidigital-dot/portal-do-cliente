@@ -48,10 +48,17 @@ export async function syncWindsorDemographicBreakdown(): Promise<DemographicSync
     return { ...base, error: "WINDSOR_API_KEY não configurada no ambiente." };
   }
 
+  const today = new Date();
+  const dateTo = today.toISOString().slice(0, 10);
+  const fromDay = new Date(today);
+  fromDay.setUTCDate(fromDay.getUTCDate() - 29);
+  const dateFrom = fromDay.toISOString().slice(0, 10);
+
   const url = new URL("https://connectors.windsor.ai/all");
   url.searchParams.set("api_key", apiKey);
   url.searchParams.set("fields", WINDSOR_DEMOGRAPHIC_FIELDS.join(","));
-  url.searchParams.set("date_preset", "last_30d");
+  url.searchParams.set("date_from", dateFrom);
+  url.searchParams.set("date_to", dateTo);
 
   let rawData: Array<Record<string, unknown>> = [];
   try {

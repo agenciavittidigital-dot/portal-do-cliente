@@ -43,6 +43,13 @@ export interface RegionalSyncResult {
 // ── Core sync ─────────────────────────────────────────────────────────────────
 
 export async function syncWindsorRegionalBreakdown(): Promise<RegionalSyncResult> {
+  const today = new Date();
+  const dateTo = today.toISOString().slice(0, 10);
+  const fromDay = new Date(today);
+  fromDay.setUTCDate(fromDay.getUTCDate() - 6);
+  const dateFrom = fromDay.toISOString().slice(0, 10);
+  const dateRange = `${dateFrom}/${dateTo}`;
+
   const base: RegionalSyncResult = {
     success: false,
     totalFetched: 0,
@@ -52,7 +59,7 @@ export async function syncWindsorRegionalBreakdown(): Promise<RegionalSyncResult
     skippedNoRegion: 0,
     upserted: 0,
     errors: 0,
-    datePreset: "last_7d",
+    datePreset: dateRange,
     fieldsSynced: [...WINDSOR_REGIONAL_FIELDS],
     unmappedAccounts: [],
     sampleSaved: [],
@@ -67,7 +74,8 @@ export async function syncWindsorRegionalBreakdown(): Promise<RegionalSyncResult
   const url = new URL("https://connectors.windsor.ai/all");
   url.searchParams.set("api_key", apiKey);
   url.searchParams.set("fields", WINDSOR_REGIONAL_FIELDS.join(","));
-  url.searchParams.set("date_preset", "last_7d");
+  url.searchParams.set("date_from", dateFrom);
+  url.searchParams.set("date_to", dateTo);
 
   let rawData: Array<Record<string, unknown>> = [];
   try {

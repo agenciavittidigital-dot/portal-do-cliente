@@ -99,7 +99,10 @@ export function getWindsorStatus(): WindsorStatus {
   return { configured: true, maskedKey: masked };
 }
 
-async function fetchWindsor(fields: string): Promise<WindsorApiResponse> {
+async function fetchWindsor(
+  fields: string,
+  dates?: { dateFrom: string; dateTo: string }
+): Promise<WindsorApiResponse> {
   const status = getWindsorStatus();
   if (!status.configured) {
     return { error: status.reason };
@@ -108,7 +111,12 @@ async function fetchWindsor(fields: string): Promise<WindsorApiResponse> {
   const url = new URL(WINDSOR_ALL_ENDPOINT);
   url.searchParams.set("api_key", process.env.WINDSOR_API_KEY!);
   url.searchParams.set("fields", fields);
-  url.searchParams.set("date_preset", "last_7d");
+  if (dates) {
+    url.searchParams.set("date_from", dates.dateFrom);
+    url.searchParams.set("date_to", dates.dateTo);
+  } else {
+    url.searchParams.set("date_preset", "last_7d");
+  }
 
   try {
     const res = await fetch(url.toString(), {
@@ -140,7 +148,12 @@ export async function fetchWindsorRawData(): Promise<WindsorApiResponse> {
   return fetchWindsor(WINDSOR_PREVIEW_FIELDS);
 }
 
-// Sync: conjunto completo de campos confirmados pela Sprint 6E-A
+// Sync: últimos 7 dias incluindo hoje (date_from/date_to explícito)
 export async function fetchWindsorSyncData(): Promise<WindsorApiResponse> {
-  return fetchWindsor(WINDSOR_SYNC_FIELDS.join(","));
+  const today = new Date();
+  const dateTo = today.toISOString().slice(0, 10);
+  const from = new Date(today);
+  from.setUTCDate(from.getUTCDate() - 6);
+  const dateFrom = from.toISOString().slice(0, 10);
+  return fetchWindsor(WINDSOR_SYNC_FIELDS.join(","), { dateFrom, dateTo });
 }
