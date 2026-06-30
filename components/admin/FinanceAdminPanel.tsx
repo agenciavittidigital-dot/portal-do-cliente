@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -15,6 +15,8 @@ import {
   AlertCircle,
   RefreshCw,
   ExternalLink,
+  ChevronDown,
+  Trash2,
 } from "lucide-react";
 import type { AdminInvoiceRow, InvoiceStatus } from "@/lib/data/invoices-admin";
 import type { AdminClientRow } from "@/lib/data/clients-admin";
@@ -86,6 +88,107 @@ export function BackToAdmin() {
   );
 }
 
+// ── ClientSelector ─────────────────────────────────────────────────────────────
+
+function ClientSelector({
+  allClients,
+  selectedClientId,
+  onSelect,
+}: {
+  allClients: AdminClientRow[];
+  selectedClientId: string;
+  onSelect: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery("");
+      }
+    }
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, [open]);
+
+  const filtered = allClients.filter((c) =>
+    c.name.toLowerCase().includes(query.toLowerCase())
+  );
+
+  const selected = allClients.find((c) => c.id === selectedClientId);
+
+  return (
+    <div ref={containerRef} className="relative flex-1 min-w-[220px]">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between gap-2 bg-white border border-black/[0.08] rounded-xl px-3 py-2.5 text-[11px] font-light text-left shadow-[0_1px_4px_rgb(0,0,0,0.04)] transition-colors hover:border-vitti-medium/30 focus:outline-none focus:border-vitti-medium/40"
+      >
+        <span className={selected ? "text-[#111111]/80" : "text-[#5F6368]/45"}>
+          {selected
+            ? `${selected.name}${selected.status !== "active" ? " (inativo)" : ""}`
+            : "Selecionar cliente…"}
+        </span>
+        <ChevronDown
+          size={12}
+          className={`text-[#5F6368]/40 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-0 right-0 mt-1.5 z-30 bg-white border border-black/[0.08] rounded-xl shadow-[0_8px_28px_rgb(0,0,0,0.10)] overflow-hidden">
+          <div className="p-2 border-b border-black/[0.05]">
+            <div className="relative">
+              <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5F6368]/40" />
+              <input
+                autoFocus
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Buscar cliente…"
+                className="w-full pl-7 pr-3 py-1.5 text-[11px] font-light text-[#111111]/70 placeholder-[#5F6368]/40 bg-black/[0.02] border border-black/[0.06] rounded-lg focus:outline-none focus:border-vitti-medium/30 transition-colors"
+              />
+            </div>
+          </div>
+          <div className="max-h-52 overflow-y-auto py-1">
+            {filtered.length === 0 ? (
+              <p className="px-3 py-2.5 text-[10px] font-light text-[#5F6368]/50">
+                Nenhum cliente encontrado.
+              </p>
+            ) : (
+              filtered.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => {
+                    onSelect(c.id);
+                    setOpen(false);
+                    setQuery("");
+                  }}
+                  className={`w-full text-left px-3 py-2.5 text-[11px] font-light transition-colors hover:bg-vitti-blue/[0.04] ${
+                    c.id === selectedClientId
+                      ? "text-vitti-light/80 bg-vitti-blue/[0.03]"
+                      : "text-[#111111]/75"
+                  }`}
+                >
+                  {c.name}
+                  {c.status !== "active" && (
+                    <span className="ml-1.5 text-[9px] text-[#5F6368]/45">(inativo)</span>
+                  )}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── StatusBadge ────────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: InvoiceStatus }) {
@@ -96,14 +199,16 @@ function StatusBadge({ status }: { status: InvoiceStatus }) {
   );
 }
 
-// ── Invoice row ────────────────────────────────────────────────────────────────
+// ── InvoiceRow ─────────────────────────────────────────────────────────────────
 
 function InvoiceRow({
   invoice,
   onEdit,
+  onDelete,
 }: {
   invoice: AdminInvoiceRow;
   onEdit: () => void;
+  onDelete: () => void;
 }) {
   return (
     <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-black/[0.06] bg-black/[0.02] hover:border-black/[0.10] hover:bg-black/[0.03] transition-all">
@@ -144,7 +249,7 @@ function InvoiceRow({
         </div>
       </div>
 
-      <div className="shrink-0 flex items-center gap-2">
+      <div className="shrink-0 flex items-center gap-1">
         <a
           href={`/api/admin/finance/invoices/${invoice.id}/download`}
           target="_blank"
@@ -156,17 +261,90 @@ function InvoiceRow({
         </a>
         <button
           onClick={onEdit}
-          className="flex items-center gap-1.5 text-[9px] font-light text-[#5F6368]/50 hover:text-vitti-light/70 transition-colors px-2 py-1 rounded-lg hover:bg-black/[0.04]"
+          className="flex items-center gap-1 text-[9px] font-light text-[#5F6368]/50 hover:text-vitti-light/70 transition-colors px-2 py-1 rounded-lg hover:bg-black/[0.04]"
         >
           <Pencil size={9} />
           Editar
+        </button>
+        <button
+          onClick={onDelete}
+          className="flex items-center gap-1 text-[9px] font-light text-red-400/40 hover:text-red-500/70 transition-colors px-2 py-1 rounded-lg hover:bg-red-400/[0.04]"
+        >
+          <Trash2 size={9} />
+          Excluir
         </button>
       </div>
     </div>
   );
 }
 
-// ── Invoice modal (create / edit) ──────────────────────────────────────────────
+// ── ConfirmDeleteModal ─────────────────────────────────────────────────────────
+
+function ConfirmDeleteModal({
+  invoice,
+  isDeleting,
+  deleteError,
+  onCancel,
+  onConfirm,
+}: {
+  invoice: AdminInvoiceRow;
+  isDeleting: boolean;
+  deleteError: string | null;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={!isDeleting ? onCancel : undefined} />
+      <div className="relative bg-white rounded-2xl border border-black/[0.08] shadow-[0_20px_60px_rgb(0,0,0,0.15)] p-6 max-w-sm w-full mx-4 space-y-4">
+        <div>
+          <p className="text-[13px] font-light text-[#111111]/85">Excluir nota fiscal</p>
+          <p className="text-[11px] font-light text-[#5F6368]/70 mt-1.5 leading-relaxed">
+            Tem certeza que deseja excluir{" "}
+            <span className="text-[#111111]/70">&ldquo;{invoice.title}&rdquo;</span>?
+            Esta ação não poderá ser desfeita.
+          </p>
+        </div>
+        {deleteError && (
+          <p className="text-[10px] font-light text-red-500/70">{deleteError}</p>
+        )}
+        <div className="flex justify-end gap-2 pt-1">
+          <button
+            onClick={onCancel}
+            disabled={isDeleting}
+            className="text-[10px] font-light px-4 py-2 rounded-full border border-black/[0.08] text-[#5F6368]/70 hover:border-black/[0.15] hover:text-[#111111]/75 transition-all disabled:opacity-40"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="text-[10px] font-light px-4 py-2 rounded-full border border-red-400/40 text-red-500/70 hover:border-red-400/70 hover:text-red-500/90 hover:bg-red-400/[0.04] transition-all disabled:opacity-40 flex items-center gap-1.5"
+          >
+            {isDeleting ? (
+              <>
+                <Loader2 size={9} className="animate-spin" />
+                Excluindo…
+              </>
+            ) : (
+              "Excluir"
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── InvoiceModal (create / edit) ───────────────────────────────────────────────
+
+// Dark panel styles
+const D = {
+  label:       "text-[9px] font-light text-white/50 block mb-1",
+  labelOpt:    "text-white/25",
+  input:       "w-full bg-white/[0.07] border border-white/15 rounded-lg px-3 py-2 text-[11px] font-light text-white/85 placeholder-white/30 focus:outline-none focus:border-[#638ACC]/50 transition-colors",
+  inputDate:   "w-full bg-white/[0.07] border border-white/15 rounded-lg px-3 py-2 text-[11px] font-light text-white/75 focus:outline-none focus:border-[#638ACC]/50 transition-colors",
+};
 
 function InvoiceModal({
   invoice,
@@ -264,73 +442,73 @@ function InvoiceModal({
     >
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
-      <div className="relative w-full max-w-md h-full bg-[#0d1117] border-l border-black/[0.07] overflow-y-auto flex flex-col">
+      <div className="relative w-full max-w-md h-full bg-[#0d1117] border-l border-white/[0.08] overflow-y-auto flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-black/[0.07] bg-[#0d1117]">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-[#0d1117]">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-black/[0.03] border border-black/[0.07] flex items-center justify-center">
-              <FileText size={11} className="text-vitti-light/40" />
+            <div className="w-7 h-7 rounded-lg bg-white/[0.06] border border-white/10 flex items-center justify-center">
+              <FileText size={11} className="text-white/50" />
             </div>
-            <p className="text-[11px] font-light text-[#111111]/80">
+            <p className="text-[11px] font-light text-white/85">
               {isNew ? "Nova Nota Fiscal" : "Editar Nota Fiscal"}
             </p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-black/[0.04] transition-colors">
-            <X size={13} className="text-[#5F6368]/60" />
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/[0.07] transition-colors">
+            <X size={13} className="text-white/50" />
           </button>
         </div>
 
         {/* Body */}
         <div className="flex-1 px-5 py-4 space-y-4">
           {validationError && (
-            <p className="text-[10px] font-light text-red-400/70">{validationError}</p>
+            <p className="text-[10px] font-light text-red-400/80">{validationError}</p>
           )}
 
           {/* Título */}
           <div>
-            <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1">Título *</label>
+            <label className={D.label}>Título *</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Ex: Serviços de Marketing Digital"
-              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-[#111111]/80 placeholder-[#5F6368]/40 focus:outline-none focus:border-vitti-medium/40 transition-colors"
+              className={D.input}
             />
           </div>
 
           {/* Descrição */}
           <div>
-            <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1">
-              Descrição <span className="text-[#5F6368]/35">(opcional)</span>
+            <label className={D.label}>
+              Descrição <span className={D.labelOpt}>(opcional)</span>
             </label>
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Ex: Gestão de tráfego pago + criação de conteúdo"
-              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-[#111111]/80 placeholder-[#5F6368]/40 focus:outline-none focus:border-vitti-medium/40 transition-colors"
+              className={D.input}
             />
           </div>
 
           {/* Competência + NF número */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1">Competência</label>
+              <label className={D.label}>Competência</label>
               <input
                 type="month"
                 value={referenceMonth}
                 onChange={(e) => setReferenceMonth(e.target.value)}
-                className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-[#111111]/70 focus:outline-none focus:border-vitti-medium/40 transition-colors"
+                className={D.inputDate}
               />
             </div>
             <div>
-              <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1">Nº NF</label>
+              <label className={D.label}>Nº NF</label>
               <input
                 type="text"
                 value={invoiceNumber}
                 onChange={(e) => setInvoiceNumber(e.target.value)}
                 placeholder="12345"
-                className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-[#111111]/80 placeholder-[#5F6368]/40 focus:outline-none focus:border-vitti-medium/40 transition-colors"
+                className={D.input}
               />
             </div>
           </div>
@@ -338,16 +516,16 @@ function InvoiceModal({
           {/* Data emissão + Valor */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1">Data de emissão</label>
+              <label className={D.label}>Data de emissão</label>
               <input
                 type="date"
                 value={issuedAt}
                 onChange={(e) => setIssuedAt(e.target.value)}
-                className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-[#111111]/70 focus:outline-none focus:border-vitti-medium/40 transition-colors"
+                className={D.inputDate}
               />
             </div>
             <div>
-              <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1">Valor (R$)</label>
+              <label className={D.label}>Valor (R$)</label>
               <input
                 type="number"
                 min="0"
@@ -355,14 +533,14 @@ function InvoiceModal({
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0,00"
-                className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-[#111111]/80 placeholder-[#5F6368]/40 focus:outline-none focus:border-vitti-medium/40 transition-colors"
+                className={D.input}
               />
             </div>
           </div>
 
           {/* Status */}
           <div>
-            <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1.5">Status</label>
+            <label className={`${D.label} mb-1.5`}>Status</label>
             <div className="flex gap-2 flex-wrap">
               {(["issued", "pending", "cancelled"] as const).map((s) => (
                 <button
@@ -371,7 +549,7 @@ function InvoiceModal({
                   className={`text-[9px] font-light px-3 py-1.5 rounded-full border transition-all ${
                     status === s
                       ? STATUS_STYLES[s]
-                      : "border-black/[0.08] text-[#5F6368]/55 hover:border-white/20"
+                      : "border-white/15 text-white/40 hover:border-white/30"
                   }`}
                 >
                   {STATUS_LABELS[s]}
@@ -383,15 +561,15 @@ function InvoiceModal({
           {/* Arquivo — somente na criação */}
           {isNew && (
             <div>
-              <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1">
-                Arquivo * <span className="text-[#5F6368]/35">(PDF, PNG ou JPEG · máx 10 MB)</span>
+              <label className={D.label}>
+                Arquivo * <span className={D.labelOpt}>(PDF, PNG ou JPEG · máx 10 MB)</span>
               </label>
               <div
-                className="relative flex items-center gap-2 border border-dashed border-black/[0.10] rounded-lg px-3 py-2.5 cursor-pointer hover:border-vitti-medium/40 transition-colors"
+                className="relative flex items-center gap-2 border border-dashed border-white/15 rounded-lg px-3 py-2.5 cursor-pointer hover:border-[#638ACC]/40 transition-colors"
                 onClick={() => fileInputRef.current?.click()}
               >
-                <Upload size={12} className="text-[#5F6368]/55 shrink-0" />
-                <span className="text-[11px] font-light text-[#5F6368]/60 truncate">
+                <Upload size={12} className="text-white/40 shrink-0" />
+                <span className="text-[11px] font-light text-white/40 truncate">
                   {selectedFile ? selectedFile.name : "Clique para selecionar o arquivo…"}
                 </span>
                 <input
@@ -407,7 +585,7 @@ function InvoiceModal({
                 />
               </div>
               {selectedFile && (
-                <p className="text-[9px] font-light text-[#5F6368]/55 mt-1">
+                <p className="text-[9px] font-light text-white/35 mt-1">
                   {selectedFile.name} · {formatFileSize(selectedFile.size)}
                 </p>
               )}
@@ -416,12 +594,12 @@ function InvoiceModal({
 
           {/* Arquivo existente — na edição, info only */}
           {!isNew && invoice?.fileName && (
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-black/[0.07] bg-black/[0.02]">
-              <FileText size={11} className="text-vitti-light/30 shrink-0" />
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-white/10 bg-white/[0.04]">
+              <FileText size={11} className="text-white/40 shrink-0" />
               <div className="min-w-0">
-                <p className="text-[10px] font-light text-[#5F6368]/70 truncate">{invoice.fileName}</p>
+                <p className="text-[10px] font-light text-white/65 truncate">{invoice.fileName}</p>
                 {invoice.fileSize && (
-                  <p className="text-[9px] font-light text-[#5F6368]/50">{formatFileSize(invoice.fileSize)}</p>
+                  <p className="text-[9px] font-light text-white/35">{formatFileSize(invoice.fileSize)}</p>
                 )}
               </div>
               <a
@@ -446,7 +624,7 @@ function InvoiceModal({
                   ? "border-emerald-400/30 text-emerald-400/70 bg-emerald-400/5"
                   : saveState === "error"
                     ? "border-red-400/30 text-red-400/60 bg-red-400/5"
-                    : "border-vitti-medium/40 text-vitti-light/60 hover:border-vitti-medium/70 hover:text-vitti-light/90 disabled:opacity-40"
+                    : "border-[#638ACC]/50 text-white/60 hover:border-[#638ACC]/80 hover:text-white/90 disabled:opacity-40"
               }`}
             >
               {saveState === "saving" ? (
@@ -481,6 +659,9 @@ export function FinanceAdminPanel({ allClients }: { allClients: AdminClientRow[]
   const [editingInvoice, setEditingInvoice] = useState<AdminInvoiceRow | "new" | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | InvoiceStatus>("all");
+  const [deletingInvoice, setDeletingInvoice] = useState<AdminInvoiceRow | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleClientSelect = useCallback((clientId: string) => {
     setSelectedClientId(clientId);
@@ -517,6 +698,29 @@ export function FinanceAdminPanel({ allClients }: { allClients: AdminClientRow[]
     setEditingInvoice(null);
   }, []);
 
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deletingInvoice) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/admin/finance/invoices/${deletingInvoice.id}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (!json.success) {
+        setDeleteError(json.error ?? "Erro ao excluir NF.");
+        setIsDeleting(false);
+        return;
+      }
+      setInvoices((prev) => prev.filter((i) => i.id !== deletingInvoice.id));
+      setDeletingInvoice(null);
+    } catch {
+      setDeleteError("Não foi possível conectar ao servidor.");
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [deletingInvoice]);
+
   const filtered = invoices.filter((inv) => {
     const q = searchQuery.toLowerCase();
     const matchQ =
@@ -533,21 +737,11 @@ export function FinanceAdminPanel({ allClients }: { allClients: AdminClientRow[]
     <div className="space-y-5">
       {/* Client selector + Nova NF */}
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex-1 min-w-[220px]">
-          <select
-            value={selectedClientId}
-            onChange={(e) => handleClientSelect(e.target.value)}
-            className="w-full bg-black/[0.03] border border-black/[0.08] rounded-xl px-3 py-2.5 text-[11px] font-light text-[#111111]/80 focus:outline-none focus:border-vitti-medium/30 transition-colors appearance-none"
-          >
-            <option value="">Selecionar cliente…</option>
-            {allClients.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-                {c.status !== "active" ? " (inativo)" : ""}
-              </option>
-            ))}
-          </select>
-        </div>
+        <ClientSelector
+          allClients={allClients}
+          selectedClientId={selectedClientId}
+          onSelect={handleClientSelect}
+        />
 
         {selectedClientId && (
           <button
@@ -683,6 +877,10 @@ export function FinanceAdminPanel({ allClients }: { allClients: AdminClientRow[]
                   key={inv.id}
                   invoice={inv}
                   onEdit={() => setEditingInvoice(inv)}
+                  onDelete={() => {
+                    setDeleteError(null);
+                    setDeletingInvoice(inv);
+                  }}
                 />
               ))}
             </div>
@@ -699,13 +897,26 @@ export function FinanceAdminPanel({ allClients }: { allClients: AdminClientRow[]
         </p>
       </div>
 
-      {/* Modal */}
+      {/* Edit / Create modal */}
       {editingInvoice !== null && (
         <InvoiceModal
           invoice={editingInvoice === "new" ? null : editingInvoice}
           clientId={selectedClientId}
           onClose={() => setEditingInvoice(null)}
           onSaved={handleSaved}
+        />
+      )}
+
+      {/* Delete confirm modal */}
+      {deletingInvoice !== null && (
+        <ConfirmDeleteModal
+          invoice={deletingInvoice}
+          isDeleting={isDeleting}
+          deleteError={deleteError}
+          onCancel={() => {
+            if (!isDeleting) setDeletingInvoice(null);
+          }}
+          onConfirm={handleDeleteConfirm}
         />
       )}
     </div>

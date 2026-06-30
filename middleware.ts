@@ -10,6 +10,7 @@ const PORTAL_ROUTES = [
   "/calls",
   "/educacao",
   "/admin",
+  "/selecionar-portal",
 ];
 
 export async function middleware(request: NextRequest) {

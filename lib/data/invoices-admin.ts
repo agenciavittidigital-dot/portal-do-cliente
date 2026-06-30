@@ -172,3 +172,12 @@ export async function updateInvoice(
   }
   return coerceRow(data as Record<string, unknown>);
 }
+
+export async function deleteInvoice(id: string): Promise<void> {
+  const admin = mkAdmin();
+  const { error } = await admin.from("invoices").delete().eq("id", id);
+  if (error) {
+    console.error("[deleteInvoice] Supabase error:", error.code, error.message);
+    throw new Error(error.message);
+  }
+}

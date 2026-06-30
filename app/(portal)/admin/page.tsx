@@ -1,16 +1,5 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { WindsorPreviewPanel } from "@/components/admin/WindsorPreviewPanel";
-import { WindsorAccountMapping } from "@/components/admin/WindsorAccountMapping";
-import { WindsorSyncPanel } from "@/components/admin/WindsorSyncPanel";
-import { WindsorFieldsTestPanel } from "@/components/admin/WindsorFieldsTestPanel";
-import { WindsorConversionTestPanel } from "@/components/admin/WindsorConversionTestPanel";
-import { WindsorMetaRawProbePanel } from "@/components/admin/WindsorMetaRawProbePanel";
-import { WindsorGoogleAdsPanel } from "@/components/admin/WindsorGoogleAdsPanel";
-import { WindsorRegionalSyncPanel } from "@/components/admin/WindsorRegionalSyncPanel";
-import { WindsorDemographicSyncPanel } from "@/components/admin/WindsorDemographicSyncPanel";
-import { getWindsorStatus } from "@/lib/integrations/windsor/client";
-import { loadActiveClients } from "@/lib/data/dashboards";
 import Link from "next/link";
 import {
   Users,
@@ -20,8 +9,8 @@ import {
   Megaphone,
   ScrollText,
   ShieldCheck,
-  Target,
   Phone,
+  Plug,
 } from "lucide-react";
 
 const ACTIVE_MODULES = [
@@ -31,6 +20,7 @@ const ACTIVE_MODULES = [
   { label: "Financeiro", icon: CreditCard, description: "Notas fiscais manuais por cliente", href: "/admin/financeiro" },
   { label: "Relatórios", icon: FileText, description: "Relatórios manuais por cliente", href: "/admin/relatorios" },
   { label: "Calls", icon: Phone, description: "Calls manuais com link de gravação por cliente", href: "/admin/calls" },
+  { label: "Integrações", icon: Plug, description: "Windsor AI, sincronizações, mapeamento de contas e ferramentas avançadas", href: "/admin/integracoes" },
 ];
 
 const OTHER_MODULES = [
@@ -38,10 +28,7 @@ const OTHER_MODULES = [
   { label: "Logs", icon: ScrollText, description: "Auditoria e histórico de atividades" },
 ];
 
-export default async function AdminPage() {
-  const windsorStatus = getWindsorStatus();
-  const { clients } = await loadActiveClients();
-
+export default function AdminPage() {
   return (
     <div className="space-y-8 max-w-5xl">
       <div>
@@ -54,64 +41,7 @@ export default async function AdminPage() {
         </p>
       </div>
 
-      {/* ── Integrações ──────────────────────────────────────────── */}
-      <section>
-        <p className="text-[9px] text-vitti-blue/40 tracking-[0.2em] uppercase font-light mb-3">
-          Integrações
-        </p>
-        <div className="space-y-3">
-          <WindsorPreviewPanel
-            windsorConfigured={windsorStatus.configured}
-            maskedKey={windsorStatus.configured ? windsorStatus.maskedKey : undefined}
-          />
-
-          <WindsorAccountMapping clients={clients} />
-
-          <WindsorSyncPanel />
-
-          <WindsorFieldsTestPanel />
-
-          <WindsorConversionTestPanel />
-
-          <WindsorMetaRawProbePanel />
-
-          <WindsorGoogleAdsPanel clients={clients} />
-
-          <WindsorRegionalSyncPanel />
-
-          <WindsorDemographicSyncPanel />
-
-          {/* Meta Ads — sincronização automática (futura) */}
-          <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
-            <div className="flex items-center justify-between px-5 py-4 gap-4 flex-wrap">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
-                  <Target size={14} className="text-vitti-light/60" />
-                </div>
-                <div>
-                  <p className="text-xs font-light text-vitti-blue">Meta Ads</p>
-                  <p className="text-[10px] font-light text-vitti-blue/50 mt-0.5">
-                    Via Windsor AI — dados em performance_daily
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[9px] font-light px-2.5 py-1 rounded-full border border-slate-200 text-vitti-blue/50 bg-slate-100/60">
-                  Sincronização manual
-                </span>
-                <button
-                  disabled
-                  className="text-[9px] font-light px-3 py-1.5 rounded-full border border-slate-200 text-vitti-blue/35 cursor-not-allowed select-none"
-                >
-                  Sincronizar — Em breve
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Módulos ativos ───────────────────────────────────────── */}
+      {/* ── Módulos ──────────────────────────────────────────────── */}
       <section>
         <p className="text-[9px] text-vitti-blue/40 tracking-[0.2em] uppercase font-light mb-3">
           Módulos
@@ -144,10 +74,7 @@ export default async function AdminPage() {
           {OTHER_MODULES.map((mod) => {
             const Icon = mod.icon;
             return (
-              <Card
-                key={mod.label}
-                className="opacity-60 cursor-default"
-              >
+              <Card key={mod.label} className="opacity-60 cursor-default">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">

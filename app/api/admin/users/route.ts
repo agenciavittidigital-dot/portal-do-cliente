@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { randomBytes } from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadUserContext } from "@/lib/data/user-context";
@@ -12,7 +11,6 @@ export interface UserCreateResponse {
   success: boolean;
   profileId?: string;
   authUserCreated?: boolean;
-  tempPassword?: string;
   newUser?: AdminUserRow;
   error?: string;
   detail?: string;
@@ -28,39 +26,6 @@ const ROLE_PRESETS: Record<string, string[]> = {
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-
-function generateTempPassword(): string {
-  const upper   = "ABCDEFGHJKMNPQRSTUVWXYZ";
-  const lower   = "abcdefghjkmnpqrstuvwxyz";
-  const digits  = "23456789";
-  const symbols = "@#$!";
-  const pool    = upper + lower + digits + symbols;
-
-  const raw = randomBytes(16);
-  const chars: string[] = [
-    upper[raw[0] % upper.length],
-    upper[raw[1] % upper.length],
-    lower[raw[2] % lower.length],
-    lower[raw[3] % lower.length],
-    digits[raw[4] % digits.length],
-    digits[raw[5] % digits.length],
-    symbols[raw[6] % symbols.length],
-    pool[raw[7] % pool.length],
-    pool[raw[8] % pool.length],
-    pool[raw[9] % pool.length],
-    pool[raw[10] % pool.length],
-    pool[raw[11] % pool.length],
-  ];
-
-  // Fisher-Yates shuffle usando bytes adicionais
-  const shuffle = randomBytes(12);
-  for (let i = chars.length - 1; i > 0; i--) {
-    const j = shuffle[i % shuffle.length] % (i + 1);
-    [chars[i], chars[j]] = [chars[j], chars[i]];
-  }
-
-  return chars.join("");
-}
 
 function errRes(message: string, status: number, detail?: string): Response {
   return NextResponse.json<UserCreateResponse>(
@@ -102,8 +67,23 @@ export async function POST(req: NextRequest): Promise<Response> {
     return errRes("E-mail inválido.", 400);
   }
 
-  const clientId = typeof b.clientId === "string" ? b.clientId.trim() : "";
-  if (!clientId) return errRes("Selecione um cliente.", 400);
+  const password = typeof b.password === "string" ? b.password.trim() : "";
+  if (!password || password.length < 8) {
+    return errRes("A senha deve ter no mínimo 8 caracteres.", 400);
+  }
+
+  // clientIds[] tem precedência; clientId singular mantém backward compat
+  let clientIds: string[] = [];
+  if (Array.isArray(b.clientIds)) {
+    clientIds = (b.clientIds as unknown[])
+      .filter((x): x is string => typeof x === "string" && x.trim().length > 0)
+      .map((x) => x.trim());
+  } else if (typeof b.clientId === "string" && b.clientId.trim()) {
+    clientIds = [b.clientId.trim()];
+  }
+
+  const globalRole: "client_user" | "vitti_admin" =
+    b.globalRole === "vitti_admin" ? "vitti_admin" : "client_user";
 
   const role =
     typeof b.role === "string" && ["admin", "finance", "team", "custom"].includes(b.role)
@@ -112,17 +92,29 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   const status: "active" | "inactive" = b.status === "inactive" ? "inactive" : "active";
 
+  if (globalRole !== "vitti_admin" && clientIds.length === 0) {
+    return errRes("Selecione ao menos um portal para o usuário.", 400);
+  }
+
   const admin = createAdminClient();
 
-  // ── Verificar cliente ──────────────────────────────────────────────────────
-  const { data: clientRow } = await admin
-    .from("clients")
-    .select("id, name")
-    .eq("id", clientId)
-    .single();
-
-  if (!clientRow) return errRes("Cliente não encontrado.", 404);
-  const clientName = String(clientRow.name ?? "");
+  // ── Verificar portais solicitados ─────────────────────────────────────────
+  const clientNameById = new Map<string, string>();
+  if (clientIds.length > 0) {
+    const { data: clientRows } = await admin
+      .from("clients")
+      .select("id, name")
+      .in("id", clientIds);
+    for (const c of clientRows ?? []) {
+      clientNameById.set(String(c.id), String(c.name ?? ""));
+    }
+    const missing = clientIds.filter((cid) => !clientNameById.has(cid));
+    if (missing.length > 0) {
+      return errRes(`Portal(is) não encontrado(s): ${missing.join(", ")}`, 404);
+    }
+  }
+  const primaryClientId = clientIds[0] ?? null;
+  const primaryClientName = primaryClientId ? (clientNameById.get(primaryClientId) ?? null) : null;
 
   // ── Verificar se já existe profile com este email ──────────────────────────
   const { data: profilesByEmail } = await admin
@@ -135,36 +127,31 @@ export async function POST(req: NextRequest): Promise<Response> {
   let profileId: string;
   let authUserId: string;
   let authUserCreated = false;
-  let tempPassword: string | undefined;
 
   if (existingProfile) {
     // Profile já existe — verificar vínculo
     profileId = String(existingProfile.id);
     authUserId = String(existingProfile.auth_user_id ?? "");
 
-    const { data: existingLink } = await admin
-      .from("client_users")
-      .select("id, client_id")
-      .eq("profile_id", profileId)
-      .maybeSingle();
-
-    if (existingLink) {
-      if (String(existingLink.client_id) === clientId) {
-        return errRes("Este usuário já está vinculado a este cliente.", 409);
+    if (clientIds.length > 0) {
+      const { data: existingLinks } = await admin
+        .from("client_users")
+        .select("client_id")
+        .eq("profile_id", profileId)
+        .in("client_id", clientIds);
+      if (existingLinks && existingLinks.length > 0) {
+        const names = existingLinks
+          .map((r) => clientNameById.get(String(r.client_id)) ?? String(r.client_id))
+          .join(", ");
+        return errRes(`Usuário já vinculado ao(s) portal(is): ${names}`, 409);
       }
-      return errRes(
-        "Este e-mail já está vinculado a outro cliente. Edite o usuário existente para alterar o vínculo.",
-        409
-      );
     }
-    // Profile sem vínculo → criar apenas client_users + permissões
+    // Profile já existe → adicionar novos vínculos sem remover os existentes
   } else {
     // ── Criar usuário no Supabase Auth ─────────────────────────────────────
-    const tmpPwd = generateTempPassword();
-
     const { data: authData, error: authError } = await admin.auth.admin.createUser({
       email,
-      password: tmpPwd,
+      password,
       email_confirm: true,
       user_metadata: { name },
     });
@@ -175,13 +162,12 @@ export async function POST(req: NextRequest): Promise<Response> {
     }
 
     authUserId = authData.user.id;
-    tempPassword = tmpPwd;
     authUserCreated = true;
 
     // ── Criar profile (idempotente: trigger pode ter criado) ───────────────
     const { data: newProfile, error: profileError } = await admin
       .from("profiles")
-      .insert({ auth_user_id: authUserId, name, email, global_role: "client_user", status })
+      .insert({ auth_user_id: authUserId, name, email, global_role: globalRole, status })
       .select("id")
       .maybeSingle();
 
@@ -216,38 +202,44 @@ export async function POST(req: NextRequest): Promise<Response> {
     }
   }
 
-  // ── Criar vínculo client_users ─────────────────────────────────────────────
-  const { data: clientUserRow, error: clientUserError } = await admin
-    .from("client_users")
-    .insert({ profile_id: profileId, client_id: clientId, role })
-    .select("id")
-    .single();
+  // ── Criar vínculos client_users (um por portal) ───────────────────────────
+  const createdClientUserIds: string[] = [];
+  for (const cid of clientIds) {
+    const { data: cuRow, error: cuError } = await admin
+      .from("client_users")
+      .insert({ profile_id: profileId, client_id: cid, role })
+      .select("id")
+      .single();
 
-  if (clientUserError || !clientUserRow) {
-    console.error("[createUser] Erro ao criar client_users:", clientUserError?.message);
-    if (authUserCreated) {
-      await admin.auth.admin.deleteUser(authUserId).catch(() => {});
-      await admin.from("profiles").delete().eq("id", profileId).then(() => {}, () => {});
+    if (cuError || !cuRow) {
+      console.error("[createUser] Erro ao criar client_users:", cuError?.message);
+      if (createdClientUserIds.length > 0) {
+        await admin.from("client_users").delete().in("id", createdClientUserIds).then(() => {}, () => {});
+      }
+      if (authUserCreated) {
+        await admin.auth.admin.deleteUser(authUserId).catch(() => {});
+        await admin.from("profiles").delete().eq("id", profileId).then(() => {}, () => {});
+      }
+      return errRes("Erro ao vincular portal.", 500, cuError?.message);
     }
-    return errRes("Erro ao vincular cliente.", 500, clientUserError?.message);
+    createdClientUserIds.push(String(cuRow.id));
   }
 
-  const clientUserId = String(clientUserRow.id);
-
-  // ── Aplicar preset de permissões ───────────────────────────────────────────
+  // ── Aplicar preset de permissões (um por portal) ──────────────────────────
   let permissionCount = 0;
   const presetKeys = ROLE_PRESETS[role] ?? [];
 
-  if (presetKeys.length > 0) {
+  if (presetKeys.length > 0 && createdClientUserIds.length > 0) {
     const { data: permRows } = await admin
       .from("permissions")
       .select("id")
       .in("key", presetKeys);
 
     if (permRows && permRows.length > 0) {
-      await admin.from("user_permissions").insert(
-        permRows.map((p) => ({ client_user_id: clientUserId, permission_id: String(p.id) }))
+      const permsToInsert = createdClientUserIds.flatMap((cuid) =>
+        permRows.map((p) => ({ client_user_id: cuid, permission_id: String(p.id) }))
       );
+      await admin.from("user_permissions").insert(permsToInsert);
       permissionCount = permRows.length;
     }
   }
@@ -258,16 +250,17 @@ export async function POST(req: NextRequest): Promise<Response> {
     authUserId,
     name,
     email,
-    globalRole: "client_user",
+    globalRole,
     status,
-    clientId,
-    clientName,
-    clientUserRole: role,
+    clientId: primaryClientId,
+    clientName: primaryClientName,
+    clientUserRole: clientIds.length > 0 ? role : null,
     permissionCount,
+    portalCount: clientIds.length,
   };
 
   return NextResponse.json<UserCreateResponse>(
-    { success: true, profileId, authUserCreated, tempPassword, newUser },
+    { success: true, profileId, authUserCreated, newUser },
     { status: 201 }
   );
 }

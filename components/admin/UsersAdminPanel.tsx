@@ -15,10 +15,8 @@ import {
   ChevronRight,
   Loader2,
   AlertTriangle,
-  Copy,
-  Check,
 } from "lucide-react";
-import type { AdminUserRow, AdminUserDetail, AdminPermission } from "@/lib/data/users-admin";
+import type { AdminUserRow, AdminUserDetail, AdminPermission, AdminClientLink } from "@/lib/data/users-admin";
 import type { AdminClientRow } from "@/lib/data/clients-admin";
 import type { UserDetailResponse, UserPatchResponse } from "@/app/api/admin/users/[id]/route";
 import type { UserClientPatchResponse } from "@/app/api/admin/users/[id]/client/route";
@@ -139,6 +137,9 @@ function UserRow({
             <span className="text-[9px] font-light text-vitti-light/40 shrink-0">
               {clientRoleLabel ? `${clientRoleLabel} · ` : ""}
               {user.clientName}
+              {user.portalCount > 1 && (
+                <span className="ml-1 text-vitti-light/30">+{user.portalCount - 1}</span>
+              )}
             </span>
           )}
           {user.permissionCount > 0 && (
@@ -206,7 +207,7 @@ function SaveButton({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1.5">{label}</label>
+      <label className="text-[9px] font-light text-white/50 block mb-1.5">{label}</label>
       {children}
     </div>
   );
@@ -232,7 +233,7 @@ function TextInput({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       disabled={disabled}
-      className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-[#111111]/80 placeholder-[#5F6368]/40 focus:outline-none focus:border-vitti-medium/40 transition-colors disabled:opacity-50"
+      className="w-full bg-white/[0.06] border border-white/[0.12] rounded-lg px-3 py-2 text-[11px] font-light text-white/80 placeholder-white/25 focus:outline-none focus:border-vitti-medium/50 transition-colors disabled:opacity-50"
     />
   );
 }
@@ -250,23 +251,32 @@ function CreateUserModal({
 }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [clientId, setClientId] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
   const [role, setRole] = useState<ClientRole>("team");
   const [status, setStatus] = useState<"active" | "inactive">("active");
 
   const [submitting, setSubmitting] = useState(false);
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
-  const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [createdEmail, setCreatedEmail] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [copied, setCopied] = useState(false);
+
+  const toggleClientId = useCallback((id: string) => {
+    setSelectedClientIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  }, []);
 
   const validate = (): string | null => {
     if (!name.trim()) return "Nome é obrigatório.";
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
       return "E-mail inválido.";
-    if (!clientId) return "Selecione um cliente.";
+    if (!password) return "Senha é obrigatória.";
+    if (password.length < 8) return "A senha deve ter no mínimo 8 caracteres.";
+    if (password !== confirmPassword) return "As senhas não coincidem.";
+    if (selectedClientIds.length === 0) return "Selecione ao menos um portal.";
     return null;
   };
 
@@ -281,7 +291,14 @@ function CreateUserModal({
       const res = await fetch("/api/admin/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), email: email.trim().toLowerCase(), clientId, role, status }),
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          password,
+          clientIds: selectedClientIds,
+          role,
+          status,
+        }),
       });
       const json = (await res.json()) as UserCreateResponse;
 
@@ -292,7 +309,6 @@ function CreateUserModal({
 
       if (json.newUser) onCreated(json.newUser);
       setCreatedEmail(email.trim().toLowerCase());
-      setTempPassword(json.tempPassword ?? null);
       setSuccess(true);
     } catch {
       setApiError("Erro de conexão.");
@@ -300,14 +316,7 @@ function CreateUserModal({
       setSubmitting(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, email, clientId, role, status, onCreated]);
-
-  function copyPassword() {
-    if (!tempPassword) return;
-    navigator.clipboard.writeText(tempPassword).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
+  }, [name, email, password, confirmPassword, selectedClientIds, role, status, onCreated]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end">
@@ -316,20 +325,20 @@ function CreateUserModal({
         onClick={!success ? onClose : undefined}
       />
 
-      <div className="relative w-full max-w-md h-full bg-[#0d1117] border-l border-black/[0.07] overflow-y-auto flex flex-col">
+      <div className="relative w-full max-w-md h-full bg-[#0d1117] border-l border-white/[0.06] overflow-y-auto flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-black/[0.07] bg-[#0d1117]">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-white/[0.06] bg-[#0d1117]">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-full bg-emerald-400/10 border border-emerald-400/15 flex items-center justify-center">
               <UserPlus size={11} className="text-emerald-400/50" />
             </div>
-            <p className="text-[11px] font-light text-[#111111]/80">Novo usuário cliente</p>
+            <p className="text-[11px] font-light text-white/80">Novo usuário</p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-black/[0.04] transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/[0.08] transition-colors"
           >
-            <X size={13} className="text-[#5F6368]/60" />
+            <X size={13} className="text-white/40" />
           </button>
         </div>
 
@@ -340,52 +349,17 @@ function CreateUserModal({
             <div className="space-y-5">
               <div className="flex items-center gap-2">
                 <CheckCircle2 size={14} className="text-emerald-400/70" />
-                <p className="text-sm font-light text-[#111111]/80">Usuário criado com sucesso</p>
+                <p className="text-sm font-light text-white/80">Usuário criado com sucesso</p>
               </div>
-
               {createdEmail && (
-                <p className="text-[10px] font-light text-[#5F6368]/60">{createdEmail}</p>
+                <p className="text-[10px] font-light text-white/45">{createdEmail}</p>
               )}
-
-              {tempPassword ? (
-                <div className="space-y-3">
-                  <div className="rounded-xl border border-amber-400/15 bg-amber-400/[0.03] px-4 py-3">
-                    <p className="text-[9px] font-light text-amber-400/70 leading-relaxed">
-                      <span className="text-amber-400/90">Senha temporária</span> — exibida
-                      apenas uma vez. Informe o cliente e oriente-o a alterar após o primeiro
-                      acesso.
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2 rounded-lg border border-black/[0.08] bg-black/[0.03] px-3 py-2.5">
-                    <code className="flex-1 text-[13px] font-mono text-[#111111]/90 tracking-widest select-all">
-                      {tempPassword}
-                    </code>
-                    <button
-                      onClick={copyPassword}
-                      className="shrink-0 p-1.5 rounded-md hover:bg-black/[0.06] transition-colors"
-                    >
-                      {copied ? (
-                        <Check size={13} className="text-emerald-400/70" />
-                      ) : (
-                        <Copy size={13} className="text-[#5F6368]/60 hover:text-[#111111]/75" />
-                      )}
-                    </button>
-                  </div>
-
-                  <p className="text-[9px] font-light text-[#5F6368]/50">
-                    Login: <span className="font-mono text-[#5F6368]/65">{createdEmail}</span>
-                  </p>
-                </div>
-              ) : (
-                <p className="text-[10px] font-light text-[#5F6368]/60">
-                  O usuário já possuía cadastro — vínculo com o cliente criado com sucesso.
-                </p>
-              )}
-
+              <p className="text-[10px] font-light text-white/35 leading-relaxed">
+                O usuário já pode acessar o portal com as credenciais definidas.
+              </p>
               <button
                 onClick={onClose}
-                className="w-full text-[10px] font-light py-2.5 rounded-xl border border-black/[0.08] text-[#5F6368]/70 hover:text-[#111111]/85 hover:border-black/[0.15] transition-all mt-4"
+                className="w-full text-[10px] font-light py-2.5 rounded-xl border border-white/[0.12] text-white/55 hover:text-white/80 hover:border-white/20 transition-all mt-4"
               >
                 Fechar
               </button>
@@ -412,21 +386,57 @@ function CreateUserModal({
                 />
               </Field>
 
-              <Field label="Cliente">
-                <select
-                  value={clientId}
-                  onChange={(e) => setClientId(e.target.value)}
+              <Field label="Senha">
+                <TextInput
+                  value={password}
+                  onChange={setPassword}
+                  placeholder="Mínimo 8 caracteres"
+                  type="password"
                   disabled={submitting}
-                  className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-[#111111]/80 focus:outline-none focus:border-vitti-medium/40 transition-colors appearance-none disabled:opacity-50"
-                >
-                  <option value="">— selecione um cliente —</option>
-                  {allClients.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                      {c.status !== "active" ? " (inativo)" : ""}
-                    </option>
-                  ))}
-                </select>
+                />
+              </Field>
+
+              <Field label="Confirmar senha">
+                <TextInput
+                  value={confirmPassword}
+                  onChange={setConfirmPassword}
+                  placeholder="Repita a senha"
+                  type="password"
+                  disabled={submitting}
+                />
+              </Field>
+
+              <Field label={`Portais vinculados${selectedClientIds.length > 0 ? ` (${selectedClientIds.length})` : ""}`}>
+                <div className="space-y-1 max-h-48 overflow-y-auto pr-0.5">
+                  {allClients.map((c) => {
+                    const selected = selectedClientIds.includes(c.id);
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => toggleClientId(c.id)}
+                        disabled={submitting}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border text-left transition-all disabled:opacity-50 ${
+                          selected
+                            ? "border-vitti-medium/35 bg-vitti-medium/[0.08]"
+                            : "border-white/[0.08] bg-white/[0.03] hover:border-white/15"
+                        }`}
+                      >
+                        <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-all ${
+                          selected ? "border-vitti-medium/60 bg-vitti-medium/30" : "border-white/20"
+                        }`}>
+                          {selected && <div className="w-1.5 h-1.5 rounded-sm bg-vitti-light/70" />}
+                        </div>
+                        <span className={`text-[10px] font-light truncate ${selected ? "text-vitti-light/80" : "text-white/55"}`}>
+                          {c.name}
+                        </span>
+                        {c.status !== "active" && (
+                          <span className="text-[8px] font-light text-white/25 ml-auto shrink-0">inativo</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </Field>
 
               <Field label="Função no cliente">
@@ -439,17 +449,13 @@ function CreateUserModal({
                       className={`text-left px-3 py-2.5 rounded-lg border transition-all disabled:opacity-50 ${
                         role === r
                           ? "border-vitti-medium/35 bg-vitti-medium/[0.08]"
-                          : "border-black/[0.07] bg-black/[0.02] hover:border-black/[0.10]"
+                          : "border-white/[0.08] bg-white/[0.03] hover:border-white/15"
                       }`}
                     >
-                      <p
-                        className={`text-[9px] font-light leading-snug ${
-                          role === r ? "text-vitti-light/80" : "text-[#5F6368]/70"
-                        }`}
-                      >
+                      <p className={`text-[9px] font-light leading-snug ${role === r ? "text-vitti-light/80" : "text-white/55"}`}>
                         {CLIENT_ROLE_LABELS[r]}
                       </p>
-                      <p className="text-[8px] font-light text-[#5F6368]/50 mt-0.5">
+                      <p className="text-[8px] font-light text-white/30 mt-0.5">
                         {CLIENT_ROLE_DESCRIPTIONS[r]}
                       </p>
                     </button>
@@ -469,7 +475,7 @@ function CreateUserModal({
                           ? s === "active"
                             ? "border-emerald-400/30 text-emerald-400/70 bg-emerald-400/5"
                             : "border-red-400/25 text-red-400/60 bg-red-400/5"
-                          : "border-black/[0.08] text-[#5F6368]/55 hover:border-white/20"
+                          : "border-white/[0.10] text-white/40 hover:border-white/20"
                       }`}
                     >
                       {s === "active" ? "Ativo" : "Inativo"}
@@ -480,11 +486,11 @@ function CreateUserModal({
 
               {/* Permissões do preset */}
               {role !== "custom" && ROLE_PRESETS[role].length > 0 && (
-                <div className="rounded-lg border border-black/[0.06] bg-black/[0.02] px-3 py-2.5">
-                  <p className="text-[9px] font-light text-[#5F6368]/55 mb-1.5">
+                <div className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2.5">
+                  <p className="text-[9px] font-light text-white/40 mb-1.5">
                     Permissões aplicadas automaticamente ({CLIENT_ROLE_LABELS[role]}):
                   </p>
-                  <p className="text-[8px] font-mono text-[#5F6368]/50 leading-relaxed">
+                  <p className="text-[8px] font-mono text-white/25 leading-relaxed">
                     {ROLE_PRESETS[role].join(", ")}
                   </p>
                 </div>
@@ -517,10 +523,6 @@ function CreateUserModal({
                   </>
                 )}
               </button>
-
-              <p className="text-[8px] font-light text-[#5F6368]/35 text-center leading-relaxed">
-                Uma senha temporária será gerada. O cliente pode alterá-la após o primeiro acesso.
-              </p>
             </div>
           )}
         </div>
@@ -554,10 +556,13 @@ function EditModal({
   const [profileRole, setProfileRole] = useState<GlobalRole>("client_user");
   const [profileSaveState, setProfileSaveState] = useState<SaveState>("idle");
 
-  // Client + role
-  const [selectedClientId, setSelectedClientId] = useState<string>("");
-  const [clientUserRole, setClientUserRole] = useState<ClientRole>("team");
-  const [clientSaveState, setClientSaveState] = useState<SaveState>("idle");
+  // Portais vinculados (multi)
+  const [linkedClients, setLinkedClients] = useState<AdminClientLink[]>([]);
+  const [addingClientId, setAddingClientId] = useState<string>("");
+  const [addClientRole, setAddClientRole] = useState<ClientRole>("team");
+  const [addClientState, setAddClientState] = useState<SaveState>("idle");
+  const [removingClientId, setRemovingClientId] = useState<string | null>(null);
+  const [removeClientError, setRemoveClientError] = useState<string | null>(null);
 
   // Permissions
   const [selectedPermIds, setSelectedPermIds] = useState<Set<string>>(new Set());
@@ -579,8 +584,7 @@ function EditModal({
         setProfileName(u.name ?? "");
         setProfileStatus(u.status === "active" ? "active" : "inactive");
         setProfileRole(u.globalRole);
-        setSelectedClientId(u.client?.id ?? "");
-        setClientUserRole(normalizeClientRole(u.clientUserRole ?? null));
+        setLinkedClients(u.clients ?? []);
         setSelectedPermIds(new Set(u.permissionIds));
       })
       .catch(() => {
@@ -618,34 +622,56 @@ function EditModal({
     }
   }, [userId, profileName, profileStatus, profileRole, onSaved]);
 
-  const handleSaveClient = useCallback(async () => {
-    setClientSaveState("saving");
-    const clientId = selectedClientId || null;
+  const handleAddClient = useCallback(async () => {
+    if (!addingClientId) return;
+    setAddClientState("saving");
     try {
       const res = await fetch(`/api/admin/users/${userId}/client`, {
-        method: "PATCH",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId,
-          ...(clientId ? { role: clientUserRole } : {}),
-        }),
+        body: JSON.stringify({ clientId: addingClientId, role: addClientRole }),
       });
       const json: UserClientPatchResponse = await res.json();
       if (!json.success) throw new Error(json.error);
-      setClientSaveState("saved");
-      const client = allClients.find((c) => c.id === clientId);
-      onSaved({
-        id: userId,
-        clientId,
-        clientName: client?.name ?? null,
-        clientUserRole: clientId ? clientUserRole : null,
-      });
-      setTimeout(() => setClientSaveState("idle"), 2500);
+      const client = allClients.find((c) => c.id === addingClientId);
+      if (client) {
+        const newLink: AdminClientLink = {
+          clientUserId: "",
+          clientId: addingClientId,
+          clientName: client.name,
+          role: addClientRole,
+        };
+        setLinkedClients((prev) => [...prev, newLink]);
+        onSaved({ id: userId, portalCount: linkedClients.length + 1 });
+      }
+      setAddingClientId("");
+      setAddClientState("saved");
+      setTimeout(() => setAddClientState("idle"), 2500);
     } catch {
-      setClientSaveState("error");
-      setTimeout(() => setClientSaveState("idle"), 3000);
+      setAddClientState("error");
+      setTimeout(() => setAddClientState("idle"), 3000);
     }
-  }, [userId, selectedClientId, clientUserRole, allClients, onSaved]);
+  }, [userId, addingClientId, addClientRole, allClients, linkedClients, onSaved]);
+
+  const handleRemoveClient = useCallback(async (clientId: string) => {
+    setRemovingClientId(clientId);
+    setRemoveClientError(null);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/client`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId }),
+      });
+      const json: UserClientPatchResponse = await res.json();
+      if (!json.success) throw new Error(json.error);
+      setLinkedClients((prev) => prev.filter((c) => c.clientId !== clientId));
+      onSaved({ id: userId, portalCount: Math.max(0, linkedClients.length - 1) });
+    } catch {
+      setRemoveClientError("Erro ao remover portal. Tente novamente.");
+    } finally {
+      setRemovingClientId(null);
+    }
+  }, [userId, linkedClients, onSaved]);
 
   const handleSavePermissions = useCallback(async () => {
     setPermSaveState("saving");
@@ -668,12 +694,13 @@ function EditModal({
   }, [userId, selectedPermIds, onSaved]);
 
   const applyPreset = useCallback(() => {
-    const keys = ROLE_PRESETS[clientUserRole] ?? [];
+    const firstRole = normalizeClientRole(linkedClients[0]?.role ?? null);
+    const keys = ROLE_PRESETS[firstRole] ?? [];
     const ids = new Set(
       allPermissions.filter((p) => keys.includes(p.key)).map((p) => p.id)
     );
     setSelectedPermIds(ids);
-  }, [clientUserRole, allPermissions]);
+  }, [linkedClients, allPermissions]);
 
   const togglePerm = useCallback((permId: string) => {
     setSelectedPermIds((prev) => {
@@ -693,29 +720,29 @@ function EditModal({
     >
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
-      <div className="relative w-full max-w-md h-full bg-[#0d1117] border-l border-black/[0.07] overflow-y-auto flex flex-col">
+      <div className="relative w-full max-w-md h-full bg-[#0d1117] border-l border-white/[0.06] overflow-y-auto flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-black/[0.07] bg-[#0d1117]">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-white/[0.06] bg-[#0d1117]">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-full bg-vitti-medium/15 border border-vitti-medium/20 flex items-center justify-center">
               <User size={11} className="text-vitti-light/50" />
             </div>
             <div>
-              <p className="text-[11px] font-light text-[#111111]/80">Editar usuário</p>
+              <p className="text-[11px] font-light text-white/80">Editar usuário</p>
               {detail && (
-                <p className="text-[9px] font-light text-[#5F6368]/55">{detail.email ?? detail.id}</p>
+                <p className="text-[9px] font-light text-white/40">{detail.email ?? detail.id}</p>
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-black/[0.04] transition-colors">
-            <X size={13} className="text-[#5F6368]/60" />
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/[0.08] transition-colors">
+            <X size={13} className="text-white/40" />
           </button>
         </div>
 
         {/* Body */}
         <div className="flex-1 px-5 py-4 space-y-6">
           {loading && (
-            <div className="flex items-center gap-2 text-[11px] font-light text-[#5F6368]/60">
+            <div className="flex items-center gap-2 text-[11px] font-light text-white/45">
               <Loader2 size={12} className="animate-spin" />
               Carregando…
             </div>
@@ -732,18 +759,18 @@ function EditModal({
                 <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase">Perfil</p>
 
                 <div>
-                  <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1">Nome</label>
+                  <label className="text-[9px] font-light text-white/50 block mb-1">Nome</label>
                   <input
                     type="text"
                     value={profileName}
                     onChange={(e) => setProfileName(e.target.value)}
                     placeholder="Nome do usuário"
-                    className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-[#111111]/80 placeholder-[#5F6368]/40 focus:outline-none focus:border-vitti-medium/40 transition-colors"
+                    className="w-full bg-white/[0.06] border border-white/[0.12] rounded-lg px-3 py-2 text-[11px] font-light text-white/80 placeholder-white/25 focus:outline-none focus:border-vitti-medium/50 transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1.5">Status</label>
+                  <label className="text-[9px] font-light text-white/50 block mb-1.5">Status</label>
                   <div className="flex gap-2">
                     {(["active", "inactive"] as const).map((s) => (
                       <button
@@ -754,7 +781,7 @@ function EditModal({
                             ? s === "active"
                               ? "border-emerald-400/30 text-emerald-400/70 bg-emerald-400/5"
                               : "border-red-400/25 text-red-400/60 bg-red-400/5"
-                            : "border-black/[0.08] text-[#5F6368]/55 hover:border-white/20"
+                            : "border-white/[0.10] text-white/40 hover:border-white/20"
                         }`}
                       >
                         {s === "active" ? "Ativo" : "Inativo"}
@@ -764,7 +791,7 @@ function EditModal({
                 </div>
 
                 <div>
-                  <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1.5">
+                  <label className="text-[9px] font-light text-white/50 block mb-1.5">
                     Tipo de acesso
                   </label>
                   <div className="flex gap-2">
@@ -775,7 +802,7 @@ function EditModal({
                         className={`text-[9px] font-light px-3 py-1.5 rounded-full border transition-all ${
                           profileRole === r
                             ? "border-vitti-medium/40 text-vitti-light/70 bg-vitti-medium/10"
-                            : "border-black/[0.08] text-[#5F6368]/55 hover:border-white/20"
+                            : "border-white/[0.10] text-white/40 hover:border-white/20"
                         }`}
                       >
                         {GLOBAL_ROLE_LABELS[r]}
@@ -785,10 +812,10 @@ function EditModal({
                 </div>
 
                 <div>
-                  <label className="text-[9px] font-light text-[#5F6368]/50 block mb-1">
+                  <label className="text-[9px] font-light text-white/40 block mb-1">
                     Email (somente leitura)
                   </label>
-                  <p className="text-[10px] font-light text-[#5F6368]/55 px-3 py-2 bg-black/[0.02] rounded-lg border border-black/[0.06]">
+                  <p className="text-[10px] font-light text-white/45 px-3 py-2 bg-white/[0.04] rounded-lg border border-white/[0.08]">
                     {detail.email ?? "—"}
                   </p>
                 </div>
@@ -798,95 +825,131 @@ function EditModal({
                 </div>
               </section>
 
-              {/* ── Cliente e função (somente client_user) ── */}
+              {/* ── Portais vinculados (somente client_user) ── */}
               {isClientUser && (
-                <section className="space-y-3 border-t border-black/[0.05] pt-5">
+                <section className="space-y-3 border-t border-white/[0.06] pt-5">
                   <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase">
-                    Cliente e função
+                    Portais vinculados
                   </p>
 
-                  <div>
-                    <label className="text-[9px] font-light text-[#5F6368]/60 block mb-1.5">
-                      Cliente vinculado
-                    </label>
-                    <select
-                      value={selectedClientId}
-                      onChange={(e) => setSelectedClientId(e.target.value)}
-                      className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-[11px] font-light text-[#111111]/80 focus:outline-none focus:border-vitti-medium/40 transition-colors appearance-none"
-                    >
-                      <option value="">— sem vínculo —</option>
-                      {allClients.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                          {c.status !== "active" ? " (inativo)" : ""}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {selectedClientId && (
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-light text-[#5F6368]/60 block">
-                        Função no cliente
-                      </label>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {(["admin", "finance", "team", "custom"] as const).map((role) => (
-                          <button
-                            key={role}
-                            onClick={() => setClientUserRole(role)}
-                            className={`text-left px-3 py-2.5 rounded-lg border transition-all ${
-                              clientUserRole === role
-                                ? "border-vitti-medium/35 bg-vitti-medium/[0.08]"
-                                : "border-black/[0.07] bg-black/[0.02] hover:border-black/[0.10]"
-                            }`}
-                          >
-                            <p className={`text-[9px] font-light leading-snug ${
-                              clientUserRole === role ? "text-vitti-light/80" : "text-[#5F6368]/70"
-                            }`}>
-                              {CLIENT_ROLE_LABELS[role]}
-                            </p>
-                            <p className="text-[8px] font-light text-[#5F6368]/50 mt-0.5">
-                              {CLIENT_ROLE_DESCRIPTIONS[role]}
-                            </p>
-                          </button>
-                        ))}
-                      </div>
-
-                      {clientUserRole !== "custom" && (
-                        <button
-                          onClick={applyPreset}
-                          className="text-[9px] font-light px-3 py-1.5 rounded-full border border-vitti-medium/20 text-vitti-light/40 hover:border-vitti-medium/40 hover:text-vitti-light/70 transition-all"
+                  {/* Lista de portais atuais */}
+                  {linkedClients.length === 0 ? (
+                    <p className="text-[10px] font-light text-white/40">
+                      Nenhum portal vinculado.
+                    </p>
+                  ) : (
+                    <div className="space-y-1">
+                      {linkedClients.map((link) => (
+                        <div
+                          key={link.clientId}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-white/[0.08] bg-white/[0.03]"
                         >
-                          Aplicar permissões da função
-                        </button>
-                      )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] font-light text-white/80 truncate">{link.clientName}</p>
+                            <p className="text-[8px] font-light text-white/35">
+                              {CLIENT_ROLE_LABELS[link.role as ClientRole] ?? link.role}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleRemoveClient(link.clientId)}
+                            disabled={removingClientId === link.clientId}
+                            className="shrink-0 p-1 rounded-md hover:bg-red-400/10 transition-colors disabled:opacity-40"
+                          >
+                            {removingClientId === link.clientId ? (
+                              <Loader2 size={11} className="animate-spin text-red-400/50" />
+                            ) : (
+                              <X size={11} className="text-white/30 hover:text-red-400/60" />
+                            )}
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   )}
 
-                  <div className="flex justify-end">
-                    <SaveButton
-                      state={clientSaveState}
-                      onClick={handleSaveClient}
-                      label="Salvar vínculo e função"
-                    />
-                  </div>
+                  {removeClientError && (
+                    <p className="text-[9px] font-light text-red-400/70">{removeClientError}</p>
+                  )}
+
+                  {/* Adicionar novo portal */}
+                  {(() => {
+                    const linkedIds = new Set(linkedClients.map((c) => c.clientId));
+                    const available = allClients.filter((c) => !linkedIds.has(c.id));
+                    if (available.length === 0) return null;
+                    return (
+                      <div className="space-y-2 border-t border-white/[0.04] pt-3">
+                        <p className="text-[9px] font-light text-white/40">Adicionar portal</p>
+                        <select
+                          value={addingClientId}
+                          onChange={(e) => setAddingClientId(e.target.value)}
+                          className="w-full bg-white/[0.06] border border-white/[0.12] rounded-lg px-3 py-2 text-[11px] font-light text-white/80 focus:outline-none focus:border-vitti-medium/50 transition-colors appearance-none"
+                        >
+                          <option value="">— selecione —</option>
+                          {available.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}{c.status !== "active" ? " (inativo)" : ""}
+                            </option>
+                          ))}
+                        </select>
+
+                        {addingClientId && (
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {(["admin", "finance", "team", "custom"] as const).map((r) => (
+                              <button
+                                key={r}
+                                onClick={() => setAddClientRole(r)}
+                                className={`text-left px-3 py-2 rounded-lg border transition-all ${
+                                  addClientRole === r
+                                    ? "border-vitti-medium/35 bg-vitti-medium/[0.08]"
+                                    : "border-white/[0.08] bg-white/[0.03] hover:border-white/15"
+                                }`}
+                              >
+                                <p className={`text-[9px] font-light ${
+                                  addClientRole === r ? "text-vitti-light/80" : "text-white/55"
+                                }`}>
+                                  {CLIENT_ROLE_LABELS[r]}
+                                </p>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {addingClientId && (
+                          <div className="flex justify-end">
+                            <SaveButton state={addClientState} onClick={handleAddClient} label="Adicionar portal" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Permissões: atalho para aplicar preset do 1º portal */}
+                  {linkedClients.length > 0 && normalizeClientRole(linkedClients[0]?.role ?? null) !== "custom" && (
+                    <div className="border-t border-white/[0.04] pt-3">
+                      <button
+                        onClick={applyPreset}
+                        className="text-[9px] font-light px-3 py-1.5 rounded-full border border-vitti-medium/20 text-vitti-light/40 hover:border-vitti-medium/40 hover:text-vitti-light/70 transition-all"
+                      >
+                        Aplicar permissões da função ({CLIENT_ROLE_LABELS[normalizeClientRole(linkedClients[0]?.role ?? null)]})
+                      </button>
+                    </div>
+                  )}
                 </section>
               )}
 
               {/* ── Permissões (somente client_user) ── */}
               {isClientUser && (
-                <section className="space-y-3 border-t border-black/[0.05] pt-5">
+                <section className="space-y-3 border-t border-white/[0.06] pt-5">
                   <div className="flex items-center justify-between">
                     <p className="text-[9px] text-white/[0.15] tracking-[0.2em] uppercase">
                       Permissões
                     </p>
-                    <span className="text-[9px] text-[#5F6368]/50 font-light">
+                    <span className="text-[9px] text-white/35 font-light">
                       {selectedPermIds.size} selecionada{selectedPermIds.size !== 1 ? "s" : ""}
                     </span>
                   </div>
 
                   {allPermissions.length === 0 ? (
-                    <p className="text-[10px] font-light text-[#5F6368]/50">
+                    <p className="text-[10px] font-light text-white/40">
                       Nenhuma permissão cadastrada. Verifique o seed no banco.
                     </p>
                   ) : (
@@ -900,21 +963,21 @@ function EditModal({
                             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg border text-left transition-all ${
                               checked
                                 ? "border-vitti-medium/25 bg-vitti-medium/[0.06]"
-                                : "border-black/[0.06] bg-black/[0.02] hover:border-black/[0.10]"
+                                : "border-white/[0.08] bg-white/[0.03] hover:border-white/15"
                             }`}
                           >
                             <div
                               className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-all ${
                                 checked
                                   ? "border-vitti-medium/60 bg-vitti-medium/30"
-                                  : "border-black/[0.15]"
+                                  : "border-white/20"
                               }`}
                             >
                               {checked && <div className="w-1.5 h-1.5 rounded-sm bg-vitti-light/70" />}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-[10px] font-light text-[#111111]/70">{perm.name}</p>
-                              <p className="text-[8px] font-mono text-[#5F6368]/50">{perm.key}</p>
+                              <p className="text-[10px] font-light text-white/70">{perm.name}</p>
+                              <p className="text-[8px] font-mono text-white/35">{perm.key}</p>
                             </div>
                           </button>
                         );
@@ -930,7 +993,7 @@ function EditModal({
 
               {!isClientUser && (
                 <div className="rounded-lg border border-vitti-medium/10 bg-vitti-medium/[0.04] px-3 py-2.5">
-                  <p className="text-[9px] font-light text-[#5F6368]/60 leading-relaxed">
+                  <p className="text-[9px] font-light text-white/50 leading-relaxed">
                     Vitti Admin tem acesso irrestrito ao portal. Cliente vinculado e
                     permissões individuais não se aplicam.
                   </p>
@@ -1072,8 +1135,8 @@ export function UsersAdminPanel({ initialUsers, allPermissions, allClients, perm
         <div className="flex items-start gap-2.5">
           <ShieldCheck size={12} className="text-[#5F6368]/50 shrink-0 mt-0.5" />
           <p className="text-[9px] font-light text-[#5F6368]/55 leading-relaxed">
-            Apenas usuários com <span className="text-[#5F6368]/70">global_role = client_user</span>{" "}
-            podem ser criados por esta tela. Vitti Admins são configurados diretamente no banco.
+            Usuários com múltiplos portais são suportados. Permissões são configuradas por portal
+            vinculado.
           </p>
         </div>
       </div>

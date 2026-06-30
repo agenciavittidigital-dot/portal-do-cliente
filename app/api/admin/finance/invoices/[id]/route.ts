@@ -2,12 +2,19 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
-import { updateInvoice } from "@/lib/data/invoices-admin";
+import { updateInvoice, getInvoiceById, deleteInvoice } from "@/lib/data/invoices-admin";
 import type { AdminInvoiceRow, InvoiceStatus } from "@/lib/data/invoices-admin";
+import { deletePortalFile } from "@/lib/storage/portal-files";
 
 export interface InvoicePatchResponse {
   success: boolean;
   invoice?: AdminInvoiceRow;
+  error?: string;
+  detail?: string;
+}
+
+export interface InvoiceDeleteResponse {
+  success: boolean;
   error?: string;
   detail?: string;
 }
@@ -106,6 +113,49 @@ export async function PATCH(
     const detail = err instanceof Error ? err.message : "Erro desconhecido.";
     return NextResponse.json<InvoicePatchResponse>(
       { success: false, error: "Erro ao atualizar nota fiscal.", detail },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /api/admin/finance/invoices/[id] — remove NF and storage file
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<Response> {
+  const auth = await requireAdmin();
+  if ("error" in auth) return auth.error;
+
+  const { id } = await params;
+  if (!id) {
+    return NextResponse.json<InvoiceDeleteResponse>(
+      { success: false, error: "ID inválido." },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const invoice = await getInvoiceById(id);
+    if (!invoice) {
+      return NextResponse.json<InvoiceDeleteResponse>(
+        { success: false, error: "NF não encontrada." },
+        { status: 404 }
+      );
+    }
+
+    await deleteInvoice(id);
+
+    try {
+      await deletePortalFile(invoice.filePath);
+    } catch (storageErr) {
+      console.error("[DELETE invoice] Storage cleanup failed:", storageErr);
+    }
+
+    return NextResponse.json<InvoiceDeleteResponse>({ success: true });
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : "Erro desconhecido.";
+    return NextResponse.json<InvoiceDeleteResponse>(
+      { success: false, error: "Erro ao excluir nota fiscal.", detail },
       { status: 500 }
     );
   }

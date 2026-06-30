@@ -4,6 +4,13 @@ import type { GlobalRole } from "@/types";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
+export interface AdminClientLink {
+  clientUserId: string;
+  clientId: string;
+  clientName: string;
+  role: string;
+}
+
 export interface AdminUserRow {
   id: string;         // profiles.id
   authUserId: string; // profiles.auth_user_id → auth.users.id
@@ -11,10 +18,11 @@ export interface AdminUserRow {
   email: string | null;
   globalRole: GlobalRole;
   status: string;
-  clientId: string | null;
-  clientName: string | null;
-  clientUserRole: string | null; // client_users.role
+  clientId: string | null;       // primary (first) portal
+  clientName: string | null;     // primary (first) portal name
+  clientUserRole: string | null; // primary portal role
   permissionCount: number;
+  portalCount: number;           // total linked portals
 }
 
 export interface AdminUserDetail {
@@ -24,9 +32,9 @@ export interface AdminUserDetail {
   email: string | null;
   globalRole: GlobalRole;
   status: string;
-  client: { id: string; name: string } | null;
-  clientUserRole: string | null; // client_users.role
-  permissionIds: string[];
+  clients: AdminClientLink[];    // all linked portals (replaces single `client`)
+  clientUserRole: string | null; // role of first portal
+  permissionIds: string[];       // permissions of the first portal
 }
 
 export interface AdminPermission {
@@ -75,23 +83,30 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
 
   const profileIds = profileRows.map((r) => String(r.id));
 
-  // client_users usa profile_id (não user_id)
+  // client_users usa profile_id (não user_id); order garante determinismo do portal primário
   const { data: clientUserRows } = await admin
     .from("client_users")
     .select("id, profile_id, client_id, role")
-    .in("profile_id", profileIds);
+    .in("profile_id", profileIds)
+    .order("created_at", { ascending: true });
 
-  const clientUserIdByProfile = new Map<string, string>(); // profile_id → client_users.id
-  const clientIdByProfile = new Map<string, string>();      // profile_id → client_id
-  const clientRoleByProfile = new Map<string, string>();    // profile_id → role
+  // first-wins: para cada profile, armazena apenas o primeiro vínculo para exibição na tabela
+  const firstClientUserIdByProfile = new Map<string, string>();
+  const firstClientIdByProfile = new Map<string, string>();
+  const firstClientRoleByProfile = new Map<string, string>();
+  const portalCountByProfile = new Map<string, number>();
   for (const r of clientUserRows ?? []) {
-    clientUserIdByProfile.set(String(r.profile_id), String(r.id));
-    clientIdByProfile.set(String(r.profile_id), String(r.client_id));
-    clientRoleByProfile.set(String(r.profile_id), String(r.role ?? "team"));
+    const pid = String(r.profile_id);
+    portalCountByProfile.set(pid, (portalCountByProfile.get(pid) ?? 0) + 1);
+    if (!firstClientIdByProfile.has(pid)) {
+      firstClientUserIdByProfile.set(pid, String(r.id));
+      firstClientIdByProfile.set(pid, String(r.client_id));
+      firstClientRoleByProfile.set(pid, String(r.role ?? "team"));
+    }
   }
 
-  // Contagem de permissões via client_user_id
-  const clientUserIds = [...clientUserIdByProfile.values()];
+  // Contagem de permissões via client_user_id (apenas do portal primário)
+  const clientUserIds = [...firstClientUserIdByProfile.values()];
   const permCountByClientUserId = new Map<string, number>();
   if (clientUserIds.length > 0) {
     const { data: permRows } = await admin
@@ -104,8 +119,8 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
     }
   }
 
-  // Nomes dos clientes vinculados
-  const clientIds = [...new Set([...clientIdByProfile.values()])];
+  // Nomes dos clientes vinculados (apenas do portal primário de cada perfil)
+  const clientIds = [...new Set([...firstClientIdByProfile.values()])];
   const clientNameById = new Map<string, string>();
   if (clientIds.length > 0) {
     const { data: clientRows } = await admin
@@ -119,8 +134,8 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
 
   return profileRows.map((r) => {
     const pid = String(r.id);
-    const clientUserId = clientUserIdByProfile.get(pid);
-    const clientId = clientIdByProfile.get(pid) ?? null;
+    const clientUserId = firstClientUserIdByProfile.get(pid);
+    const clientId = firstClientIdByProfile.get(pid) ?? null;
     return {
       id: pid,
       authUserId: String(r.auth_user_id ?? ""),
@@ -130,8 +145,9 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
       status: String(r.status ?? ""),
       clientId,
       clientName: clientId ? (clientNameById.get(clientId) ?? null) : null,
-      clientUserRole: clientId ? (clientRoleByProfile.get(pid) ?? "team") : null,
+      clientUserRole: clientId ? (firstClientRoleByProfile.get(pid) ?? "team") : null,
       permissionCount: clientUserId ? (permCountByClientUserId.get(clientUserId) ?? 0) : 0,
+      portalCount: portalCountByProfile.get(pid) ?? 0,
     };
   });
 }
@@ -151,36 +167,46 @@ export async function getAdminUserDetail(
 
   if (error || !profile) return null;
 
-  // client_users usa profile_id
-  const { data: clientUserRow } = await admin
+  // Busca TODOS os vínculos do perfil, ordenados por criação (primeiro = portal primário)
+  const { data: allClientUserRows } = await admin
     .from("client_users")
     .select("id, client_id, role")
     .eq("profile_id", profileId)
-    .maybeSingle();
+    .order("created_at", { ascending: true });
 
-  // Permissões via client_users.id → user_permissions.client_user_id
+  const firstClientUserRow = allClientUserRows?.[0] ?? null;
+
+  // Permissões do portal primário
   let permissionIds: string[] = [];
-  if (clientUserRow?.id) {
+  if (firstClientUserRow?.id) {
     const { data: permRows } = await admin
       .from("user_permissions")
       .select("permission_id")
-      .eq("client_user_id", String(clientUserRow.id));
+      .eq("client_user_id", String(firstClientUserRow.id));
     permissionIds = (permRows ?? [])
       .map((r) => String(r.permission_id))
       .filter(Boolean);
   }
 
-  let client: { id: string; name: string } | null = null;
-  if (clientUserRow?.client_id) {
-    const { data: clientRow } = await admin
+  // Nomes de todos os clientes vinculados
+  const allClientIds = [...new Set((allClientUserRows ?? []).map((r) => String(r.client_id)))];
+  const clientNameById = new Map<string, string>();
+  if (allClientIds.length > 0) {
+    const { data: clientRows } = await admin
       .from("clients")
       .select("id, name")
-      .eq("id", String(clientUserRow.client_id))
-      .maybeSingle();
-    if (clientRow) {
-      client = { id: String(clientRow.id), name: String(clientRow.name ?? "") };
+      .in("id", allClientIds);
+    for (const c of clientRows ?? []) {
+      clientNameById.set(String(c.id), String(c.name ?? ""));
     }
   }
+
+  const clients: AdminClientLink[] = (allClientUserRows ?? []).map((r) => ({
+    clientUserId: String(r.id),
+    clientId: String(r.client_id),
+    clientName: clientNameById.get(String(r.client_id)) ?? "",
+    role: String(r.role ?? "team"),
+  }));
 
   return {
     id: String(profile.id),
@@ -189,8 +215,8 @@ export async function getAdminUserDetail(
     email: profile.email ? String(profile.email) : null,
     globalRole: profile.global_role === "vitti_admin" ? "vitti_admin" : "client_user",
     status: String(profile.status ?? ""),
-    client,
-    clientUserRole: clientUserRow?.role ? String(clientUserRow.role) : null,
+    clients,
+    clientUserRole: firstClientUserRow?.role ? String(firstClientUserRow.role) : null,
     permissionIds,
   };
 }
@@ -326,6 +352,66 @@ export async function listPermissions(): Promise<AdminPermission[]> {
     description: r.description ? String(r.description) : null,
     module: String(r.module ?? ""),
   }));
+}
+
+// ── Add / remove individual client links (multi-client support) ───────────────
+
+/**
+ * Adds a new client link for a profile without removing existing ones.
+ * No-op if the link already exists.
+ */
+export async function addUserClient(
+  profileId: string,
+  clientId: string,
+  role: string = "team"
+): Promise<void> {
+  const admin = mkAdmin();
+
+  const { data: existing } = await admin
+    .from("client_users")
+    .select("id")
+    .eq("profile_id", profileId)
+    .eq("client_id", clientId)
+    .maybeSingle();
+
+  if (existing) return;
+
+  const { error } = await admin
+    .from("client_users")
+    .insert({ profile_id: profileId, client_id: clientId, role });
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Removes a specific client link for a profile, including its permissions.
+ * No-op if the link does not exist.
+ */
+export async function removeUserClient(
+  profileId: string,
+  clientId: string
+): Promise<void> {
+  const admin = mkAdmin();
+
+  const { data: existing } = await admin
+    .from("client_users")
+    .select("id")
+    .eq("profile_id", profileId)
+    .eq("client_id", clientId)
+    .maybeSingle();
+
+  if (!existing) return;
+
+  await admin
+    .from("user_permissions")
+    .delete()
+    .eq("client_user_id", String(existing.id));
+
+  const { error } = await admin
+    .from("client_users")
+    .delete()
+    .eq("profile_id", profileId)
+    .eq("client_id", clientId);
+  if (error) throw new Error(error.message);
 }
 
 // ── Garantir permissões padrão ─────────────────────────────────────────────────
