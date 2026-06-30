@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Phone,
   Plug,
+  ImageIcon,
 } from "lucide-react";
 
 const ACTIVE_MODULES = [
@@ -21,6 +22,7 @@ const ACTIVE_MODULES = [
   { label: "Relatórios", icon: FileText, description: "Relatórios manuais por cliente", href: "/admin/relatorios" },
   { label: "Calls", icon: Phone, description: "Calls manuais com link de gravação por cliente", href: "/admin/calls" },
   { label: "Integrações", icon: Plug, description: "Windsor AI, sincronizações, mapeamento de contas e ferramentas avançadas", href: "/admin/integracoes" },
+  { label: "Carrossel da Home", icon: ImageIcon, description: "Gerenciar banners exibidos no carrossel da Home do portal", href: "/admin/carrossel-home" },
 ];
 
 const OTHER_MODULES = [

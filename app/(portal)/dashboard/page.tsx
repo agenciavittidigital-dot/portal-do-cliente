@@ -7,7 +7,10 @@ import { computeDateRange, loadPerformanceData } from "@/lib/data/performance";
 import { listClientInvoices } from "@/lib/data/invoices-client";
 import { listPublishedReports } from "@/lib/data/reports-client";
 import { listPublishedCalls } from "@/lib/data/calls-client";
+import { listActiveBanners } from "@/lib/data/banners-admin";
+import { getSignedDownloadUrl } from "@/lib/storage/portal-files";
 import { HomeCarousel } from "@/components/home/HomeCarousel";
+import type { CarouselBannerSlide } from "@/components/home/HomeCarousel";
 import {
   Target,
   Search,
@@ -265,6 +268,26 @@ export default async function DashboardPage({
     );
   }
 
+  // ── Banners do carrossel ───────────────────────────────────────────────────
+  let carouselSlides: CarouselBannerSlide[] = [];
+  try {
+    const activeBanners = await listActiveBanners();
+    carouselSlides = (
+      await Promise.all(
+        activeBanners.map(async (b) => {
+          try {
+            const imageUrl = await getSignedDownloadUrl(b.storagePath, 3600);
+            return { id: b.id, imageUrl, linkUrl: b.linkUrl };
+          } catch {
+            return null;
+          }
+        })
+      )
+    ).filter((s): s is CarouselBannerSlide => s !== null);
+  } catch {
+    // Falls back to static images in HomeCarousel
+  }
+
   // ── Carregar dados em paralelo ─────────────────────────────────────────────
   const { start: perfStart, end: perfEnd } = computeDateRange("last_30_days");
 
@@ -322,7 +345,7 @@ export default async function DashboardPage({
     <div className="space-y-6 max-w-6xl">
 
       {/* Carrossel */}
-      <HomeCarousel />
+      <HomeCarousel banners={carouselSlides} />
 
       {/* Hero */}
       <section className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#171F38] via-[#1c2a52] to-[#0d1220] p-8 shadow-[0_8px_40px_rgb(0,0,0,0.15)]">
