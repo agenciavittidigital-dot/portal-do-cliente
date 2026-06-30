@@ -676,11 +676,12 @@ function EditModal({
   const handleSavePermissions = useCallback(async () => {
     setPermSaveState("saving");
     const permissionIds = [...selectedPermIds];
+    const clientUserId = linkedClients[0]?.clientUserId ?? "";
     try {
       const res = await fetch(`/api/admin/users/${userId}/permissions`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ permissionIds }),
+        body: JSON.stringify({ permissionIds, clientUserId }),
       });
       const json: UserPermissionsPatchResponse = await res.json();
       if (!json.success) throw new Error(json.error);
@@ -691,7 +692,7 @@ function EditModal({
       setPermSaveState("error");
       setTimeout(() => setPermSaveState("idle"), 3000);
     }
-  }, [userId, selectedPermIds, onSaved]);
+  }, [userId, selectedPermIds, linkedClients, onSaved]);
 
   const applyPreset = useCallback(() => {
     const firstRole = normalizeClientRole(linkedClients[0]?.role ?? null);

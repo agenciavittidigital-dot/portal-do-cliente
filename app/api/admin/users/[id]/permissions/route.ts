@@ -64,6 +64,14 @@ export async function PATCH(
 
   const b = body as Record<string, unknown>;
 
+  const clientUserId = typeof b.clientUserId === "string" ? b.clientUserId.trim() : "";
+  if (!clientUserId) {
+    return NextResponse.json<UserPermissionsPatchResponse>(
+      { success: false, error: "clientUserId é obrigatório." },
+      { status: 400 }
+    );
+  }
+
   if (!Array.isArray(b.permissionIds)) {
     return NextResponse.json<UserPermissionsPatchResponse>(
       { success: false, error: "permissionIds deve ser um array." },
@@ -76,7 +84,7 @@ export async function PATCH(
     .map((v) => String(v));
 
   try {
-    await setUserPermissions(id, permissionIds);
+    await setUserPermissions(clientUserId, permissionIds);
     return NextResponse.json<UserPermissionsPatchResponse>({ success: true });
   } catch (err) {
     const detail = err instanceof Error ? err.message : "Erro desconhecido.";

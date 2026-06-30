@@ -170,7 +170,7 @@ export async function loadUserContext(
     // 4. Fetch ALL client links for this profile (ordered for determinism)
     const { data: clientUserRows } = await admin
       .from("client_users")
-      .select("id, client_id")
+      .select("id, client_id, role")
       .eq("profile_id", profile.id)
       .order("created_at", { ascending: true });
 
@@ -178,7 +178,7 @@ export async function loadUserContext(
     const clientCount = allClientUsers.length;
 
     // Pick target: use selectedClientId if provided and valid; else first record
-    let targetClientUser: { id: unknown; client_id: unknown } | null = null;
+    let targetClientUser: { id: unknown; client_id: unknown; role: unknown } | null = null;
 
     if (selectedClientId) {
       targetClientUser =
@@ -228,6 +228,30 @@ export async function loadUserContext(
         permissions = (permRows ?? [])
           .map((r: Record<string, unknown>) => String(r.key ?? ""))
           .filter(Boolean);
+      } else {
+        // No permissions for this link — create defaults silently.
+        // This repairs links that were created before automatic permission seeding.
+        try {
+          const { data: allPermRows } = await admin
+            .from("permissions")
+            .select("id, key")
+            .not("module", "eq", "admin");
+
+          const allPerms = (allPermRows ?? []) as Array<Record<string, unknown>>;
+          if (allPerms.length > 0) {
+            await admin
+              .from("user_permissions")
+              .insert(
+                allPerms.map((p) => ({
+                  client_user_id: clientUserId,
+                  permission_id: String(p.id),
+                }))
+              );
+            permissions = allPerms.map((p) => String(p.key ?? "")).filter(Boolean);
+          }
+        } catch (e) {
+          console.error("[loadUserContext] Falha ao criar permissões padrão:", e);
+        }
       }
     }
 

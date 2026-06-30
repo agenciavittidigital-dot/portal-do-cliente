@@ -1,6 +1,6 @@
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
-import { resolveClientForUser } from "@/lib/data/invoices-client";
 import { listPublishedReports } from "@/lib/data/reports-client";
 import type { ClientReportRow } from "@/lib/data/reports-client";
 import { getSignedDownloadUrl } from "@/lib/storage/portal-files";
@@ -71,9 +71,11 @@ export default async function RelatoriosPage({
   const filterMonth  = params.month ? parseInt(params.month) : null;
 
   // ── Auth ──────────────────────────────────────────────────────────────────
+  const cookieStore = await cookies();
+  const activeClientId = cookieStore.get("active_client_id")?.value;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const ctx     = user ? await loadUserContext(user.id) : null;
+  const ctx     = user ? await loadUserContext(user.id, activeClientId) : null;
   const isAdmin = ctx?.isAdmin ?? false;
 
   // ── Dados ─────────────────────────────────────────────────────────────────
@@ -92,7 +94,7 @@ export default async function RelatoriosPage({
         allReports    = await listPublishedReports(urlClientId);
       }
     } else {
-      const resolvedId = await resolveClientForUser(user.id);
+      const resolvedId = ctx?.client?.id ?? null;
       if (resolvedId) {
         clientFound = true;
         allReports  = await listPublishedReports(resolvedId);

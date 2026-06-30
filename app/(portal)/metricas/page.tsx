@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
 import { loadActiveClients, loadClientDashboards } from "@/lib/data/dashboards";
@@ -26,12 +27,14 @@ export default async function MetricasPage({
 
   const { start: perfStart, end: perfEnd } = computeDateRange(period, startDate, endDate);
   // ── Auth ──────────────────────────────────────────────────────
+  const cookieStore = await cookies();
+  const activeClientId = cookieStore.get("active_client_id")?.value;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const ctx = user ? await loadUserContext(user.id) : null;
+  const ctx = user ? await loadUserContext(user.id, activeClientId) : null;
   const isAdmin = ctx?.isAdmin ?? false;
 
   const filterProps = {

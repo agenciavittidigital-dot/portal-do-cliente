@@ -294,28 +294,21 @@ export async function setUserClient(
   }
 }
 
-// ── Set permissions (replace all) ─────────────────────────────────────────────
+// ── Set permissions (replace all for a specific client link) ──────────────────
 
+/**
+ * Replaces all permissions for a specific client_users row.
+ * clientUserId is the client_users.id (not profile.id).
+ */
 export async function setUserPermissions(
-  profileId: string,
+  clientUserId: string,
   permissionIds: string[]
 ): Promise<void> {
   const admin = mkAdmin();
 
-  // user_permissions usa client_user_id → precisa do client_users.id
-  const { data: clientUserRow } = await admin
-    .from("client_users")
-    .select("id")
-    .eq("profile_id", profileId)
-    .maybeSingle();
-
-  if (!clientUserRow?.id) {
-    throw new Error(
-      "Usuário não possui vínculo com cliente. Vincule um cliente antes de definir permissões."
-    );
+  if (!clientUserId) {
+    throw new Error("clientUserId é obrigatório para definir permissões.");
   }
-
-  const clientUserId = String(clientUserRow.id);
 
   const { error: deleteErr } = await admin
     .from("user_permissions")
@@ -354,10 +347,41 @@ export async function listPermissions(): Promise<AdminPermission[]> {
   }));
 }
 
+// ── Ensure default permissions for a client link ──────────────────────────────
+
+/**
+ * Idempotent: creates all non-admin permissions for a client_users.id
+ * only when that link has zero user_permissions rows. Safe to call repeatedly.
+ */
+export async function ensureClientUserPermissions(clientUserId: string): Promise<void> {
+  const admin = mkAdmin();
+
+  const { data: existing } = await admin
+    .from("user_permissions")
+    .select("id")
+    .eq("client_user_id", clientUserId)
+    .limit(1);
+
+  if (existing && existing.length > 0) return;
+
+  const { data: permRows } = await admin
+    .from("permissions")
+    .select("id")
+    .not("module", "eq", "admin");
+
+  const permIds = (permRows ?? []).map((r) => String(r.id)).filter(Boolean);
+  if (permIds.length === 0) return;
+
+  await admin
+    .from("user_permissions")
+    .insert(permIds.map((pid) => ({ client_user_id: clientUserId, permission_id: pid })));
+}
+
 // ── Add / remove individual client links (multi-client support) ───────────────
 
 /**
  * Adds a new client link for a profile without removing existing ones.
+ * Creates default permissions for the new link automatically.
  * No-op if the link already exists.
  */
 export async function addUserClient(
@@ -376,10 +400,21 @@ export async function addUserClient(
 
   if (existing) return;
 
-  const { error } = await admin
+  const { data: newRow, error } = await admin
     .from("client_users")
-    .insert({ profile_id: profileId, client_id: clientId, role });
+    .insert({ profile_id: profileId, client_id: clientId, role })
+    .select("id")
+    .single();
+
   if (error) throw new Error(error.message);
+
+  if (newRow?.id) {
+    try {
+      await ensureClientUserPermissions(String(newRow.id));
+    } catch (e) {
+      console.error("[addUserClient] Falha ao criar permissões padrão:", e);
+    }
+  }
 }
 
 /**

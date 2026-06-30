@@ -132,6 +132,22 @@ export async function createReport(input: ReportCreateInput): Promise<AdminRepor
   return coerceRow(data as Record<string, unknown>);
 }
 
+export async function deleteReport(id: string): Promise<{ filePath: string }> {
+  const admin = mkAdmin();
+  const { data, error } = await admin
+    .from("reports")
+    .delete()
+    .eq("id", id)
+    .select("file_path")
+    .single();
+
+  if (error) {
+    console.error("[deleteReport] Supabase error:", error.code, error.message);
+    throw new Error(error.message);
+  }
+  return { filePath: String((data as Record<string, unknown>).file_path ?? "") };
+}
+
 export async function updateReport(
   id: string,
   patch: ReportUpdateInput

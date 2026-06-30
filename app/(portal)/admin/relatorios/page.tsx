@@ -20,7 +20,7 @@ export default async function AdminRelatoriosPage() {
             <Badge label="Admin" variant="info" />
           </div>
         </div>
-        <p className="text-sm text-vitti-blue/50 mt-1.5 font-light">
+        <p className="text-sm text-slate-600 mt-1.5 font-light">
           Gerencie relatórios por cliente — cadastro manual com link e resumo.
         </p>
       </div>

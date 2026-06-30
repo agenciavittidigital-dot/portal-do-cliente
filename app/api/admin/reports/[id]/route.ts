@@ -2,12 +2,19 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
-import { updateReport } from "@/lib/data/reports-admin";
+import { updateReport, deleteReport } from "@/lib/data/reports-admin";
+import { deletePortalFile } from "@/lib/storage/portal-files";
 import type { AdminReportRow, ReportStatus } from "@/lib/data/reports-admin";
 
 export interface ReportPatchResponse {
   success: boolean;
   report?: AdminReportRow;
+  error?: string;
+  detail?: string;
+}
+
+export interface ReportDeleteResponse {
+  success: boolean;
   error?: string;
   detail?: string;
 }
@@ -38,6 +45,41 @@ async function requireAdmin(): Promise<{ userId: string } | { error: Response }>
 }
 
 const VALID_STATUSES: ReportStatus[] = ["draft", "published", "archived"];
+
+// DELETE /api/admin/reports/[id] — removes DB record + Storage file (best-effort)
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<Response> {
+  const auth = await requireAdmin();
+  if ("error" in auth) return auth.error;
+
+  const { id } = await params;
+  if (!id) {
+    return NextResponse.json<ReportDeleteResponse>(
+      { success: false, error: "ID inválido." },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const { filePath } = await deleteReport(id);
+    if (filePath) {
+      try {
+        await deletePortalFile(filePath);
+      } catch {
+        // best-effort: DB record already removed, storage failure is non-fatal
+      }
+    }
+    return NextResponse.json<ReportDeleteResponse>({ success: true });
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : "Erro desconhecido.";
+    return NextResponse.json<ReportDeleteResponse>(
+      { success: false, error: "Erro ao excluir relatório.", detail },
+      { status: 500 }
+    );
+  }
+}
 
 // PATCH /api/admin/reports/[id] — metadata only, no file replacement
 export async function PATCH(

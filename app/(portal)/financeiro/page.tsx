@@ -1,7 +1,7 @@
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
 import {
-  resolveClientForUser,
   listClientInvoices,
   listClientPayments,
 } from "@/lib/data/invoices-client";
@@ -60,9 +60,11 @@ export default async function FinanceiroPage({
 }) {
   const { clientId: urlClientId } = await searchParams;
 
+  const cookieStore = await cookies();
+  const activeClientId = cookieStore.get("active_client_id")?.value;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const ctx     = user ? await loadUserContext(user.id) : null;
+  const ctx     = user ? await loadUserContext(user.id, activeClientId) : null;
   const isAdmin = ctx?.isAdmin ?? false;
 
   let invoices: ClientInvoiceRow[] = [];
@@ -83,7 +85,7 @@ export default async function FinanceiroPage({
         ]);
       }
     } else {
-      const clientId = await resolveClientForUser(user.id);
+      const clientId = ctx?.client?.id ?? null;
       if (clientId) {
         clientFound = true;
         ;[invoices, payments] = await Promise.all([

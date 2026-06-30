@@ -1,6 +1,6 @@
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
-import { resolveClientForUser } from "@/lib/data/invoices-client";
 import { listPublishedCalls } from "@/lib/data/calls-client";
 import { getNextScheduledCall } from "@/lib/data/scheduled-calls-client";
 import type { ClientCallRow } from "@/lib/data/calls-client";
@@ -66,6 +66,8 @@ export default async function CallsPage({
 }) {
   const { clientId: urlClientId } = await searchParams;
 
+  const cookieStore = await cookies();
+  const activeClientId = cookieStore.get("active_client_id")?.value;
   const supabase = await createClient();
   const {
     data: { user },
@@ -77,7 +79,7 @@ export default async function CallsPage({
   let adminPreview = false;
 
   if (user) {
-    const ctx = await loadUserContext(user.id);
+    const ctx = await loadUserContext(user.id, activeClientId);
     isAdmin = ctx.isAdmin;
 
     if (isAdmin) {
@@ -89,7 +91,7 @@ export default async function CallsPage({
         ]);
       }
     } else {
-      const clientId = ctx.client?.id ?? (await resolveClientForUser(user.id));
+      const clientId = ctx.client?.id ?? null;
       if (clientId) {
         [calls, scheduledCall] = await Promise.all([
           listPublishedCalls(clientId),
