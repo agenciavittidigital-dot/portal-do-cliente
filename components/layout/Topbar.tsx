@@ -21,7 +21,7 @@ interface TopbarProps {
   clientName?: string | null;
 }
 
-export function Topbar({ userEmail, userName }: TopbarProps) {
+export function Topbar({ userEmail, userName, clientName }: TopbarProps) {
   const pathname = usePathname();
   const title = pageTitles[pathname] ?? "Portal";
 
@@ -68,14 +68,21 @@ export function Topbar({ userEmail, userName }: TopbarProps) {
           className="flex items-center gap-2.5 pl-3 border-l border-slate-200/60 hover:opacity-80 transition-opacity cursor-pointer"
         >
           {displayName && (
-            <div className="hidden sm:flex items-center gap-1">
-              <p className="text-xs font-medium text-vitti-fg leading-none truncate max-w-[160px]">
-                {displayName}
-              </p>
-              <ChevronDown
-                size={11}
-                className={`text-vitti-fg-muted/50 transition-transform duration-150 ${open ? "rotate-180" : ""}`}
-              />
+            <div className="hidden sm:flex flex-col items-end gap-0.5 text-right">
+              <div className="flex items-center gap-1">
+                <p className="text-xs font-medium text-vitti-fg leading-none truncate max-w-[160px]">
+                  {displayName}
+                </p>
+                <ChevronDown
+                  size={11}
+                  className={`text-vitti-fg-muted/50 transition-transform duration-150 ${open ? "rotate-180" : ""}`}
+                />
+              </div>
+              {clientName && (
+                <p className="text-[10px] font-light text-vitti-fg-muted/70 leading-none truncate max-w-[160px]">
+                  {clientName}
+                </p>
+              )}
             </div>
           )}
           <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200/80 flex items-center justify-center shrink-0 shadow-sm">
