@@ -116,7 +116,7 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg bg-[#0d1117] border border-black/[0.08] rounded-xl shadow-2xl p-6 space-y-5"
+        className="w-full max-w-lg bg-[#0d1117] border border-white/[0.10] rounded-xl shadow-2xl p-6 space-y-5"
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -187,30 +187,30 @@ function CreateModal({
   return (
     <Modal onClose={onClose}>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-light text-[#111111]/90 tracking-wide">Nova Call</h3>
-        <button onClick={onClose} className="text-[#5F6368]/55 hover:text-[#111111]/75 transition-colors">
+        <h3 className="text-sm font-light text-white/90 tracking-wide">Nova Call</h3>
+        <button onClick={onClose} className="text-white/40 hover:text-white/75 transition-colors">
           <X size={14} />
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Título *</label>
+          <label className="block text-[10px] text-white/60 font-light mb-1.5">Título *</label>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Ex: Call de Performance — Maio 2025"
-            className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20"
+            className="w-full bg-white/[0.06] border border-white/[0.10] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/35 font-light focus:outline-none focus:border-white/30"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Tipo *</label>
+            <label className="block text-[10px] text-white/60 font-light mb-1.5">Tipo *</label>
             <select
               value={callType}
               onChange={(e) => setCallType(e.target.value as CallType)}
-              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 font-light focus:outline-none focus:border-white/20"
+              className="w-full bg-white/[0.06] border border-white/[0.10] rounded-lg px-3 py-2 text-sm text-white font-light focus:outline-none focus:border-white/30"
             >
               {CALL_TYPES.map((t) => (
                 <option key={t} value={t} className="bg-[#0d1117]">
@@ -220,11 +220,11 @@ function CreateModal({
             </select>
           </div>
           <div>
-            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Status</label>
+            <label className="block text-[10px] text-white/60 font-light mb-1.5">Status</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as CallStatus)}
-              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 font-light focus:outline-none focus:border-white/20"
+              className="w-full bg-white/[0.06] border border-white/[0.10] rounded-lg px-3 py-2 text-sm text-white font-light focus:outline-none focus:border-white/30"
             >
               {CALL_STATUSES.map((s) => (
                 <option key={s} value={s} className="bg-[#0d1117]">
@@ -237,57 +237,58 @@ function CreateModal({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Data da call *</label>
+            <label className="block text-[10px] text-white/60 font-light mb-1.5">Data da call *</label>
             <input
               type="date"
               value={callDate}
               onChange={(e) => setCallDate(e.target.value)}
-              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 font-light focus:outline-none focus:border-white/20"
+              style={{ colorScheme: "dark" }}
+              className="w-full bg-white/[0.06] border border-white/[0.10] rounded-lg px-3 py-2 text-sm text-white font-light focus:outline-none focus:border-white/30"
             />
           </div>
           <div>
-            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Duração (min)</label>
+            <label className="block text-[10px] text-white/60 font-light mb-1.5">Duração (min)</label>
             <input
               type="number"
               min="1"
               value={durationMinutes}
               onChange={(e) => setDurationMinutes(e.target.value)}
               placeholder="Ex: 60"
-              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20"
+              className="w-full bg-white/[0.06] border border-white/[0.10] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/35 font-light focus:outline-none focus:border-white/30"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Link da gravação</label>
+          <label className="block text-[10px] text-white/60 font-light mb-1.5">Link da gravação</label>
           <input
             type="url"
             value={recordingUrl}
             onChange={(e) => setRecordingUrl(e.target.value)}
             placeholder="https://..."
-            className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20"
+            className="w-full bg-white/[0.06] border border-white/[0.10] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/35 font-light focus:outline-none focus:border-white/30"
           />
         </div>
 
         <div>
-          <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Descrição</label>
+          <label className="block text-[10px] text-white/60 font-light mb-1.5">Descrição <span className="text-white/30">(opcional)</span></label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
             placeholder="Breve descrição da call..."
-            className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20 resize-none"
+            className="w-full bg-white/[0.06] border border-white/[0.10] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/35 font-light focus:outline-none focus:border-white/30 resize-none"
           />
         </div>
 
         <div>
-          <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Resumo / Notas</label>
+          <label className="block text-[10px] text-white/60 font-light mb-1.5">Resumo / Notas <span className="text-white/30">(opcional)</span></label>
           <textarea
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
             rows={3}
             placeholder="Pontos discutidos, decisões, próximos passos..."
-            className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20 resize-none"
+            className="w-full bg-white/[0.06] border border-white/[0.10] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/35 font-light focus:outline-none focus:border-white/30 resize-none"
           />
         </div>
 
@@ -302,14 +303,14 @@ function CreateModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-light text-[#5F6368]/70 hover:text-[#111111]/85 transition-colors"
+            className="px-4 py-2 text-xs font-light text-white/50 hover:text-white/80 transition-colors"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="px-4 py-2 text-xs font-light bg-black/[0.06] hover:bg-white/[0.09] border border-black/[0.08] rounded-lg text-[#111111]/80 transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 text-xs font-light bg-vitti-blue hover:bg-vitti-blue/90 border border-transparent rounded-lg text-white transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             {loading ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
             Criar call
@@ -381,29 +382,29 @@ function EditModal({
   return (
     <Modal onClose={onClose}>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-light text-[#111111]/90 tracking-wide">Editar Call</h3>
-        <button onClick={onClose} className="text-[#5F6368]/55 hover:text-[#111111]/75 transition-colors">
+        <h3 className="text-sm font-light text-white/90 tracking-wide">Editar Call</h3>
+        <button onClick={onClose} className="text-white/40 hover:text-white/75 transition-colors">
           <X size={14} />
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Título *</label>
+          <label className="block text-[10px] text-white/60 font-light mb-1.5">Título *</label>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20"
+            className="w-full bg-white/[0.06] border border-white/[0.10] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/35 font-light focus:outline-none focus:border-white/30"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Tipo *</label>
+            <label className="block text-[10px] text-white/60 font-light mb-1.5">Tipo *</label>
             <select
               value={callType}
               onChange={(e) => setCallType(e.target.value as CallType)}
-              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 font-light focus:outline-none focus:border-white/20"
+              className="w-full bg-white/[0.06] border border-white/[0.10] rounded-lg px-3 py-2 text-sm text-white font-light focus:outline-none focus:border-white/30"
             >
               {CALL_TYPES.map((t) => (
                 <option key={t} value={t} className="bg-[#0d1117]">
@@ -413,11 +414,11 @@ function EditModal({
             </select>
           </div>
           <div>
-            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Status</label>
+            <label className="block text-[10px] text-white/60 font-light mb-1.5">Status</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as CallStatus)}
-              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 font-light focus:outline-none focus:border-white/20"
+              className="w-full bg-white/[0.06] border border-white/[0.10] rounded-lg px-3 py-2 text-sm text-white font-light focus:outline-none focus:border-white/30"
             >
               {CALL_STATUSES.map((s) => (
                 <option key={s} value={s} className="bg-[#0d1117]">
@@ -430,35 +431,36 @@ function EditModal({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Data da call *</label>
+            <label className="block text-[10px] text-white/60 font-light mb-1.5">Data da call *</label>
             <input
               type="date"
               value={callDate}
               onChange={(e) => setCallDate(e.target.value)}
-              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 font-light focus:outline-none focus:border-white/20"
+              style={{ colorScheme: "dark" }}
+              className="w-full bg-white/[0.06] border border-white/[0.10] rounded-lg px-3 py-2 text-sm text-white font-light focus:outline-none focus:border-white/30"
             />
           </div>
           <div>
-            <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Duração (min)</label>
+            <label className="block text-[10px] text-white/60 font-light mb-1.5">Duração (min)</label>
             <input
               type="number"
               min="1"
               value={durationMinutes}
               onChange={(e) => setDurationMinutes(e.target.value)}
               placeholder="Ex: 60"
-              className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20"
+              className="w-full bg-white/[0.06] border border-white/[0.10] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/35 font-light focus:outline-none focus:border-white/30"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Link da gravação</label>
+          <label className="block text-[10px] text-white/60 font-light mb-1.5">Link da gravação</label>
           <input
             type="url"
             value={recordingUrl}
             onChange={(e) => setRecordingUrl(e.target.value)}
             placeholder="https://..."
-            className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20"
+            className="w-full bg-white/[0.06] border border-white/[0.10] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/35 font-light focus:outline-none focus:border-white/30"
           />
           {call.recordingUrl && (
             <a
@@ -474,24 +476,24 @@ function EditModal({
         </div>
 
         <div>
-          <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Descrição</label>
+          <label className="block text-[10px] text-white/60 font-light mb-1.5">Descrição <span className="text-white/30">(opcional)</span></label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
             placeholder="Breve descrição da call..."
-            className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20 resize-none"
+            className="w-full bg-white/[0.06] border border-white/[0.10] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/35 font-light focus:outline-none focus:border-white/30 resize-none"
           />
         </div>
 
         <div>
-          <label className="block text-[10px] text-[#5F6368]/60 font-light mb-1.5">Resumo / Notas</label>
+          <label className="block text-[10px] text-white/60 font-light mb-1.5">Resumo / Notas <span className="text-white/30">(opcional)</span></label>
           <textarea
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
             rows={3}
             placeholder="Pontos discutidos, decisões, próximos passos..."
-            className="w-full bg-black/[0.03] border border-black/[0.08] rounded-lg px-3 py-2 text-sm text-[#111111]/90 placeholder:text-[#5F6368]/35 font-light focus:outline-none focus:border-white/20 resize-none"
+            className="w-full bg-white/[0.06] border border-white/[0.10] rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/35 font-light focus:outline-none focus:border-white/30 resize-none"
           />
         </div>
 
@@ -506,14 +508,14 @@ function EditModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-light text-[#5F6368]/70 hover:text-[#111111]/85 transition-colors"
+            className="px-4 py-2 text-xs font-light text-white/50 hover:text-white/80 transition-colors"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="px-4 py-2 text-xs font-light bg-black/[0.06] hover:bg-white/[0.09] border border-black/[0.08] rounded-lg text-[#111111]/80 transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 text-xs font-light bg-vitti-blue hover:bg-vitti-blue/90 border border-transparent rounded-lg text-white transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             {loading ? <Loader2 size={12} className="animate-spin" /> : <Pencil size={12} />}
             Salvar alterações
