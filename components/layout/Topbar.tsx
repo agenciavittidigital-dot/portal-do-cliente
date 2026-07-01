@@ -2,7 +2,8 @@
 
 import { useRef, useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { User, ChevronDown, LayoutGrid } from "lucide-react";
+import Image from "next/image";
+import { User, ChevronDown, LayoutGrid, UserCircle, Shield } from "lucide-react";
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Home",
@@ -13,17 +14,24 @@ const pageTitles: Record<string, string> = {
   "/calls": "Calls",
   "/educacao": "Educação",
   "/admin": "Admin",
+  "/configuracoes/perfil": "Perfil",
+  "/configuracoes/seguranca": "Segurança",
 };
 
 interface TopbarProps {
   userEmail?: string | null;
   userName?: string | null;
   clientName?: string | null;
+  avatarUrl?: string | null;
 }
 
-export function Topbar({ userEmail, userName, clientName }: TopbarProps) {
+export function Topbar({ userEmail, userName, clientName, avatarUrl }: TopbarProps) {
   const pathname = usePathname();
-  const title = pageTitles[pathname] ?? "Portal";
+
+  const title =
+    pageTitles[pathname] ??
+    Object.entries(pageTitles).find(([k]) => pathname.startsWith(k + "/"))?.[1] ??
+    "Portal";
 
   const displayName = userName ?? (userEmail ? userEmail.split("@")[0] : null);
 
@@ -37,7 +45,7 @@ export function Topbar({ userEmail, userName, clientName }: TopbarProps) {
     if (rect) {
       setMenuStyle({
         top: rect.bottom + 8,
-        left: rect.right - 176,
+        left: rect.right - 192,
       });
     }
     setOpen((v) => !v);
@@ -85,8 +93,20 @@ export function Topbar({ userEmail, userName, clientName }: TopbarProps) {
               )}
             </div>
           )}
-          <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200/80 flex items-center justify-center shrink-0 shadow-sm">
-            <User size={14} className="text-vitti-blue/60" />
+
+          {/* Avatar */}
+          <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 border border-slate-200/80 flex items-center justify-center shrink-0 shadow-sm">
+            {avatarUrl ? (
+              <Image
+                src={avatarUrl}
+                alt="Avatar"
+                width={32}
+                height={32}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <User size={14} className="text-vitti-blue/60" />
+            )}
           </div>
         </button>
       </header>
@@ -95,18 +115,51 @@ export function Topbar({ userEmail, userName, clientName }: TopbarProps) {
         <div
           ref={menuRef}
           style={{ position: "fixed", top: menuStyle.top, left: menuStyle.left, zIndex: 99999 }}
-          className="w-44 pointer-events-auto bg-white border border-slate-200/70 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.10)] py-1"
+          className="w-48 pointer-events-auto bg-white border border-slate-200/70 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.10)] py-1.5 overflow-hidden"
         >
+          {/* Contas */}
           <button
             type="button"
             onClick={() => {
               setOpen(false);
               window.location.assign("/selecionar-portal");
             }}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-slate-50 transition-colors rounded-lg"
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-slate-50 transition-colors"
           >
             <LayoutGrid size={13} className="text-vitti-blue/50 shrink-0" />
             <span className="text-[12px] font-light text-vitti-fg/80">Contas</span>
+          </button>
+
+          {/* Divisor */}
+          <div className="border-t border-slate-100 my-1" />
+
+          {/* Seção Configuração */}
+          <p className="px-3 pt-1 pb-0.5 text-[9px] font-semibold text-vitti-fg-muted/50 uppercase tracking-widest select-none">
+            Configuração
+          </p>
+
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              window.location.assign("/configuracoes/perfil");
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-50 transition-colors"
+          >
+            <UserCircle size={13} className="text-vitti-blue/50 shrink-0" />
+            <span className="text-[12px] font-light text-vitti-fg/80">Perfil</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              window.location.assign("/configuracoes/seguranca");
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-slate-50 transition-colors"
+          >
+            <Shield size={13} className="text-vitti-blue/50 shrink-0" />
+            <span className="text-[12px] font-light text-vitti-fg/80">Segurança</span>
           </button>
         </div>
       )}

@@ -42,6 +42,7 @@ function coerceProfile(raw: Record<string, unknown>): Profile {
     email: raw.email ? String(raw.email) : null,
     global_role: globalRole,
     status: String(raw.status ?? ""),
+    avatar_url: raw.avatar_url ? String(raw.avatar_url) : null,
   };
 }
 
@@ -145,7 +146,7 @@ export async function loadUserContext(
     // 1. Profile via auth_user_id
     const { data: profileRaw, error: profileError } = await admin
       .from("profiles")
-      .select("id, auth_user_id, name, email, global_role, status")
+      .select("id, auth_user_id, name, email, global_role, status, avatar_url")
       .eq("auth_user_id", userId)
       .maybeSingle();
 

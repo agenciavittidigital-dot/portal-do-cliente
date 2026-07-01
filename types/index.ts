@@ -7,6 +7,7 @@ export interface Profile {
   email: string | null;
   global_role: GlobalRole;
   status: string;       // "active" | "inactive" | outros
+  avatar_url: string | null;
 }
 
 export interface Client {
