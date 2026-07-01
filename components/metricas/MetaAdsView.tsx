@@ -938,6 +938,27 @@ function BestAdsSection({ creatives }: { creatives: CreativeRow[] }) {
 
 // ── Tabela de campanhas Meta Ads ──────────────────────────────────────────────
 
+const OBJECTIVE_LABELS: Record<string, string> = {
+  OUTCOME_LEADS:          "Leads",
+  OUTCOME_TRAFFIC:        "Tráfego",
+  OUTCOME_SALES:          "Vendas",
+  OUTCOME_ENGAGEMENT:     "Engajamento",
+  OUTCOME_AWARENESS:      "Reconhecimento",
+  OUTCOME_APP_PROMOTION:  "Promoção de app",
+  OUTCOME_MESSAGING:      "Mensagens",
+  OUTCOME_VIDEO_VIEWS:    "Visualizações de vídeo",
+};
+
+function formatCampaignObjectiveLabel(value: string): string {
+  if (OBJECTIVE_LABELS[value]) return OBJECTIVE_LABELS[value];
+  // Fallback: remove "OUTCOME_", troca _ por espaço, capitaliza cada palavra
+  return value
+    .replace(/^OUTCOME_/, "")
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+}
+
 function MetaCampaignsTable({ campaigns }: { campaigns: MetaAdsCampaignRow[] }) {
   const [nameFilter, setNameFilter] = useState("");
   const [objectiveFilter, setObjectiveFilter] = useState("");
@@ -1006,16 +1027,22 @@ function MetaCampaignsTable({ campaigns }: { campaigns: MetaAdsCampaignRow[] }) 
           className="flex-1 min-w-[140px] max-w-[220px] px-2.5 py-1 text-[10px] font-light text-[#171f38]/80 bg-white/70 border border-slate-200/70 rounded-lg outline-none focus:border-[#455cab]/40 focus:ring-1 focus:ring-[#455cab]/20 placeholder:text-[#171f38]/30 transition-all"
         />
         {objectives.length > 0 && (
-          <select
-            value={objectiveFilter}
-            onChange={(e) => setObjectiveFilter(e.target.value)}
-            className="min-w-[140px] max-w-[200px] px-2.5 py-1 text-[10px] font-light text-[#171f38]/80 bg-white/70 border border-slate-200/70 rounded-lg outline-none focus:border-[#455cab]/40 focus:ring-1 focus:ring-[#455cab]/20 transition-all appearance-none cursor-pointer"
-          >
-            <option value="">Filtrar por objetivo</option>
-            {objectives.map((obj) => (
-              <option key={obj} value={obj}>{obj}</option>
-            ))}
-          </select>
+          <div className="relative min-w-[148px] max-w-[200px]">
+            <select
+              value={objectiveFilter}
+              onChange={(e) => setObjectiveFilter(e.target.value)}
+              className="w-full appearance-none pl-2.5 pr-7 py-1 text-[10px] font-light text-[#171f38]/80 bg-white/70 border border-slate-200/70 rounded-lg outline-none focus:border-[#455cab]/40 focus:ring-1 focus:ring-[#455cab]/20 transition-all cursor-pointer"
+            >
+              <option value="">Objetivo</option>
+              {objectives.map((obj) => (
+                <option key={obj} value={obj}>{formatCampaignObjectiveLabel(obj)}</option>
+              ))}
+            </select>
+            <ChevronDown
+              size={10}
+              className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#171f38]/35"
+            />
+          </div>
         )}
       </div>
 
