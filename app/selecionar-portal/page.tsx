@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { listUserClients } from "@/lib/data/user-context";
-import { selectPortal } from "./actions";
-import { Building2, ChevronRight } from "lucide-react";
+import { PortalCards } from "./PortalCards";
 
 export default async function SelecionarPortalPage() {
   const supabase = await createClient();
@@ -53,46 +52,7 @@ export default async function SelecionarPortalPage() {
       )}
 
       {/* Client grid */}
-      {hasClients && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {clients.map((c) => (
-            <form key={c.clientId} action={selectPortal}>
-              <input type="hidden" name="clientId" value={c.clientId} />
-              <button
-                type="submit"
-                className="w-full text-left rounded-2xl border border-black/[0.07] bg-white shadow-[0_2px_16px_rgb(0,0,0,0.05)] hover:border-vitti-medium/30 hover:shadow-[0_6px_28px_rgb(0,0,0,0.09)] transition-all duration-200 p-6 group cursor-pointer"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-vitti-blue/[0.05] border border-vitti-blue/[0.08] flex items-center justify-center shrink-0">
-                    <Building2 size={16} className="text-vitti-light/60" />
-                  </div>
-                  <ChevronRight
-                    size={14}
-                    className="text-vitti-blue/25 group-hover:text-vitti-light/60 transition-colors mt-0.5 shrink-0"
-                  />
-                </div>
-
-                <div className="mt-4 space-y-0.5">
-                  <p className="text-[13px] font-light text-vitti-blue/90 leading-snug">
-                    {c.clientName}
-                  </p>
-                  {c.clientSegment && (
-                    <p className="text-[11px] font-light text-vitti-blue/45">
-                      {c.clientSegment}
-                    </p>
-                  )}
-                </div>
-
-                <div className="mt-5">
-                  <span className="inline-flex items-center text-[10px] font-light px-2.5 py-1 rounded-full border border-vitti-medium/25 text-vitti-light/60 bg-vitti-medium/[0.04] group-hover:border-vitti-medium/50 group-hover:text-vitti-light/80 transition-all">
-                    Acessar portal
-                  </span>
-                </div>
-              </button>
-            </form>
-          ))}
-        </div>
-      )}
+      {hasClients && <PortalCards clients={clients} />}
 
       <p className="text-center text-[10px] font-light text-vitti-blue/30">
         Vitti Digital — acesso restrito
