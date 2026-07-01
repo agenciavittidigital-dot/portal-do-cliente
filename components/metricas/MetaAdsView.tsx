@@ -15,6 +15,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  type PieLabelRenderProps,
 } from "recharts";
 import type {
   BlockWithMetrics,
@@ -630,7 +631,8 @@ function EvolutionChart({
 
 interface DonutSlice {
   label: string;
-  value: number; // percentual 0–100
+  value: number;    // percentual 0–100
+  rawValue: number; // contagem absoluta para tooltip
   color: string;
 }
 
@@ -683,6 +685,7 @@ function buildDemographicSlices(
     .map((r) => ({
       label: labelFn(r.breakdownValue),
       value: (r[key] / total) * 100,
+      rawValue: r[key],
       color: colorFn(r.breakdownValue),
     }))
     .sort((a, b) => {
@@ -697,7 +700,38 @@ function buildDemographicSlices(
   return { slices, metricLabel };
 }
 
-// ── DonutCard ─────────────────────────────────────────────────────────────────
+// ── Label externo do gráfico de pizza ────────────────────────────────────────
+
+function PieExternalLabel(props: PieLabelRenderProps) {
+  const cx          = props.cx          as number;
+  const cy          = props.cy          as number;
+  const midAngle    = props.midAngle    as number;
+  const outerRadius = props.outerRadius as number;
+  const value       = props.value       as number;
+  const payload     = props.payload     as DonutSlice;
+
+  if (!payload || value < 1) return null;
+
+  const RADIAN = Math.PI / 180;
+  const r  = outerRadius + 10;
+  const x  = cx + r * Math.cos(-midAngle * RADIAN);
+  const y  = cy + r * Math.sin(-midAngle * RADIAN);
+  const anchor = Math.abs(x - cx) < 6 ? "middle" : x > cx ? "start" : "end";
+  const pct = value.toFixed(1).replace(".", ",") + "%";
+
+  return (
+    <g>
+      <text x={x} y={y - 4} textAnchor={anchor} fill="#171f38" fillOpacity={0.6} fontSize={7} fontWeight={400}>
+        {payload.label}
+      </text>
+      <text x={x} y={y + 5} textAnchor={anchor} fill="#455cab" fillOpacity={0.9} fontSize={7.5} fontWeight={600}>
+        {pct}
+      </text>
+    </g>
+  );
+}
+
+// ── PieCard (ex-DonutCard) ────────────────────────────────────────────────────
 
 function DonutCard({
   title,
@@ -724,56 +758,50 @@ function DonutCard({
         )}
       </div>
 
-      {/* Conteúdo: donut à esquerda, legenda à direita */}
-      <div className="flex-1 flex items-center">
+      {/* flex-1 restaura o comportamento original: cards se ajustam à coluna */}
+      <div className="flex-1 flex items-center justify-center min-h-[120px]">
         {hasData ? (
-          <div className="flex items-center gap-2.5 w-full">
-
-            {/* Gráfico de rosca */}
-            <div className="shrink-0">
-              <PieChart width={70} height={70}>
-                <Pie
-                  data={slices!}
-                  cx={35}
-                  cy={35}
-                  innerRadius={19}
-                  outerRadius={33}
-                  startAngle={90}
-                  endAngle={-270}
-                  dataKey="value"
-                  stroke="none"
-                  isAnimationActive={false}
-                  paddingAngle={slices!.length > 1 ? 2 : 0}
-                >
-                  {slices!.map((s, i) => (
-                    <Cell key={i} fill={s.color} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </div>
-
-            {/* Legenda sem truncamento */}
-            <div className="flex flex-col gap-1 flex-1 min-w-0">
-              {slices!.map((s) => (
-                <div key={s.label} className="flex items-center justify-between gap-1">
-                  <div className="flex items-center gap-1.5">
-                    <div
-                      className="w-1.5 h-1.5 rounded-full shrink-0"
-                      style={{ backgroundColor: s.color }}
-                    />
-                    <span className="text-[9px] text-[#171f38]/70 font-light whitespace-nowrap">
-                      {s.label}
-                    </span>
-                  </div>
-                  <span className="text-[9px] text-[#171f38]/60 font-light tabular-nums shrink-0">
-                    {s.value.toFixed(1)}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ResponsiveContainer width="100%" height={120}>
+            <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+              <Pie
+                data={slices!}
+                cx="50%"
+                cy="50%"
+                innerRadius={0}
+                outerRadius={40}
+                startAngle={90}
+                endAngle={-270}
+                dataKey="value"
+                nameKey="label"
+                stroke="none"
+                isAnimationActive={false}
+                paddingAngle={slices!.length > 1 ? 1 : 0}
+                label={PieExternalLabel}
+                labelLine={false}
+              >
+                {slices!.map((s, i) => (
+                  <Cell key={i} fill={s.color} />
+                ))}
+              </Pie>
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  const d = payload[0].payload as DonutSlice;
+                  const raw = new Intl.NumberFormat("pt-BR").format(Math.round(d.rawValue));
+                  return (
+                    <div className="rounded-lg bg-[#171f38]/90 px-2.5 py-1.5 shadow-lg">
+                      <p className="text-[11px] font-medium text-white leading-snug">{d.label}</p>
+                      <p className="text-[10px] text-white/70 font-light tabular-nums">
+                        {raw} ({d.value.toFixed(1).replace(".", ",")}%)
+                      </p>
+                    </div>
+                  );
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
         ) : (
-          <p className="text-[9px] text-[#171f38]/35 font-light text-center leading-relaxed w-full">
+          <p className="text-[9px] text-[#171f38]/35 font-light text-center leading-relaxed">
             Sem dados
             <br />
             no período
@@ -911,6 +939,9 @@ function BestAdsSection({ creatives }: { creatives: CreativeRow[] }) {
 // ── Tabela de campanhas Meta Ads ──────────────────────────────────────────────
 
 function MetaCampaignsTable({ campaigns }: { campaigns: MetaAdsCampaignRow[] }) {
+  const [nameFilter, setNameFilter] = useState("");
+  const [objectiveFilter, setObjectiveFilter] = useState("");
+
   if (campaigns.length === 0) return null;
 
   const totalLeads    = campaigns.reduce((s, c) => s + c.leads, 0);
@@ -942,14 +973,56 @@ function MetaCampaignsTable({ campaigns }: { campaigns: MetaAdsCampaignRow[] }) 
   const fmtInt = (v: number) => new Intl.NumberFormat("pt-BR").format(Math.round(v));
   const fmtPct = (v: number | null) => v != null ? `${v.toFixed(2)}%` : "—";
 
+  // Objetivos únicos vindos de wcf__objetivo, sem VTT, ordenados alfabeticamente
+  const objectives = Array.from(
+    new Set(
+      campaigns
+        .map((c) => c.campaignObjective)
+        .filter((o): o is string => !!o && o.toUpperCase() !== "VTT")
+    )
+  ).sort((a, b) => a.localeCompare(b, "pt-BR"));
+
+  // Filtro combinado: nome + objetivo
+  const filtered = campaigns.filter((c) => {
+    const matchesName = !nameFilter.trim() ||
+      c.campaignName?.toLowerCase().includes(nameFilter.toLowerCase());
+    const matchesObjective = !objectiveFilter ||
+      c.campaignObjective === objectiveFilter;
+    return matchesName && matchesObjective;
+  });
+
   return (
     <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4">
-      <h4 className="text-[11px] font-light text-[#455cab] tracking-wide mb-3">
-        Campanhas
-      </h4>
-      <div className="overflow-x-auto">
+      {/* Cabeçalho + filtros */}
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <h4 className="text-[11px] font-light text-[#455cab] tracking-wide shrink-0 mr-1">
+          Campanhas
+        </h4>
+        <input
+          type="text"
+          value={nameFilter}
+          onChange={(e) => setNameFilter(e.target.value)}
+          placeholder="Filtrar por campanha..."
+          className="flex-1 min-w-[140px] max-w-[220px] px-2.5 py-1 text-[10px] font-light text-[#171f38]/80 bg-white/70 border border-slate-200/70 rounded-lg outline-none focus:border-[#455cab]/40 focus:ring-1 focus:ring-[#455cab]/20 placeholder:text-[#171f38]/30 transition-all"
+        />
+        {objectives.length > 0 && (
+          <select
+            value={objectiveFilter}
+            onChange={(e) => setObjectiveFilter(e.target.value)}
+            className="min-w-[140px] max-w-[200px] px-2.5 py-1 text-[10px] font-light text-[#171f38]/80 bg-white/70 border border-slate-200/70 rounded-lg outline-none focus:border-[#455cab]/40 focus:ring-1 focus:ring-[#455cab]/20 transition-all appearance-none cursor-pointer"
+          >
+            <option value="">Filtrar por objetivo</option>
+            {objectives.map((obj) => (
+              <option key={obj} value={obj}>{obj}</option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* Scroll vertical limitado a ~4 linhas; thead sticky */}
+      <div className="overflow-auto max-h-[200px]">
         <table className="w-full text-left border-collapse">
-          <thead>
+          <thead className="sticky top-0 bg-white/95 backdrop-blur-sm z-10">
             <tr className="border-b border-slate-200/70">
               <th className="pb-2 pr-4 text-[9px] font-light text-[#171f38]/45 tracking-wider uppercase whitespace-nowrap">Campanha</th>
               <th className="pb-2 pr-4 text-[9px] font-light text-[#171f38]/45 tracking-wider uppercase whitespace-nowrap text-right">Investimento</th>
@@ -959,32 +1032,40 @@ function MetaCampaignsTable({ campaigns }: { campaigns: MetaAdsCampaignRow[] }) 
             </tr>
           </thead>
           <tbody>
-            {campaigns.map((c) => {
-              const result = getResult(c);
-              const costPerResult = getCostPerResult(c);
-              return (
-                <tr
-                  key={c.campaignId}
-                  className="border-b border-slate-100/70 hover:bg-slate-50/80 transition-colors"
-                >
-                  <td className="py-2.5 pr-4 text-[11px] font-light text-[#171f38]/75 max-w-[220px] truncate">
-                    {c.campaignName ?? "—"}
-                  </td>
-                  <td className="py-2.5 pr-4 text-[11px] font-bold text-[#455cab] tabular-nums text-right whitespace-nowrap">
-                    {fmtBRL(c.spend)}
-                  </td>
-                  <td className="py-2.5 pr-4 text-[11px] font-light text-[#171f38]/75 tabular-nums text-right">
-                    {result > 0 ? fmtInt(result) : "—"}
-                  </td>
-                  <td className="py-2.5 pr-4 text-[11px] font-bold text-[#455cab] tabular-nums text-right whitespace-nowrap">
-                    {costPerResult != null ? fmtBRL(costPerResult) : "—"}
-                  </td>
-                  <td className="py-2.5 text-[11px] font-light text-[#171f38]/75 tabular-nums text-right">
-                    {fmtPct(c.ctr)}
-                  </td>
-                </tr>
-              );
-            })}
+            {filtered.length > 0 ? (
+              filtered.map((c) => {
+                const result = getResult(c);
+                const costPerResult = getCostPerResult(c);
+                return (
+                  <tr
+                    key={c.campaignId}
+                    className="border-b border-slate-100/70 hover:bg-slate-50/80 transition-colors"
+                  >
+                    <td className="py-2.5 pr-4 text-[11px] font-light text-[#171f38]/75 max-w-[220px] truncate">
+                      {c.campaignName ?? "—"}
+                    </td>
+                    <td className="py-2.5 pr-4 text-[11px] font-bold text-[#455cab] tabular-nums text-right whitespace-nowrap">
+                      {fmtBRL(c.spend)}
+                    </td>
+                    <td className="py-2.5 pr-4 text-[11px] font-light text-[#171f38]/75 tabular-nums text-right">
+                      {result > 0 ? fmtInt(result) : "—"}
+                    </td>
+                    <td className="py-2.5 pr-4 text-[11px] font-bold text-[#455cab] tabular-nums text-right whitespace-nowrap">
+                      {costPerResult != null ? fmtBRL(costPerResult) : "—"}
+                    </td>
+                    <td className="py-2.5 text-[11px] font-light text-[#171f38]/75 tabular-nums text-right">
+                      {fmtPct(c.ctr)}
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={5} className="py-6 text-center text-[10px] font-light text-[#171f38]/35">
+                  Nenhuma campanha encontrada.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -1270,7 +1351,7 @@ export function MetaAdsView({
           return (
             <div className="flex flex-col gap-3">
               <DonutCard
-                title="Percentual de Gênero"
+                title="Gênero"
                 className="flex-1"
                 slices={gender?.slices}
                 metricLabel={gender?.metricLabel}

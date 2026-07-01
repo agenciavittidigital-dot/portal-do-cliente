@@ -53,6 +53,8 @@ export const WINDSOR_SYNC_FIELDS = [
   "ad_name",
   // Page Views (aterrissagem confirmada no site)
   "actions_landing_page_view",
+  // Objetivo da campanha (campo customizado Windsor)
+  "wcf__objetivo",
 ] as const;
 
 // Campos para o sync de breakdown demográfico (gênero e faixa etária)

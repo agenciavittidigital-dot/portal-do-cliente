@@ -45,6 +45,7 @@ interface AggregatedRecord {
   date: string;
   accountName: string;
   campaignName: string | null;
+  campaignObjective: string | null;
   campaignId: string;
   adId: string;
   adName: string | null;
@@ -248,6 +249,7 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
       existing.roasWeightedSum += safeNum(raw.roas) * rawSpend;
       existing.groupedCount++;
       if (!existing.thumbnail_url) existing.thumbnail_url = safeStr(raw.thumbnail_url);
+      if (!existing.campaignObjective) existing.campaignObjective = safeStr(raw.wcf__objetivo);
     } else {
       const rawSpend = safeNum(raw.spend);
       aggregated.set(key, {
@@ -255,6 +257,7 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
         date,
         accountName,
         campaignName,
+        campaignObjective: safeStr(raw.wcf__objetivo),
         campaignId,
         adId,
         adName,
@@ -354,6 +357,7 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
       account_name: rec.accountName,
       campaign_id: rec.campaignId,
       campaign_name: rec.campaignName,
+      campaign_objective: rec.campaignObjective,
       adset_id: "unknown",
       adset_name: null,
       ad_id: rec.adId,

@@ -48,6 +48,8 @@ export interface WindsorRawRecord {
   region?: string | null;
   gender?: string | null;
   age?: string | null;
+  // Campo customizado: objetivo da campanha
+  wcf__objetivo?: string | null;
   // Campos adicionais que Windsor pode retornar sem mapeamento prévio
   [key: string]: unknown;
 }

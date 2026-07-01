@@ -309,6 +309,7 @@ export async function loadCreativesData(
 export interface MetaAdsCampaignRow {
   campaignId: string;
   campaignName: string | null;
+  campaignObjective: string | null;
   spend: number;
   impressions: number;
   clicks: number;
@@ -327,7 +328,7 @@ export async function loadMetaAdsCampaigns(
     const admin = createAdminClient();
     const { data, error } = await admin
       .from("performance_daily")
-      .select("campaign_id, campaign_name, spend, impressions, clicks, leads, messages_started, purchases")
+      .select("campaign_id, campaign_name, campaign_objective, spend, impressions, clicks, leads, messages_started, purchases")
       .eq("client_id", clientId)
       .eq("channel", "meta_ads")
       .gte("date", startDate)
@@ -339,6 +340,7 @@ export async function loadMetaAdsCampaigns(
 
     const byId = new Map<string, {
       campaignName: string | null;
+      campaignObjective: string | null;
       spend: number;
       impressions: number;
       clicks: number;
@@ -351,6 +353,7 @@ export async function loadMetaAdsCampaigns(
       const r = row as Record<string, unknown>;
       const id = String(r.campaign_id ?? "unknown");
       const name = r.campaign_name;
+      const objective = typeof r.campaign_objective === "string" && r.campaign_objective ? r.campaign_objective : null;
       const spend = Number(r.spend) || 0;
       const impressions = Number(r.impressions) || 0;
       const clicks = Number(r.clicks) || 0;
@@ -366,9 +369,11 @@ export async function loadMetaAdsCampaigns(
         existing.leads += leads;
         existing.messages_started += messages_started;
         existing.purchases += purchases;
+        if (!existing.campaignObjective) existing.campaignObjective = objective;
       } else {
         byId.set(id, {
           campaignName: typeof name === "string" && name ? name : null,
+          campaignObjective: objective,
           spend,
           impressions,
           clicks,
@@ -383,6 +388,7 @@ export async function loadMetaAdsCampaigns(
       .map(([campaignId, c]) => ({
         campaignId,
         campaignName: c.campaignName,
+        campaignObjective: c.campaignObjective,
         spend: c.spend,
         impressions: c.impressions,
         clicks: c.clicks,
