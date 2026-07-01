@@ -8,7 +8,6 @@ import {
 import type { ClientInvoiceRow, ClientPaymentRow } from "@/lib/data/invoices-client";
 import { getSignedDownloadUrl } from "@/lib/storage/portal-files";
 import { NfHistorySection } from "@/components/financeiro/NfHistorySection";
-import { PaymentHistorySection } from "@/components/financeiro/PaymentHistorySection";
 import {
   ArrowLeft,
   Barcode,
@@ -122,9 +121,6 @@ export default async function FinanceiroPage({
   const today          = new Date().toISOString().slice(0, 10);
   const pendingPayments = payments.filter(
     (p) => p.status === "pending" || p.status === "overdue"
-  );
-  const paidPayments    = payments.filter(
-    (p) => p.status === "paid" || p.status === "cancelled" || p.status === "failed"
   );
 
   const latestNf    = invoices[0] ?? null;
@@ -394,11 +390,6 @@ export default async function FinanceiroPage({
               )}
             </div>
 
-            {/* Histórico de Pagamentos */}
-            <PaymentHistorySection
-              payments={paidPayments}
-              downloadUrls={paymentUrls}
-            />
           </div>
         </>
       )}
