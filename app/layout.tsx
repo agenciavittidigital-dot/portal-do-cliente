@@ -11,6 +11,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Portal Vitti",
   description: "Portal do Cliente — Vitti Digital",
+  icons: {
+    icon: "/assets/favicon.png",
+    shortcut: "/assets/favicon.png",
+  },
 };
 
 export default function RootLayout({
