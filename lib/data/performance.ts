@@ -209,8 +209,10 @@ export interface CreativeRow {
   clicks: number;
   leads: number;
   messages_started: number;
+  purchases: number;
   cost_per_lead: number | null;
   cost_per_message: number | null;
+  cost_per_purchase: number | null;
 }
 
 export async function loadCreativesData(
@@ -222,7 +224,7 @@ export async function loadCreativesData(
     const admin = createAdminClient();
     const { data, error } = await admin
       .from("performance_daily")
-      .select("ad_id, ad_name, campaign_id, campaign_name, thumbnail_url, spend, impressions, clicks, leads, messages_started")
+      .select("ad_id, ad_name, campaign_id, campaign_name, thumbnail_url, spend, impressions, clicks, leads, messages_started, purchases")
       .eq("client_id", clientId)
       .eq("channel", "meta_ads")
       .gte("date", startDate)
@@ -242,6 +244,7 @@ export async function loadCreativesData(
       clicks: number;
       leads: number;
       messages_started: number;
+      purchases: number;
     };
     const byId = new Map<string, CreativeAccum>();
 
@@ -258,6 +261,7 @@ export async function loadCreativesData(
       const clicks = Number(r.clicks) || 0;
       const leads = Number(r.leads) || 0;
       const messages_started = Number(r.messages_started) || 0;
+      const purchases = Number(r.purchases) || 0;
       const thumb = r.thumbnail_url ? String(r.thumbnail_url) : null;
 
       const existing = byId.get(id);
@@ -267,6 +271,7 @@ export async function loadCreativesData(
         existing.clicks += clicks;
         existing.leads += leads;
         existing.messages_started += messages_started;
+        existing.purchases += purchases;
         if (!existing.thumbnail_url && thumb) existing.thumbnail_url = thumb;
       } else {
         const camName = r.campaign_name;
@@ -281,6 +286,7 @@ export async function loadCreativesData(
           clicks,
           leads,
           messages_started,
+          purchases,
         });
       }
     }
@@ -296,8 +302,10 @@ export async function loadCreativesData(
       clicks: c.clicks,
       leads: c.leads,
       messages_started: c.messages_started,
+      purchases: c.purchases,
       cost_per_lead: c.leads > 0 ? c.spend / c.leads : null,
       cost_per_message: c.messages_started > 0 ? c.spend / c.messages_started : null,
+      cost_per_purchase: c.purchases > 0 ? c.spend / c.purchases : null,
     }));
   } catch {
     return [];

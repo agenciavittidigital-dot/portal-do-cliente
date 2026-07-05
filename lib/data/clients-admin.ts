@@ -12,6 +12,7 @@ export interface AdminClientRow {
   created_at: string;
   publishedDashboards: number;
   windsorMappings: number;
+  conversionMetric: string | null;
 }
 
 export interface CreateClientInput {
@@ -70,7 +71,7 @@ export async function listAdminClients(): Promise<AdminClientRow[]> {
   const [{ data: dashRows }, { data: integRows }] = await Promise.all([
     admin
       .from("client_dashboards")
-      .select("client_id")
+      .select("id, client_id")
       .in("client_id", clientIds)
       .eq("status", "published"),
     admin
@@ -83,15 +84,37 @@ export async function listAdminClients(): Promise<AdminClientRow[]> {
   ]);
 
   const dashCount = new Map<string, number>();
+  const dashClientMap = new Map<string, string>(); // dashboardId → clientId
   for (const r of dashRows ?? []) {
-    const id = String(r.client_id);
-    dashCount.set(id, (dashCount.get(id) ?? 0) + 1);
+    const clientId = String(r.client_id);
+    const dashId = String(r.id);
+    dashCount.set(clientId, (dashCount.get(clientId) ?? 0) + 1);
+    dashClientMap.set(dashId, clientId);
   }
 
   const integCount = new Map<string, number>();
   for (const r of integRows ?? []) {
     const id = String(r.client_id);
     integCount.set(id, (integCount.get(id) ?? 0) + 1);
+  }
+
+  // Fetch conversion_metric from dashboard_blocks settings
+  const dashIds = [...dashClientMap.keys()];
+  const convMetricByClient = new Map<string, string>();
+  if (dashIds.length > 0) {
+    const { data: blockRows } = await admin
+      .from("dashboard_blocks")
+      .select("dashboard_id, settings")
+      .in("dashboard_id", dashIds);
+    for (const block of blockRows ?? []) {
+      const clientId = dashClientMap.get(String(block.dashboard_id));
+      if (!clientId || convMetricByClient.has(clientId)) continue;
+      const s = block.settings as Record<string, unknown> | null;
+      const m = s?.conversion_metric;
+      if (m === "leads" || m === "messages" || m === "purchases") {
+        convMetricByClient.set(clientId, String(m));
+      }
+    }
   }
 
   return clientRows.map((r) => ({
@@ -103,6 +126,7 @@ export async function listAdminClients(): Promise<AdminClientRow[]> {
     created_at: String(r.created_at ?? ""),
     publishedDashboards: dashCount.get(String(r.id)) ?? 0,
     windsorMappings: integCount.get(String(r.id)) ?? 0,
+    conversionMetric: convMetricByClient.get(String(r.id)) ?? null,
   }));
 }
 

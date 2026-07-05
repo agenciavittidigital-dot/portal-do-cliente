@@ -272,6 +272,15 @@ export function ClientsAdminPanel({
   const [actionLoading, setActionLoading] = useState<Record<string, string>>({});
   // Per-client feedback
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  // Conversion type per client (leads | messages | purchases | null)
+  const [conversionSettings, setConversionSettings] = useState<Record<string, string | null>>(
+    () => initialClients.reduce<Record<string, string | null>>((acc, c) => {
+      acc[c.id] = c.conversionMetric;
+      return acc;
+    }, {})
+  );
+  // Which client's conversion panel is open
+  const [conversionOpen, setConversionOpen] = useState<string | null>(null);
 
   // ── Filtered list ────────────────────────────────────────────────────────
 
@@ -468,6 +477,40 @@ export function ClientsAdminPanel({
     }
   }
 
+  // ── Set conversion type ──────────────────────────────────────────────────
+
+  async function handleSetConversion(clientId: string, metric: "leads" | "messages" | "purchases") {
+    setActionLoading((prev) => ({ ...prev, [clientId]: "conversion" }));
+    try {
+      const res = await fetch(`/api/admin/clients/${clientId}/conversion`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversion_metric: metric }),
+      });
+      const json = await res.json() as { success: boolean; error?: string };
+      if (!json.success) {
+        showFeedback(clientId, "error", json.error ?? "Erro ao salvar conversão.");
+        return;
+      }
+      setConversionSettings((prev) => ({ ...prev, [clientId]: metric }));
+      showFeedback(
+        clientId,
+        "success",
+        metric === "leads" ? "Conversão: Leads." :
+        metric === "messages" ? "Conversão: Mensagens." :
+        "Conversão: Vendas."
+      );
+    } catch {
+      showFeedback(clientId, "error", "Erro de conexão.");
+    } finally {
+      setActionLoading((prev) => {
+        const next = { ...prev };
+        delete next[clientId];
+        return next;
+      });
+    }
+  }
+
   // ── Render ───────────────────────────────────────────────────────────────
 
   const counts = useMemo(
@@ -530,8 +573,8 @@ export function ClientsAdminPanel({
       {/* ── Table ────────────────────────────────────────────────── */}
       <div className="rounded-xl border border-black/[0.07] overflow-hidden">
         {/* Header */}
-        <div className="grid grid-cols-[2fr_1fr_1fr_auto_auto_auto_auto] gap-x-4 px-5 py-3 bg-black/[0.02] border-b border-black/[0.06]">
-          {(["Cliente", "Segmento", "Status", "Dash.", "Windsor", "Criado", ""] as const).map(
+        <div className="grid grid-cols-[2fr_1fr_1fr_auto_auto_auto_auto_auto] gap-x-4 px-5 py-3 bg-black/[0.02] border-b border-black/[0.06]">
+          {(["Cliente", "Segmento", "Status", "Dash.", "Windsor", "Conversão", "Criado", ""] as const).map(
             (h) => (
               <p
                 key={h}
@@ -561,7 +604,7 @@ export function ClientsAdminPanel({
               <div key={client.id}>
                 <div
                   className={cn(
-                    "grid grid-cols-[2fr_1fr_1fr_auto_auto_auto_auto] gap-x-4 px-5 py-3.5 items-center text-[11px] font-light transition-colors hover:bg-black/[0.02]",
+                    "grid grid-cols-[2fr_1fr_1fr_auto_auto_auto_auto_auto] gap-x-4 px-5 py-3.5 items-center text-[11px] font-light transition-colors hover:bg-black/[0.02]",
                     i < filtered.length - 1 && "border-b border-black/[0.04]"
                   )}
                 >
@@ -604,6 +647,38 @@ export function ClientsAdminPanel({
                   >
                     {client.windsorMappings}
                   </p>
+
+                  {/* Conversion type selector */}
+                  <div className="flex items-center gap-0.5 w-[78px]">
+                    {([
+                      { value: "messages", label: "Msg" },
+                      { value: "leads",    label: "Lead" },
+                      { value: "purchases", label: "Venda" },
+                    ] as const).map(({ value, label }) => {
+                      const current = conversionSettings[client.id];
+                      const active = current === value;
+                      return (
+                        <button
+                          key={value}
+                          disabled={!!isLoading}
+                          onClick={() => handleSetConversion(client.id, value)}
+                          title={value === "messages" ? "Mensagens" : value === "leads" ? "Leads" : "Vendas"}
+                          className={cn(
+                            "px-1.5 py-0.5 rounded text-[8px] font-light transition-all",
+                            active
+                              ? "bg-[#455cab]/15 text-[#455cab] border border-[#455cab]/30"
+                              : "text-[#5F6368]/45 border border-transparent hover:border-black/[0.08] hover:text-[#5F6368]/70"
+                          )}
+                        >
+                          {isLoading === "conversion" && active ? (
+                            <Loader2 size={8} className="animate-spin" />
+                          ) : (
+                            label
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
 
                   {/* Created at */}
                   <p className="text-[#5F6368]/55 tabular-nums w-24">

@@ -322,17 +322,36 @@ function SaleKpiCard({
   );
 }
 
+// ── Config central de conversão ───────────────────────────────────────────────
+
+interface ConversionConfig {
+  key: "leads" | "messages_started" | "purchases";
+  label: string;
+  funnelLabel: string;
+  costKey: "cost_per_lead" | "cost_per_message" | "cost_per_purchase";
+  costLabel: string;
+}
+
+function getPrimaryConversionConfig(convType: "lead" | "message" | "purchase"): ConversionConfig {
+  if (convType === "purchase") {
+    return { key: "purchases", label: "Vendas", funnelLabel: "Vendas", costKey: "cost_per_purchase", costLabel: "CP Venda" };
+  }
+  if (convType === "lead") {
+    return { key: "leads", label: "Leads", funnelLabel: "Leads", costKey: "cost_per_lead", costLabel: "CPL" };
+  }
+  return { key: "messages_started", label: "Mensagens", funnelLabel: "Mensagens", costKey: "cost_per_message", costLabel: "CP Mensagem" };
+}
+
 // ── Funil de resultados (SVG) ─────────────────────────────────────────────────
 
 function FunnelChart({
   summary,
-  isLeads,
+  convType,
 }: {
   summary: PerformanceSummary | null;
-  isLeads: boolean;
+  convType: "lead" | "message" | "purchase";
 }) {
-  const convKey = isLeads ? "leads" : "messages_started";
-  const convLabel = isLeads ? "Leads" : "Mensagens";
+  const conv = getPrimaryConversionConfig(convType);
 
   function fmt(key: string): string {
     const raw = summary?.[key];
@@ -341,10 +360,10 @@ function FunnelChart({
   }
 
   const stages = [
-    { key: "impressions", label: "Impressões" },
-    { key: "reach",       label: "Alcance"    },
-    { key: "clicks",      label: "Cliques"    },
-    { key: convKey,       label: convLabel    },
+    { key: "impressions", label: "Impressões"     },
+    { key: "reach",       label: "Alcance"        },
+    { key: "clicks",      label: "Cliques"        },
+    { key: conv.key,      label: conv.funnelLabel },
   ];
 
   // viewBox: 200 units wide, separated stages with GAP between them
@@ -839,40 +858,43 @@ function CreativeThumb({ url, name }: { url: string | null; name: string | null 
   );
 }
 
-// Decide a métrica de resultado por criativo:
-// leads têm prioridade sobre mensagens — respeita o objetivo real da campanha.
-function resolveCreativeResult(c: CreativeRow): {
+function resolveCreativeResult(
+  c: CreativeRow,
+  convType: "lead" | "message" | "purchase"
+): {
   value: number;
   label: string;
   cost: number | null;
   costLabel: string;
 } {
-  if (c.leads > 0) {
-    return {
-      value: c.leads,
-      label: "Leads",
-      cost: c.cost_per_lead,
-      costLabel: "Custo / Lead",
-    };
+  const conv = getPrimaryConversionConfig(convType);
+  if (convType === "purchase") {
+    return { value: c.purchases ?? 0, label: conv.label, cost: c.cost_per_purchase, costLabel: conv.costLabel };
   }
-  return {
-    value: c.messages_started,
-    label: "Mensagens",
-    cost: c.cost_per_message,
-    costLabel: "Custo / Mensagem",
-  };
+  if (convType === "lead") {
+    return { value: c.leads ?? 0, label: conv.label, cost: c.cost_per_lead, costLabel: conv.costLabel };
+  }
+  return { value: c.messages_started ?? 0, label: conv.label, cost: c.cost_per_message, costLabel: conv.costLabel };
 }
 
-function BestAdsSection({ creatives }: { creatives: CreativeRow[] }) {
+function BestAdsSection({
+  creatives,
+  convType,
+}: {
+  creatives: CreativeRow[];
+  convType: "lead" | "message" | "purchase";
+}) {
+  const conv = getPrimaryConversionConfig(convType);
+  const getConvVal = (c: CreativeRow): number =>
+    conv.key === "purchases" ? (c.purchases ?? 0) :
+    conv.key === "leads"     ? (c.leads ?? 0)     :
+    (c.messages_started ?? 0);
+
   const sorted = [...creatives]
-    .filter((c) => c.spend > 0 || c.impressions > 0 || c.leads > 0 || c.messages_started > 0)
+    .filter((c) => c.spend > 0 || c.impressions > 0 || c.leads > 0 || c.messages_started > 0 || c.purchases > 0)
     .sort((a, b) => {
-      // Campanhas com leads ficam acima das de mensagens; desempate por spend
-      const aResult = a.leads > 0 ? a.leads : 0;
-      const bResult = b.leads > 0 ? b.leads : 0;
-      if (bResult !== aResult) return bResult - aResult;
-      if (b.messages_started !== a.messages_started) return b.messages_started - a.messages_started;
-      return b.spend - a.spend;
+      const diff = getConvVal(b) - getConvVal(a);
+      return diff !== 0 ? diff : b.spend - a.spend;
     });
 
   if (sorted.length === 0) {
@@ -900,7 +922,7 @@ function BestAdsSection({ creatives }: { creatives: CreativeRow[] }) {
       <div className="relative">
         <div className="flex gap-3 overflow-x-auto pb-2 -mb-2 scroll-smooth snap-x snap-mandatory">
           {sorted.map((c) => {
-            const result = resolveCreativeResult(c);
+            const result = resolveCreativeResult(c, convType);
             return (
               <div
                 key={c.adId}
@@ -1155,20 +1177,28 @@ export function MetaAdsView({
   const summary = performance?.summary ?? null;
   const rows = performance?.rows ?? [];
 
-  // Lógica de conversão: admin pode fixar "leads" ou "messages"; se não configurado, detecta pelos dados
-  const adminConvMetric = (() => {
+  // Tipo primário de conversão:
+  // Prioridade 1 — conversion_metric explícito no block.settings (override do admin)
+  // Prioridade 2 — primeiro entry de enabled_conversions (configurado no DashboardsAdminPanel)
+  // Prioridade 3 — padrão: "lead"
+  const primaryConvType: "lead" | "message" | "purchase" = (() => {
+    // P1: override explícito
     for (const { block } of blocks) {
       const m = (block.settings as Record<string, unknown> | null)?.conversion_metric;
-      if (m === "leads" || m === "messages") return m as "leads" | "messages";
+      if (m === "leads")    return "lead";
+      if (m === "messages") return "message";
+      if (m === "purchases") return "purchase";
     }
-    return null;
+    // P2: primeiro enabled_conversion configurado
+    for (const { block } of blocks) {
+      const raw = (block.settings as Record<string, unknown> | null)?.enabled_conversions;
+      if (Array.isArray(raw) && (raw as string[]).length > 0) {
+        const first = (raw as string[])[0];
+        if (first === "lead" || first === "message" || first === "purchase") return first;
+      }
+    }
+    return "lead";
   })();
-
-  const isLeads =
-    adminConvMetric === "leads" ||
-    (adminConvMetric !== "messages" &&
-      typeof summary?.leads === "number" &&
-      (summary.leads as number) > 0);
 
   // Lê métricas do gráfico de evolução configuradas no Admin (salvas em block.settings)
   const configuredEvolutionKeys = (() => {
@@ -1184,10 +1214,8 @@ export function MetaAdsView({
     return null;
   })();
 
-  const evolutionMetricKeys: string[] = configuredEvolutionKeys ?? [
-    "spend",
-    isLeads ? "leads" : "messages_started",
-  ];
+  const primaryConv = getPrimaryConversionConfig(primaryConvType);
+  const evolutionMetricKeys: string[] = configuredEvolutionKeys ?? ["spend", primaryConv.key];
 
   // Tipos de conversão ativos lidos de block.settings.enabled_conversions.
   // Array já salvo (inclusive []) → usar exatamente. Chave ausente → default retrocompatível.
@@ -1320,7 +1348,7 @@ export function MetaAdsView({
             Funil de resultados
           </h4>
           <div className="flex-1 flex items-center justify-center">
-            <FunnelChart summary={summary} isLeads={isLeads} />
+            <FunnelChart summary={summary} convType={primaryConvType} />
           </div>
         </div>
 
@@ -1402,9 +1430,9 @@ export function MetaAdsView({
       ─────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(240px,1.05fr)_minmax(110px,0.5fr)_minmax(360px,2.1fr)_minmax(280px,1.15fr)] gap-3">
         <div className="xl:col-span-3">
-          <BestAdsSection creatives={creatives ?? []} />
+          <BestAdsSection creatives={creatives ?? []} convType={primaryConvType} />
         </div>
-        <RegionHeatmap rows={regionBreakdown ?? []} isLeads={isLeads} />
+        <RegionHeatmap rows={regionBreakdown ?? []} isLeads={primaryConvType === "lead"} />
       </div>
 
       {/* ── Tabela de campanhas ──────────────────────────────────── */}
