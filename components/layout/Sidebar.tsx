@@ -21,6 +21,11 @@ import {
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 
+interface NavChildDef {
+  label: string;
+  href: string;
+}
+
 interface NavItemDef {
   label: string;
   href: string;
@@ -29,6 +34,8 @@ interface NavItemDef {
   alsoActiveOn: string[];
   comingSoon?: boolean;
   alwaysVisible?: boolean;
+  adminOnly?: boolean;
+  children?: NavChildDef[];
 }
 
 const ALL_NAV_ITEMS: NavItemDef[] = [
@@ -69,12 +76,15 @@ const ALL_NAV_ITEMS: NavItemDef[] = [
   },
   {
     label: "Calendário Editorial",
-    href: "/calendario-editorial",
+    href: "/calendario-editorial/calendario",
     icon: CalendarDays,
     permission: "view_calendar",
-    alsoActiveOn: [],
-    comingSoon: true,
-    alwaysVisible: true,
+    alsoActiveOn: ["/calendario-editorial/lista"],
+    adminOnly: true,
+    children: [
+      { label: "Calendário", href: "/calendario-editorial/calendario" },
+      { label: "Lista editorial", href: "/calendario-editorial/lista" },
+    ],
   },
   {
     label: "Educação",
@@ -121,7 +131,9 @@ export function Sidebar({ permissions, isAdmin }: SidebarProps) {
 
   const navItems = isAdmin
     ? ALL_NAV_ITEMS
-    : ALL_NAV_ITEMS.filter((item) => item.alwaysVisible || permissions.includes(item.permission));
+    : ALL_NAV_ITEMS.filter(
+        (item) => !item.adminOnly && (item.alwaysVisible || permissions.includes(item.permission))
+      );
 
   const itemBase = cn(
     "flex items-center gap-3 rounded-xl px-3 py-3 text-sm",
@@ -279,6 +291,48 @@ export function Sidebar({ permissions, isAdmin }: SidebarProps) {
                     >
                       <Icon className="h-4 w-4 shrink-0" />
                     </Link>
+                  );
+                }
+
+                if (item.children) {
+                  return (
+                    <div key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={() => handleNavClick(item)}
+                        className={cn(itemBase, isActive ? itemActive : itemNormal)}
+                      >
+                        <Icon className="h-4 w-4 shrink-0" />
+                        {item.label}
+                      </Link>
+                      {isActive && (
+                        <div className="mt-0.5 mb-0.5 flex flex-col gap-0.5 ml-4 border-l border-white/10 pl-2">
+                          {item.children.map((child) => {
+                            const childActive =
+                              pathname === child.href ||
+                              pathname.startsWith(child.href + "/");
+                            return (
+                              <Link
+                                key={child.href}
+                                href={child.href}
+                                onClick={() => {
+                                  if (!childActive) setIsLoading(true);
+                                }}
+                                className={cn(
+                                  "flex items-center gap-2 rounded-lg px-3 py-2 text-xs transition-all duration-200",
+                                  childActive
+                                    ? "bg-white/10 text-white font-medium"
+                                    : "text-white/50 hover:bg-white/5 hover:text-white"
+                                )}
+                              >
+                                <span className="h-1 w-1 rounded-full bg-current shrink-0" />
+                                {child.label}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   );
                 }
 
