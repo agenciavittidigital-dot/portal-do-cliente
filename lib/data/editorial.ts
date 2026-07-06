@@ -34,6 +34,8 @@ export interface EditorialContent {
   scheduledAt: string | null;
   deliveryAt: string | null;
   responsibleId: string | null;
+  videoUrl: string | null;
+  attachmentCount: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -84,7 +86,7 @@ export async function listEditorialContents(opts?: {
   let contentsQuery = admin
     .from("editorial_contents")
     .select(
-      "id, client_id, category_id, status_id, title, description, caption, scheduled_at, delivery_at, responsible_id, created_at, updated_at"
+      "id, client_id, category_id, status_id, title, description, caption, scheduled_at, delivery_at, responsible_id, video_url, created_at, updated_at"
     )
     .order("scheduled_at", { ascending: true })
     .order("created_at", { ascending: true });
@@ -98,6 +100,7 @@ export async function listEditorialContents(opts?: {
     { data: categoriesRaw },
     { data: statusesRaw },
     { data: clientsRaw },
+    { data: attachmentsRaw },
   ] = await Promise.all([
     contentsQuery,
     admin
@@ -107,7 +110,14 @@ export async function listEditorialContents(opts?: {
       .from("editorial_statuses")
       .select("id, name, color"),
     admin.from("clients").select("id, name"),
+    admin.from("editorial_attachments").select("content_id"),
   ]);
+
+  const attachCountMap = new Map<string, number>();
+  for (const a of attachmentsRaw ?? []) {
+    const key = String(a.content_id);
+    attachCountMap.set(key, (attachCountMap.get(key) ?? 0) + 1);
+  }
 
   const catMap = new Map(
     (categoriesRaw ?? []).map((c) => [String(c.id), c])
@@ -139,6 +149,8 @@ export async function listEditorialContents(opts?: {
       scheduledAt: r.scheduled_at ? String(r.scheduled_at) : null,
       deliveryAt: r.delivery_at ? String(r.delivery_at) : null,
       responsibleId: r.responsible_id ? String(r.responsible_id) : null,
+      videoUrl: r.video_url ? String(r.video_url) : null,
+      attachmentCount: attachCountMap.get(String(r.id)) ?? 0,
       createdAt: String(r.created_at),
       updatedAt: String(r.updated_at),
     };

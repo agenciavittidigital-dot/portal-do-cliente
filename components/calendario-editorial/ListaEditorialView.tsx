@@ -1,17 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   ChevronDown,
   ChevronUp,
   Inbox,
-  Paperclip,
   MessageSquare,
   Pencil,
+  Loader2,
+  Link2,
+  ExternalLink,
+  Eye,
+  Paperclip,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CategoryTag } from "./CategoryTag";
 import { StatusBadge } from "./StatusBadge";
+import { ArtPreviewModal } from "./ArtPreviewModal";
+import type { ModalAttachment } from "./ArtPreviewModal";
 
 export interface ListaContentItem {
   id: string;
@@ -24,6 +30,16 @@ export interface ListaContentItem {
   scheduledAt: string | null;
   deliveryAt: string | null;
   clientName: string;
+  videoUrl: string | null;
+  attachmentCount: number;
+}
+
+interface AttachmentItem {
+  id: string;
+  fileName: string;
+  fileSize: number;
+  url: string | null;
+  uploadedAt: string;
 }
 
 interface ListaEditorialViewProps {
@@ -35,7 +51,7 @@ interface ListaEditorialViewProps {
 // Grid template: Categoria | Cliente | Responsável | Título | Descrição | Legenda |
 //               Entrega | Data postagem | Arquivo | Considerações | Status | Chevron
 const GRID =
-  "78px 108px 108px minmax(130px,1fr) 108px 108px 84px 100px 76px 108px 108px 28px";
+  "78px 108px 108px minmax(130px,1fr) 108px 108px 84px 100px 96px 108px 108px 28px";
 
 function formatDate(iso?: string | null): string {
   if (!iso) return "—";
@@ -107,6 +123,81 @@ export function ListaEditorialView({
   onSelectItem,
 }: ListaEditorialViewProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [attachmentsCache, setAttachmentsCache] = useState<
+    Record<string, AttachmentItem[]>
+  >({});
+  const [loadingAttachments, setLoadingAttachments] = useState<Set<string>>(
+    new Set()
+  );
+
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalAttachments, setModalAttachments] = useState<ModalAttachment[]>([]);
+  const [modalIndex, setModalIndex] = useState(0);
+
+  // Lazy-load attachments when an expanded row has cards
+  useEffect(() => {
+    if (!expandedId) return;
+    const item = items.find((i) => i.id === expandedId);
+    if (!item || item.attachmentCount === 0) return;
+    if (attachmentsCache[expandedId] !== undefined) return;
+
+    setLoadingAttachments((prev) => new Set(prev).add(expandedId));
+
+    fetch(`/api/admin/editorial/${expandedId}/attachments`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success) {
+          setAttachmentsCache((prev) => ({
+            ...prev,
+            [expandedId]: data.attachments,
+          }));
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        setLoadingAttachments((prev) => {
+          const next = new Set(prev);
+          next.delete(expandedId!);
+          return next;
+        });
+      });
+  }, [expandedId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch attachments for modal, using cache when available
+  const openArtModal = useCallback(
+    async (itemId: string, initialIndex = 0) => {
+      const cached = attachmentsCache[itemId];
+      if (cached) {
+        setModalAttachments(cached);
+        setModalIndex(initialIndex);
+        setModalOpen(true);
+        return;
+      }
+
+      // Need to fetch first — mark as loading in the set so the button shows spinner
+      setLoadingAttachments((prev) => new Set(prev).add(itemId));
+
+      try {
+        const r = await fetch(`/api/admin/editorial/${itemId}/attachments`);
+        const data = await r.json();
+        if (data.success) {
+          const atts: AttachmentItem[] = data.attachments ?? [];
+          setAttachmentsCache((prev) => ({ ...prev, [itemId]: atts }));
+          setModalAttachments(atts);
+          setModalIndex(initialIndex);
+          setModalOpen(true);
+        }
+      } catch { /* ignore */ } finally {
+        setLoadingAttachments((prev) => {
+          const next = new Set(prev);
+          next.delete(itemId);
+          return next;
+        });
+      }
+    },
+    [attachmentsCache]
+  );
 
   if (items.length === 0) {
     return (
@@ -123,254 +214,350 @@ export function ListaEditorialView({
   }
 
   return (
-    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-hidden">
-      <div className="overflow-x-auto">
-        <div className="min-w-[1200px]">
+    <>
+      <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-hidden">
+        <div className="overflow-x-auto">
+          <div className="min-w-[1200px]">
 
-          {/* ── Header ───────────────────────────────────────────────────── */}
-          <div
-            className="grid items-center px-4 py-2.5 border-b border-black/[0.06] bg-black/[0.02]"
-            style={{ gridTemplateColumns: GRID }}
-          >
-            {HEADERS.map((h, i) => (
-              <span
-                key={i}
-                className="text-[9px] font-medium text-vitti-fg-muted/50 tracking-wider uppercase pr-2 truncate"
-              >
-                {h}
-              </span>
-            ))}
-          </div>
+            {/* ── Header ─────────────────────────────────────────────── */}
+            <div
+              className="grid items-center px-4 py-2.5 border-b border-black/[0.06] bg-black/[0.02]"
+              style={{ gridTemplateColumns: GRID }}
+            >
+              {HEADERS.map((h, i) => (
+                <span
+                  key={i}
+                  className="text-[9px] font-medium text-vitti-fg-muted/50 tracking-wider uppercase pr-2 truncate"
+                >
+                  {h}
+                </span>
+              ))}
+            </div>
 
-          {/* ── Rows ─────────────────────────────────────────────────────── */}
-          <div className="divide-y divide-black/[0.04]">
-            {items.map((item) => {
-              const isExpanded = expandedId === item.id;
+            {/* ── Rows ───────────────────────────────────────────────── */}
+            <div className="divide-y divide-black/[0.04]">
+              {items.map((item) => {
+                const isExpanded = expandedId === item.id;
+                const cachedAttachments = attachmentsCache[item.id];
+                const isLoadingThis = loadingAttachments.has(item.id);
+                const hasCards = item.attachmentCount > 0;
+                const hasVideo = !!item.videoUrl;
 
-              return (
-                <div key={item.id}>
-                  {/* Collapsed row — click toggles expand */}
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() =>
-                      setExpandedId(isExpanded ? null : item.id)
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ")
-                        setExpandedId(isExpanded ? null : item.id);
-                    }}
-                    className={cn(
-                      "grid items-center w-full text-left px-4 py-3 cursor-pointer select-none transition-colors",
-                      isExpanded
-                        ? "bg-black/[0.012]"
-                        : "hover:bg-black/[0.018]"
-                    )}
-                    style={{ gridTemplateColumns: GRID }}
-                  >
-                    {/* 1. Categoria */}
-                    <div>
-                      <CategoryTag
-                        name={item.category.name}
-                        color={item.category.color}
-                        small
-                      />
-                    </div>
-
-                    {/* 2. Cliente */}
-                    <span className="text-[10px] font-light text-vitti-fg truncate pr-2">
-                      {item.clientName}
-                    </span>
-
-                    {/* 3. Responsável */}
-                    <span className="text-[10px] font-light text-vitti-fg-muted truncate pr-2">
-                      {item.responsibleName ?? "—"}
-                    </span>
-
-                    {/* 4. Título */}
-                    <span className="text-xs font-light text-vitti-fg truncate pr-3">
-                      {item.title}
-                    </span>
-
-                    {/* 5. Descrição */}
-                    <span className="text-[10px] font-light text-vitti-fg-muted/70 truncate pr-2">
-                      {clip(item.description)}
-                    </span>
-
-                    {/* 6. Legenda */}
-                    <span className="text-[10px] font-light text-vitti-fg-muted/70 truncate pr-2">
-                      {clip(item.caption)}
-                    </span>
-
-                    {/* 7. Data de entrega */}
-                    <span className="text-[10px] font-light text-vitti-fg-muted pr-2">
-                      {formatDate(item.deliveryAt)}
-                    </span>
-
-                    {/* 8. Data postagem */}
-                    <span className="text-[10px] font-light text-vitti-fg-muted pr-2">
-                      {formatDateTime(item.scheduledAt)}
-                    </span>
-
-                    {/* 9. Arquivo */}
-                    <span className="text-[10px] font-light text-vitti-fg-muted/35 italic pr-2">
-                      Sem arquivo
-                    </span>
-
-                    {/* 10. Considerações */}
-                    <span className="text-[10px] font-light text-vitti-fg-muted/35 italic pr-2">
-                      Sem considerações
-                    </span>
-
-                    {/* 11. Status */}
-                    <div>
-                      <StatusBadge
-                        name={item.status.name}
-                        color={item.status.color}
-                        small
-                      />
-                    </div>
-
-                    {/* Chevron */}
-                    <div className="flex items-center justify-center">
-                      {isExpanded ? (
-                        <ChevronUp size={12} className="text-vitti-fg-muted/40" />
-                      ) : (
-                        <ChevronDown size={12} className="text-vitti-fg-muted/25" />
+                return (
+                  <div key={item.id}>
+                    {/* Collapsed row */}
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() =>
+                        setExpandedId(isExpanded ? null : item.id)
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ")
+                          setExpandedId(isExpanded ? null : item.id);
+                      }}
+                      className={cn(
+                        "grid items-center w-full text-left px-4 py-3 cursor-pointer select-none transition-colors",
+                        isExpanded
+                          ? "bg-black/[0.012]"
+                          : "hover:bg-black/[0.018]"
                       )}
+                      style={{ gridTemplateColumns: GRID }}
+                    >
+                      {/* 1. Categoria */}
+                      <div>
+                        <CategoryTag
+                          name={item.category.name}
+                          color={item.category.color}
+                          small
+                        />
+                      </div>
+
+                      {/* 2. Cliente */}
+                      <span className="text-[10px] font-light text-vitti-fg truncate pr-2">
+                        {item.clientName}
+                      </span>
+
+                      {/* 3. Responsável */}
+                      <span className="text-[10px] font-light text-vitti-fg-muted truncate pr-2">
+                        {item.responsibleName ?? "—"}
+                      </span>
+
+                      {/* 4. Título */}
+                      <span className="text-xs font-light text-vitti-fg truncate pr-3">
+                        {item.title}
+                      </span>
+
+                      {/* 5. Descrição */}
+                      <span className="text-[10px] font-light text-vitti-fg-muted/70 truncate pr-2">
+                        {clip(item.description)}
+                      </span>
+
+                      {/* 6. Legenda */}
+                      <span className="text-[10px] font-light text-vitti-fg-muted/70 truncate pr-2">
+                        {clip(item.caption)}
+                      </span>
+
+                      {/* 7. Data de entrega */}
+                      <span className="text-[10px] font-light text-vitti-fg-muted pr-2">
+                        {formatDate(item.deliveryAt)}
+                      </span>
+
+                      {/* 8. Data postagem */}
+                      <span className="text-[10px] font-light text-vitti-fg-muted pr-2">
+                        {formatDateTime(item.scheduledAt)}
+                      </span>
+
+                      {/* 9. Arquivo */}
+                      <div className="pr-1 flex flex-col gap-0.5 items-start">
+                        {/* Video badge */}
+                        {hasVideo && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-50 border border-purple-200/60">
+                            <Link2 size={8} className="text-purple-400" />
+                            <span className="text-[8px] font-medium text-purple-500">
+                              Vídeo
+                            </span>
+                          </span>
+                        )}
+                        {/* Cards — "Ver arte" button */}
+                        {hasCards ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openArtModal(item.id);
+                            }}
+                            disabled={isLoadingThis}
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-vitti-blue/[0.07] border border-vitti-blue/[0.15] text-vitti-blue/70 hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all disabled:opacity-50"
+                          >
+                            {isLoadingThis ? (
+                              <Loader2 size={8} className="animate-spin" />
+                            ) : (
+                              <Eye size={8} />
+                            )}
+                            <span className="text-[8px] font-medium">
+                              {isLoadingThis
+                                ? "..."
+                                : `${item.attachmentCount === 1 ? "1 card" : `${item.attachmentCount} cards`}`}
+                            </span>
+                          </button>
+                        ) : !hasVideo ? (
+                          <span className="text-[10px] font-light text-vitti-fg-muted/35 italic">
+                            Sem arquivo
+                          </span>
+                        ) : null}
+                      </div>
+
+                      {/* 10. Considerações */}
+                      <span className="text-[10px] font-light text-vitti-fg-muted/35 italic pr-2">
+                        Sem considerações
+                      </span>
+
+                      {/* 11. Status */}
+                      <div>
+                        <StatusBadge
+                          name={item.status.name}
+                          color={item.status.color}
+                          small
+                        />
+                      </div>
+
+                      {/* Chevron */}
+                      <div className="flex items-center justify-center">
+                        {isExpanded ? (
+                          <ChevronUp size={12} className="text-vitti-fg-muted/40" />
+                        ) : (
+                          <ChevronDown size={12} className="text-vitti-fg-muted/25" />
+                        )}
+                      </div>
                     </div>
+
+                    {/* ── Expanded detail panel ─────────────────────── */}
+                    {isExpanded && (
+                      <div className="border-t border-black/[0.05] bg-[#f9f9fb] px-6 py-5">
+                        <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+
+                          {/* 1. Categoria */}
+                          <div>
+                            <FL>Categoria</FL>
+                            <FV>
+                              <CategoryTag
+                                name={item.category.name}
+                                color={item.category.color}
+                              />
+                            </FV>
+                          </div>
+
+                          {/* 2. Cliente */}
+                          <div>
+                            <FL>Cliente</FL>
+                            <FV>{item.clientName}</FV>
+                          </div>
+
+                          {/* 3. Responsável */}
+                          <div>
+                            <FL>Responsável</FL>
+                            <FV>{item.responsibleName ?? "—"}</FV>
+                          </div>
+
+                          {/* 4. Título */}
+                          <div className="col-span-3">
+                            <FL>Título do post</FL>
+                            <FV>{item.title}</FV>
+                          </div>
+
+                          {/* 5. Descrição */}
+                          <div className="col-span-3">
+                            <FL>Descrição</FL>
+                            <FV>
+                              {item.description ? (
+                                <span className="whitespace-pre-wrap">
+                                  {item.description}
+                                </span>
+                              ) : (
+                                <span className="text-vitti-fg-muted/40 italic">
+                                  Sem descrição
+                                </span>
+                              )}
+                            </FV>
+                          </div>
+
+                          {/* 6. Legenda */}
+                          <div className="col-span-3">
+                            <FL>Legenda</FL>
+                            <FV>
+                              {item.caption ? (
+                                <span className="whitespace-pre-wrap">
+                                  {item.caption}
+                                </span>
+                              ) : (
+                                <span className="text-vitti-fg-muted/40 italic">
+                                  Sem legenda
+                                </span>
+                              )}
+                            </FV>
+                          </div>
+
+                          {/* 7. Data de entrega */}
+                          <div>
+                            <FL>Data de entrega</FL>
+                            <FV>{formatDate(item.deliveryAt)}</FV>
+                          </div>
+
+                          {/* 8. Data e hora da postagem */}
+                          <div>
+                            <FL>Data e hora da postagem</FL>
+                            <FV>{formatDateTime(item.scheduledAt)}</FV>
+                          </div>
+
+                          {/* 9. Link do vídeo (only if exists) */}
+                          {hasVideo ? (
+                            <div>
+                              <FL>Link do vídeo</FL>
+                              <FV>
+                                <a
+                                  href={item.videoUrl!}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="inline-flex items-center gap-1.5 text-purple-500 hover:text-purple-600 transition-colors"
+                                >
+                                  <ExternalLink size={11} />
+                                  <span>Abrir vídeo</span>
+                                </a>
+                              </FV>
+                            </div>
+                          ) : (
+                            <div /> /* keep grid alignment */
+                          )}
+
+                          {/* 10. Cards / artes — compact row */}
+                          {hasCards && (
+                            <div className="col-span-3">
+                              <FL>Cards / artes</FL>
+                              <FV>
+                                <div className="flex items-center gap-3 mt-0.5">
+                                  {isLoadingThis ? (
+                                    <span className="inline-flex items-center gap-1.5 text-vitti-fg-muted/40">
+                                      <Loader2 size={11} className="animate-spin" />
+                                      <span className="text-[11px] italic">Carregando...</span>
+                                    </span>
+                                  ) : (
+                                    <>
+                                      <span className="inline-flex items-center gap-1.5 text-[11px] font-light text-vitti-fg-muted/60">
+                                        <Paperclip size={11} className="text-vitti-fg-muted/40" />
+                                        {item.attachmentCount === 1
+                                          ? "1 card anexado"
+                                          : `${item.attachmentCount} cards anexados`}
+                                      </span>
+                                      {(cachedAttachments || !isLoadingThis) && (
+                                        <button
+                                          type="button"
+                                          onClick={() => openArtModal(item.id)}
+                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-black/[0.1] text-[11px] font-light text-vitti-fg-muted hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all"
+                                        >
+                                          <Eye size={11} />
+                                          Ver arte
+                                        </button>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+                              </FV>
+                            </div>
+                          )}
+
+                          {/* 11. Considerações */}
+                          <div className="col-span-2">
+                            <FL>Considerações</FL>
+                            <FV>
+                              <span className="inline-flex items-center gap-1.5 text-vitti-fg-muted/40 italic">
+                                <MessageSquare size={11} />
+                                Sem considerações
+                              </span>
+                            </FV>
+                          </div>
+
+                          {/* 12. Status */}
+                          <div>
+                            <FL>Status</FL>
+                            <FV>
+                              <StatusBadge
+                                name={item.status.name}
+                                color={item.status.color}
+                              />
+                            </FV>
+                          </div>
+                        </div>
+
+                        {/* Editar button */}
+                        <div className="flex justify-end mt-4 pt-4 border-t border-black/[0.05]">
+                          <button
+                            onClick={() => onSelectItem?.(item)}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-black/[0.1] text-[11px] font-light text-vitti-fg-muted hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all"
+                          >
+                            <Pencil size={11} />
+                            Editar conteúdo
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-                  {/* ── Expanded detail panel ───────────────────────────── */}
-                  {isExpanded && (
-                    <div className="border-t border-black/[0.05] bg-[#f9f9fb] px-6 py-5">
-                      <div className="grid grid-cols-3 gap-x-6 gap-y-4">
-
-                        {/* 1. Categoria */}
-                        <div>
-                          <FL>Categoria</FL>
-                          <FV>
-                            <CategoryTag
-                              name={item.category.name}
-                              color={item.category.color}
-                            />
-                          </FV>
-                        </div>
-
-                        {/* 2. Cliente */}
-                        <div>
-                          <FL>Cliente</FL>
-                          <FV>{item.clientName}</FV>
-                        </div>
-
-                        {/* 3. Responsável */}
-                        <div>
-                          <FL>Responsável</FL>
-                          <FV>{item.responsibleName ?? "—"}</FV>
-                        </div>
-
-                        {/* 4. Título (full width) */}
-                        <div className="col-span-3">
-                          <FL>Título do post</FL>
-                          <FV>{item.title}</FV>
-                        </div>
-
-                        {/* 5. Descrição (full width) */}
-                        <div className="col-span-3">
-                          <FL>Descrição</FL>
-                          <FV>
-                            {item.description ? (
-                              <span className="whitespace-pre-wrap">
-                                {item.description}
-                              </span>
-                            ) : (
-                              <span className="text-vitti-fg-muted/40 italic">
-                                Sem descrição
-                              </span>
-                            )}
-                          </FV>
-                        </div>
-
-                        {/* 6. Legenda (full width) */}
-                        <div className="col-span-3">
-                          <FL>Legenda</FL>
-                          <FV>
-                            {item.caption ? (
-                              <span className="whitespace-pre-wrap">
-                                {item.caption}
-                              </span>
-                            ) : (
-                              <span className="text-vitti-fg-muted/40 italic">
-                                Sem legenda
-                              </span>
-                            )}
-                          </FV>
-                        </div>
-
-                        {/* 7. Data de entrega */}
-                        <div>
-                          <FL>Data de entrega</FL>
-                          <FV>{formatDate(item.deliveryAt)}</FV>
-                        </div>
-
-                        {/* 8. Data e hora da postagem */}
-                        <div>
-                          <FL>Data e hora da postagem</FL>
-                          <FV>{formatDateTime(item.scheduledAt)}</FV>
-                        </div>
-
-                        {/* 9. Arquivo */}
-                        <div>
-                          <FL>Arquivo</FL>
-                          <FV>
-                            <span className="inline-flex items-center gap-1.5 text-vitti-fg-muted/40 italic">
-                              <Paperclip size={11} />
-                              Sem arquivo
-                            </span>
-                          </FV>
-                        </div>
-
-                        {/* 10. Considerações (2 cols) */}
-                        <div className="col-span-2">
-                          <FL>Considerações</FL>
-                          <FV>
-                            <span className="inline-flex items-center gap-1.5 text-vitti-fg-muted/40 italic">
-                              <MessageSquare size={11} />
-                              Sem considerações
-                            </span>
-                          </FV>
-                        </div>
-
-                        {/* 11. Status */}
-                        <div>
-                          <FL>Status</FL>
-                          <FV>
-                            <StatusBadge
-                              name={item.status.name}
-                              color={item.status.color}
-                            />
-                          </FV>
-                        </div>
-                      </div>
-
-                      {/* Editar button */}
-                      <div className="flex justify-end mt-4 pt-4 border-t border-black/[0.05]">
-                        <button
-                          onClick={() => onSelectItem?.(item)}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-black/[0.1] text-[11px] font-light text-vitti-fg-muted hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all"
-                        >
-                          <Pencil size={11} />
-                          Editar conteúdo
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Art preview modal — rendered outside the list for correct stacking */}
+      <ArtPreviewModal
+        open={modalOpen}
+        attachments={modalAttachments}
+        currentIndex={modalIndex}
+        onChangeIndex={setModalIndex}
+        onClose={() => setModalOpen(false)}
+      />
+    </>
   );
 }

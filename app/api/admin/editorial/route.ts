@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
       caption: b.caption ? String(b.caption).trim() : null,
       scheduled_at: b.scheduled_at ?? null,
       delivery_at: b.delivery_at ?? null,
+      video_url: b.video_url ? String(b.video_url).trim() : null,
       created_by: profile?.id ?? null,
     })
     .select("id")

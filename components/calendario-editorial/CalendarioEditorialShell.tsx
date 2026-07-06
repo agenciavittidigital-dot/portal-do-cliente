@@ -30,6 +30,8 @@ export interface ContentRow {
   scheduledAt: string | null;
   deliveryAt: string | null;
   responsibleId: string | null;
+  videoUrl: string | null;
+  attachmentCount: number;
 }
 
 export interface CategoryOption { id: string; name: string; color: string }
@@ -94,6 +96,8 @@ export function CalendarioEditorialShell({
     scheduledAt: c.scheduledAt,
     deliveryAt: c.deliveryAt,
     clientName: c.clientName,
+    videoUrl: c.videoUrl,
+    attachmentCount: c.attachmentCount,
     category: c.categoryName
       ? { name: c.categoryName, color: c.categoryColor! }
       : FALLBACK_CAT,
@@ -128,6 +132,7 @@ export function CalendarioEditorialShell({
       caption: full.caption,
       scheduledAt: full.scheduledAt,
       deliveryAt: full.deliveryAt,
+      videoUrl: full.videoUrl,
     });
     setInitialDate(undefined);
     setDrawerOpen(true);
@@ -147,6 +152,7 @@ export function CalendarioEditorialShell({
       caption: full.caption,
       scheduledAt: full.scheduledAt,
       deliveryAt: full.deliveryAt,
+      videoUrl: full.videoUrl,
     });
     setInitialDate(undefined);
     setDrawerOpen(true);

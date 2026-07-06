@@ -55,6 +55,7 @@ export async function PATCH(
   if (b.caption !== undefined)       patch.caption = b.caption || null;
   if (b.scheduled_at !== undefined)  patch.scheduled_at = b.scheduled_at || null;
   if (b.delivery_at !== undefined)   patch.delivery_at = b.delivery_at || null;
+  if (b.video_url !== undefined)     patch.video_url = b.video_url ? String(b.video_url).trim() : null;
 
   const admin = createAdminClient();
   const { error } = await admin
