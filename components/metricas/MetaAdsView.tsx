@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, ChevronDown, BarChart3, Film } from "lucide-react";
+import { Calendar, ChevronDown, BarChart3, Film, FileDown, Loader2 } from "lucide-react";
+import { exportDashboardToPdf } from "@/lib/pdf/exportDashboard";
 import { cn } from "@/lib/utils";
 import {
   AreaChart,
@@ -1134,6 +1135,7 @@ interface MetaAdsViewProps {
   initialPeriod?: string;
   initialStartDate?: string;
   initialEndDate?: string;
+  clientName?: string;
 }
 
 export function MetaAdsView({
@@ -1146,14 +1148,18 @@ export function MetaAdsView({
   initialPeriod = "last_7_days",
   initialStartDate = "",
   initialEndDate = "",
+  clientName = "",
 }: MetaAdsViewProps) {
   const router = useRouter();
+  const dashboardRef = useRef<HTMLDivElement>(null);
 
   const [period, setPeriod] = useState(initialPeriod);
   const [customStart, setCustomStart] = useState(initialStartDate);
   const [customEnd, setCustomEnd] = useState(initialEndDate);
   const [carouselIdx, setCarouselIdx] = useState(0);
   const [saleCardIdx, setSaleCardIdx] = useState(0);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   function handlePeriodChange(p: string, start: string, end: string) {
     setPeriod(p);
@@ -1172,6 +1178,25 @@ export function MetaAdsView({
       url.searchParams.delete("endDate");
     }
     router.replace(url.pathname + url.search, { scroll: false });
+  }
+
+  async function handleExportPdf() {
+    if (!dashboardRef.current) return;
+    setExportingPdf(true);
+    setPdfError(null);
+    try {
+      await exportDashboardToPdf({
+        containerEl: dashboardRef.current,
+        clientName: clientName || "Cliente",
+        platformLabel: "Meta Ads",
+        periodLabel: resolvePeriodLabel(period, customStart, customEnd),
+      });
+    } catch (err) {
+      console.error("[PDF Export] MetaAds error:", err);
+      setPdfError("Não foi possível gerar o PDF. Tente novamente.");
+    } finally {
+      setExportingPdf(false);
+    }
   }
 
   const summary = performance?.summary ?? null;
@@ -1286,19 +1311,36 @@ export function MetaAdsView({
   ];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" ref={dashboardRef}>
       {/* ── Header + 5 cards: grupo compacto ────────────────────── */}
-      <div className="space-y-4">
+      <div className="space-y-4" data-pdf-section="kpis">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <h3 className="text-sm font-light text-[#455cab] tracking-wide">
             Visão geral de performance
           </h3>
-          <PeriodFilter
-            period={period}
-            customStart={customStart}
-            customEnd={customEnd}
-            onChange={handlePeriodChange}
-          />
+          <div className="flex items-center gap-2" data-pdf-hide>
+            {pdfError && (
+              <span className="text-[10px] text-red-400 font-light max-w-[220px] truncate">
+                {pdfError}
+              </span>
+            )}
+            <button
+              onClick={handleExportPdf}
+              disabled={exportingPdf}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#455cab]/30 bg-[#171f38]/90 text-[10px] font-light text-white/80 hover:bg-[#1e2a47] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed select-none"
+            >
+              {exportingPdf
+                ? <Loader2 size={9} className="animate-spin shrink-0" />
+                : <FileDown size={9} className="shrink-0" />}
+              {exportingPdf ? "Gerando..." : "Baixar relatório"}
+            </button>
+            <PeriodFilter
+              period={period}
+              customStart={customStart}
+              customEnd={customEnd}
+              onChange={handlePeriodChange}
+            />
+          </div>
         </div>
 
         <div className={cn(
@@ -1340,7 +1382,7 @@ export function MetaAdsView({
           items-stretch alinha a base de todos os blocos
           Mobile: empilhado
       ─────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(270px,1.25fr)_minmax(128px,0.6fr)_minmax(400px,2.5fr)_minmax(200px,1fr)] gap-3 items-stretch">
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(270px,1.25fr)_minmax(128px,0.6fr)_minmax(400px,2.5fr)_minmax(200px,1fr)] gap-3 items-stretch" data-pdf-section="performance">
 
         {/* Coluna 1 — Funil de resultados */}
         <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col">
@@ -1428,7 +1470,7 @@ export function MetaAdsView({
           Melhores anúncios ocupa as 3 primeiras colunas (xl:col-span-3).
           Última coluna levemente mais larga que a seção superior (280px vs 200px).
       ─────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(240px,1.05fr)_minmax(110px,0.5fr)_minmax(360px,2.1fr)_minmax(280px,1.15fr)] gap-3">
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(240px,1.05fr)_minmax(110px,0.5fr)_minmax(360px,2.1fr)_minmax(280px,1.15fr)] gap-3" data-pdf-section="ads-map">
         <div className="xl:col-span-3">
           <BestAdsSection creatives={creatives ?? []} convType={primaryConvType} />
         </div>
@@ -1437,7 +1479,9 @@ export function MetaAdsView({
 
       {/* ── Tabela de campanhas ──────────────────────────────────── */}
       {campaigns && campaigns.length > 0 && (
-        <MetaCampaignsTable campaigns={campaigns} />
+        <div data-pdf-section="campaigns">
+          <MetaCampaignsTable campaigns={campaigns} />
+        </div>
       )}
     </div>
   );

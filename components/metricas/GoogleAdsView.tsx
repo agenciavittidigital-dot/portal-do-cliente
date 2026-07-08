@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BarChart3, Calendar, ChevronDown, Search } from "lucide-react";
+import { BarChart3, Calendar, ChevronDown, FileDown, Loader2, Search } from "lucide-react";
+import { exportDashboardToPdf } from "@/lib/pdf/exportDashboard";
 import {
   Area,
   AreaChart,
@@ -585,6 +586,7 @@ interface Props {
   initialPeriod?: string;
   initialStartDate?: string;
   initialEndDate?: string;
+  clientName?: string;
 }
 
 export function GoogleAdsView({
@@ -594,11 +596,34 @@ export function GoogleAdsView({
   initialPeriod = "last_7_days",
   initialStartDate = "",
   initialEndDate = "",
+  clientName = "",
 }: Props) {
   const router = useRouter();
+  const dashboardRef = useRef<HTMLDivElement>(null);
   const [period, setPeriod] = useState(initialPeriod);
   const [customStart, setCustomStart] = useState(initialStartDate);
   const [customEnd, setCustomEnd] = useState(initialEndDate);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
+  async function handleExportPdf() {
+    if (!dashboardRef.current) return;
+    setExportingPdf(true);
+    setPdfError(null);
+    try {
+      await exportDashboardToPdf({
+        containerEl: dashboardRef.current,
+        clientName: clientName || "Cliente",
+        platformLabel: "Google Ads",
+        periodLabel: resolvePeriodLabel(period, customStart, customEnd),
+      });
+    } catch (err) {
+      console.error("[PDF Export] GoogleAds error:", err);
+      setPdfError("Não foi possível gerar o PDF. Tente novamente.");
+    } finally {
+      setExportingPdf(false);
+    }
+  }
 
   function handlePeriodChange(p: string, start: string, end: string) {
     setPeriod(p);
@@ -657,23 +682,40 @@ export function GoogleAdsView({
       : null;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" ref={dashboardRef}>
 
       {/* ── Cabeçalho + filtro de período ──────────────────────────────────── */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <h3 className="text-sm font-light text-[#455cab] tracking-wide">
           Visão geral de performance
         </h3>
-        <PeriodFilter
-          period={period}
-          customStart={customStart}
-          customEnd={customEnd}
-          onChange={handlePeriodChange}
-        />
+        <div className="flex items-center gap-2" data-pdf-hide>
+          {pdfError && (
+            <span className="text-[10px] text-red-400 font-light max-w-[220px] truncate">
+              {pdfError}
+            </span>
+          )}
+          <button
+            onClick={handleExportPdf}
+            disabled={exportingPdf}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#455cab]/30 bg-[#171f38]/90 text-[10px] font-light text-white/80 hover:bg-[#1e2a47] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed select-none"
+          >
+            {exportingPdf
+              ? <Loader2 size={9} className="animate-spin shrink-0" />
+              : <FileDown size={9} className="shrink-0" />}
+            {exportingPdf ? "Gerando..." : "Baixar relatório"}
+          </button>
+          <PeriodFilter
+            period={period}
+            customStart={customStart}
+            customEnd={customEnd}
+            onChange={handlePeriodChange}
+          />
+        </div>
       </div>
 
       {/* ── 5 KPI cards principais ─────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" data-pdf-section="kpis">
         <KpiCard
           label="Investimento"
           value={spend !== null ? fmtCurrency(spend) : null}
@@ -717,7 +759,7 @@ export function GoogleAdsView({
       <div className="border-t border-slate-200/60" />
 
       {/* ── Layout: Palavras-chave + métricas secundárias | Gráfico ─────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[5fr_7fr] gap-5 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-[5fr_7fr] gap-5 items-stretch" data-pdf-section="performance">
 
         {/* Coluna esquerda */}
         <div className="flex flex-col gap-4">
@@ -747,7 +789,9 @@ export function GoogleAdsView({
       </div>
 
       {/* ── Tabela de campanhas ─────────────────────────────────────────────── */}
-      <CampaignsTable campaigns={campaigns} />
+      <div data-pdf-section="campaigns">
+        <CampaignsTable campaigns={campaigns} />
+      </div>
 
     </div>
   );

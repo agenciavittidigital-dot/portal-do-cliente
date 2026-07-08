@@ -36,6 +36,7 @@ export interface EditorialContent {
   responsibleId: string | null;
   videoUrl: string | null;
   attachmentCount: number;
+  commentCount: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -101,6 +102,7 @@ export async function listEditorialContents(opts?: {
     { data: statusesRaw },
     { data: clientsRaw },
     { data: attachmentsRaw },
+    { data: commentsRaw },
   ] = await Promise.all([
     contentsQuery,
     admin
@@ -111,12 +113,19 @@ export async function listEditorialContents(opts?: {
       .select("id, name, color"),
     admin.from("clients").select("id, name"),
     admin.from("editorial_attachments").select("content_id"),
+    admin.from("editorial_comments").select("content_id"),
   ]);
 
   const attachCountMap = new Map<string, number>();
   for (const a of attachmentsRaw ?? []) {
     const key = String(a.content_id);
     attachCountMap.set(key, (attachCountMap.get(key) ?? 0) + 1);
+  }
+
+  const commentCountMap = new Map<string, number>();
+  for (const c of commentsRaw ?? []) {
+    const key = String(c.content_id);
+    commentCountMap.set(key, (commentCountMap.get(key) ?? 0) + 1);
   }
 
   const catMap = new Map(
@@ -151,6 +160,7 @@ export async function listEditorialContents(opts?: {
       responsibleId: r.responsible_id ? String(r.responsible_id) : null,
       videoUrl: r.video_url ? String(r.video_url) : null,
       attachmentCount: attachCountMap.get(String(r.id)) ?? 0,
+      commentCount: commentCountMap.get(String(r.id)) ?? 0,
       createdAt: String(r.created_at),
       updatedAt: String(r.updated_at),
     };

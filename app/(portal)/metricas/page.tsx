@@ -67,6 +67,9 @@ export default async function MetricasPage({
         : [null, null, [], [], [], [], [], []];
 
     const targetClientId = valid ? requestedId : null;
+    const targetClientName = targetClientId
+      ? (clients.find((c) => c.id === targetClientId)?.name ?? "")
+      : "";
 
     return (
       <div className="space-y-6 max-w-6xl">
@@ -96,6 +99,7 @@ export default async function MetricasPage({
             creativesMetaAds={creativesMetaAds ?? []}
             regionBreakdown={regionBreakdown ?? []}
             demographicBreakdown={demographicBreakdown ?? []}
+            clientName={targetClientName}
             {...filterProps}
           />
         )}
@@ -145,6 +149,7 @@ export default async function MetricasPage({
           creativesMetaAds={creativesMetaAds ?? []}
           regionBreakdown={regionBreakdown ?? []}
           demographicBreakdown={demographicBreakdown ?? []}
+          clientName={ctx?.client?.name ?? ""}
           {...filterProps}
         />
       ) : (

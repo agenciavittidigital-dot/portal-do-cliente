@@ -32,6 +32,7 @@ export interface ContentRow {
   responsibleId: string | null;
   videoUrl: string | null;
   attachmentCount: number;
+  commentCount: number;
 }
 
 export interface CategoryOption { id: string; name: string; color: string }
@@ -98,6 +99,7 @@ export function CalendarioEditorialShell({
     clientName: c.clientName,
     videoUrl: c.videoUrl,
     attachmentCount: c.attachmentCount,
+    commentCount: c.commentCount,
     category: c.categoryName
       ? { name: c.categoryName, color: c.categoryColor! }
       : FALLBACK_CAT,

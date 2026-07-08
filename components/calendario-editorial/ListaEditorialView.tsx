@@ -12,6 +12,7 @@ import {
   ExternalLink,
   Eye,
   Paperclip,
+  Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CategoryTag } from "./CategoryTag";
@@ -32,6 +33,7 @@ export interface ListaContentItem {
   clientName: string;
   videoUrl: string | null;
   attachmentCount: number;
+  commentCount: number;
 }
 
 interface AttachmentItem {
@@ -40,6 +42,13 @@ interface AttachmentItem {
   fileSize: number;
   url: string | null;
   uploadedAt: string;
+}
+
+interface CommentItem {
+  id: string;
+  authorName: string;
+  message: string;
+  createdAt: string;
 }
 
 interface ListaEditorialViewProps {
@@ -80,6 +89,21 @@ function formatDateTime(iso?: string | null): string {
     });
   } catch {
     return iso.slice(0, 16);
+  }
+}
+
+function formatCommentDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
   }
 }
 
@@ -129,6 +153,12 @@ export function ListaEditorialView({
   const [loadingAttachments, setLoadingAttachments] = useState<Set<string>>(
     new Set()
   );
+  const [commentsCache, setCommentsCache] = useState<Record<string, CommentItem[]>>({});
+  const [loadingComments, setLoadingComments] = useState<Set<string>>(new Set());
+  const [newCommentText, setNewCommentText] = useState<Record<string, string>>({});
+  const [submittingComment, setSubmittingComment] = useState<Set<string>>(new Set());
+  const [commentErrors, setCommentErrors] = useState<Record<string, string>>({});
+  const [localCommentCounts, setLocalCommentCounts] = useState<Record<string, number>>({});
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -163,6 +193,86 @@ export function ListaEditorialView({
         });
       });
   }, [expandedId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Lazy-load comments when a row is expanded
+  useEffect(() => {
+    if (!expandedId) return;
+    if (commentsCache[expandedId] !== undefined) return; // already cached
+
+    setLoadingComments((prev) => new Set(prev).add(expandedId));
+
+    fetch(`/api/admin/editorial/${expandedId}/comments`)
+      .then((r) => r.json())
+      .then((data) => {
+        setCommentsCache((prev) => ({
+          ...prev,
+          [expandedId]: data.success ? (data.comments ?? []) : [],
+        }));
+      })
+      .catch(() => {
+        setCommentsCache((prev) => ({ ...prev, [expandedId]: [] }));
+      })
+      .finally(() => {
+        setLoadingComments((prev) => {
+          const next = new Set(prev);
+          next.delete(expandedId!);
+          return next;
+        });
+      });
+  }, [expandedId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleAddComment(itemId: string) {
+    const text = (newCommentText[itemId] ?? "").trim();
+    if (!text) return;
+
+    setSubmittingComment((prev) => new Set(prev).add(itemId));
+    setCommentErrors((prev) => ({ ...prev, [itemId]: "" }));
+
+    try {
+      const res = await fetch(`/api/admin/editorial/${itemId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text }),
+      });
+      const data = await res.json() as {
+        success: boolean;
+        comment?: CommentItem;
+        error?: string;
+        code?: string;
+      };
+
+      if (!res.ok || !data.success) {
+        const msg = [data.error, data.code ? `(${data.code})` : null]
+          .filter(Boolean)
+          .join(" ");
+        setCommentErrors((prev) => ({ ...prev, [itemId]: msg || "Erro ao salvar." }));
+        return;
+      }
+
+      if (data.comment) {
+        setCommentsCache((prev) => ({
+          ...prev,
+          [itemId]: [...(prev[itemId] ?? []), data.comment!],
+        }));
+      }
+
+      // Update local count so the collapsed row reflects the addition immediately
+      setLocalCommentCounts((prev) => {
+        const base = prev[itemId] ?? items.find((i) => i.id === itemId)?.commentCount ?? 0;
+        return { ...prev, [itemId]: base + 1 };
+      });
+
+      setNewCommentText((prev) => ({ ...prev, [itemId]: "" }));
+    } catch {
+      setCommentErrors((prev) => ({ ...prev, [itemId]: "Erro de conexão." }));
+    } finally {
+      setSubmittingComment((prev) => {
+        const next = new Set(prev);
+        next.delete(itemId);
+        return next;
+      });
+    }
+  }
 
   // Fetch attachments for modal, using cache when available
   const openArtModal = useCallback(
@@ -279,32 +389,32 @@ export function ListaEditorialView({
                       </span>
 
                       {/* 3. Responsável */}
-                      <span className="text-[10px] font-light text-vitti-fg-muted truncate pr-2">
+                      <span className="text-[10px] font-light text-vitti-fg truncate pr-2">
                         {item.responsibleName ?? "—"}
                       </span>
 
                       {/* 4. Título */}
-                      <span className="text-xs font-light text-vitti-fg truncate pr-3">
+                      <span className="text-[10px] font-light text-vitti-fg truncate pr-3">
                         {item.title}
                       </span>
 
                       {/* 5. Descrição */}
-                      <span className="text-[10px] font-light text-vitti-fg-muted/70 truncate pr-2">
+                      <span className="text-[10px] font-light text-vitti-fg truncate pr-2">
                         {clip(item.description)}
                       </span>
 
                       {/* 6. Legenda */}
-                      <span className="text-[10px] font-light text-vitti-fg-muted/70 truncate pr-2">
+                      <span className="text-[10px] font-light text-vitti-fg truncate pr-2">
                         {clip(item.caption)}
                       </span>
 
                       {/* 7. Data de entrega */}
-                      <span className="text-[10px] font-light text-vitti-fg-muted pr-2">
+                      <span className="text-[10px] font-light text-vitti-fg pr-2">
                         {formatDate(item.deliveryAt)}
                       </span>
 
                       {/* 8. Data postagem */}
-                      <span className="text-[10px] font-light text-vitti-fg-muted pr-2">
+                      <span className="text-[10px] font-light text-vitti-fg pr-2">
                         {formatDateTime(item.scheduledAt)}
                       </span>
 
@@ -342,16 +452,25 @@ export function ListaEditorialView({
                             </span>
                           </button>
                         ) : !hasVideo ? (
-                          <span className="text-[10px] font-light text-vitti-fg-muted/35 italic">
+                          <span className="text-[10px] font-light text-vitti-fg/40">
                             Sem arquivo
                           </span>
                         ) : null}
                       </div>
 
                       {/* 10. Considerações */}
-                      <span className="text-[10px] font-light text-vitti-fg-muted/35 italic pr-2">
-                        Sem considerações
-                      </span>
+                      {(() => {
+                        const count = localCommentCounts[item.id] ?? item.commentCount;
+                        return count > 0 ? (
+                          <span className="text-[10px] font-light text-vitti-fg pr-2 truncate">
+                            {count === 1 ? "1 consideração" : `${count} considerações`}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-light text-vitti-fg/40 pr-2">
+                            Sem considerações
+                          </span>
+                        );
+                      })()}
 
                       {/* 11. Status */}
                       <div>
@@ -510,12 +629,84 @@ export function ListaEditorialView({
                           {/* 11. Considerações */}
                           <div className="col-span-2">
                             <FL>Considerações</FL>
-                            <FV>
-                              <span className="inline-flex items-center gap-1.5 text-vitti-fg-muted/40 italic">
-                                <MessageSquare size={11} />
-                                Sem considerações
-                              </span>
-                            </FV>
+                            {loadingComments.has(item.id) ? (
+                              <div className="flex items-center gap-1.5 py-1">
+                                <Loader2 size={10} className="animate-spin text-vitti-fg/30" />
+                                <span className="text-[10px] font-light text-vitti-fg/40">Carregando...</span>
+                              </div>
+                            ) : (
+                              <>
+                                {(commentsCache[item.id] ?? []).length === 0 ? (
+                                  <p className="text-[11px] font-light text-vitti-fg/40 mb-2">
+                                    Sem considerações
+                                  </p>
+                                ) : (
+                                  <div className="space-y-1.5 mb-2">
+                                    {(commentsCache[item.id] ?? []).map((c) => (
+                                      <div
+                                        key={c.id}
+                                        className="px-2.5 py-2 rounded-lg bg-white border border-black/[0.06]"
+                                      >
+                                        <p className="text-[11px] font-light text-vitti-fg leading-relaxed whitespace-pre-wrap">
+                                          {c.message}
+                                        </p>
+                                        <p className="text-[9px] font-light text-vitti-fg/40 mt-1">
+                                          {c.authorName} · {formatCommentDate(c.createdAt)}
+                                        </p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {/* New comment input */}
+                                <div
+                                  className="space-y-1.5"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <textarea
+                                    value={newCommentText[item.id] ?? ""}
+                                    onChange={(e) =>
+                                      setNewCommentText((prev) => ({
+                                        ...prev,
+                                        [item.id]: e.target.value,
+                                      }))
+                                    }
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                                        e.preventDefault();
+                                        handleAddComment(item.id);
+                                      }
+                                    }}
+                                    placeholder="Nova consideração... (Ctrl+Enter para enviar)"
+                                    rows={2}
+                                    className="w-full text-[11px] font-light text-vitti-fg border border-black/[0.1] rounded-lg px-2.5 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 placeholder:text-vitti-fg/25 resize-none"
+                                  />
+                                  {commentErrors[item.id] && (
+                                    <p className="text-[10px] font-light text-red-400">
+                                      {commentErrors[item.id]}
+                                    </p>
+                                  )}
+                                  <div className="flex justify-end">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAddComment(item.id)}
+                                      disabled={
+                                        submittingComment.has(item.id) ||
+                                        !(newCommentText[item.id] ?? "").trim()
+                                      }
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-vitti-blue/[0.07] border border-vitti-blue/[0.15] text-[10px] font-light text-vitti-blue hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                      {submittingComment.has(item.id) ? (
+                                        <Loader2 size={9} className="animate-spin" />
+                                      ) : (
+                                        <Send size={9} />
+                                      )}
+                                      {submittingComment.has(item.id) ? "Salvando..." : "Adicionar"}
+                                    </button>
+                                  </div>
+                                </div>
+                              </>
+                            )}
                           </div>
 
                           {/* 12. Status */}

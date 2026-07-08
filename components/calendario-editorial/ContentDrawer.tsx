@@ -10,6 +10,7 @@ import {
   MessageSquare,
   Download,
   Link2,
+  Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,13 @@ interface AttachmentItem {
   fileSize: number;
   url: string | null;
   uploadedAt: string;
+}
+
+interface CommentItem {
+  id: string;
+  authorName: string;
+  message: string;
+  createdAt: string;
 }
 
 export interface DrawerEditItem {
@@ -78,7 +86,6 @@ const EMPTY: FormState = {
   videoUrl: "",
 };
 
-// Video MIME types and extensions that should NOT be uploaded
 const VIDEO_MIME_PREFIXES = ["video/"];
 const VIDEO_EXTENSIONS = /\.(mp4|mov|avi|mkv|wmv|flv|webm|m4v|mpg|mpeg|m2v)$/i;
 
@@ -106,6 +113,20 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function formatCommentTime(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
+}
+
 export function ContentDrawer({
   open,
   onClose,
@@ -120,11 +141,18 @@ export function ContentDrawer({
   const [form, setForm] = useState<FormState>(EMPTY);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Multiple pending files for cards/carrossel
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [existingAttachments, setExistingAttachments] = useState<AttachmentItem[]>([]);
   const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Comments state
+  const [comments, setComments] = useState<CommentItem[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
+  const commentsEndRef = useRef<HTMLDivElement>(null);
 
   const isEditing = !!editItem;
 
@@ -133,10 +161,15 @@ export function ContentDrawer({
       setPendingFiles([]);
       setExistingAttachments([]);
       setError(null);
+      setComments([]);
+      setNewComment("");
+      setCommentError(null);
       return;
     }
     setError(null);
     setPendingFiles([]);
+    setNewComment("");
+    setCommentError(null);
 
     if (editItem) {
       setForm({
@@ -153,21 +186,35 @@ export function ContentDrawer({
         statusId:   editItem.statusId   ?? "",
         videoUrl:   editItem.videoUrl   ?? "",
       });
-      // Fetch existing attachments
+
+      // Load attachments and comments in parallel
       fetch(`/api/admin/editorial/${editItem.id}/attachments`)
         .then((r) => r.json())
-        .then((d) => {
-          if (d.success) setExistingAttachments(d.attachments ?? []);
-        })
+        .then((d) => { if (d.success) setExistingAttachments(d.attachments ?? []); })
         .catch(() => {});
+
+      setLoadingComments(true);
+      fetch(`/api/admin/editorial/${editItem.id}/comments`)
+        .then((r) => r.json())
+        .then((d) => { if (d.success) setComments(d.comments ?? []); })
+        .catch(() => {})
+        .finally(() => setLoadingComments(false));
     } else {
       setForm({
         ...EMPTY,
         scheduledAt: initialScheduledAt ? `${initialScheduledAt}T09:00` : "",
       });
       setExistingAttachments([]);
+      setComments([]);
     }
   }, [open, editItem, initialScheduledAt]);
+
+  // Scroll to bottom when new comment arrives
+  useEffect(() => {
+    if (comments.length > 0) {
+      commentsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [comments.length]);
 
   function set(key: keyof FormState, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -175,8 +222,7 @@ export function ContentDrawer({
 
   function handleFilesSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
-    e.target.value = ""; // reset so same file can be re-selected
-
+    e.target.value = "";
     const videos = files.filter(isVideoFile);
     if (videos.length > 0) {
       setError(
@@ -184,7 +230,6 @@ export function ContentDrawer({
       );
       return;
     }
-
     setError(null);
     setPendingFiles((prev) => [...prev, ...files]);
   }
@@ -202,13 +247,49 @@ export function ContentDrawer({
         { method: "DELETE" }
       );
       if (res.ok) {
-        setExistingAttachments((prev) =>
-          prev.filter((a) => a.id !== attachmentId)
-        );
+        setExistingAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
       }
     } catch { /* ignore */ } finally {
       setDeletingAttachmentId(null);
     }
+  }
+
+  async function handleSubmitComment() {
+    if (!editItem?.id || !newComment.trim()) return;
+    setSubmittingComment(true);
+    setCommentError(null);
+    try {
+      const res = await fetch(`/api/admin/editorial/${editItem.id}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: newComment.trim() }),
+      });
+      const data = await res.json() as { success: boolean; comment?: CommentItem; error?: string; code?: string };
+      if (!res.ok || !data.success) {
+        const msg = [data.error, data.code ? `(${data.code})` : null].filter(Boolean).join(" ");
+        setCommentError(msg || "Erro ao salvar consideração.");
+      } else if (data.comment) {
+        setComments((prev) => [...prev, data.comment!]);
+        setNewComment("");
+      }
+    } catch {
+      setCommentError("Erro de conexão. Tente novamente.");
+    } finally {
+      setSubmittingComment(false);
+    }
+  }
+
+  async function handleDeleteComment(commentId: string) {
+    if (!editItem?.id) return;
+    try {
+      const res = await fetch(
+        `/api/admin/editorial/${editItem.id}/comments?commentId=${commentId}`,
+        { method: "DELETE" }
+      );
+      if (res.ok) {
+        setComments((prev) => prev.filter((c) => c.id !== commentId));
+      }
+    } catch { /* ignore */ }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -216,7 +297,6 @@ export function ContentDrawer({
     if (!form.title.trim()) { setError("O título é obrigatório."); return; }
     if (!form.clientId)     { setError("Selecione um cliente."); return; }
 
-    // Validate video URL if filled
     const videoUrl = form.videoUrl.trim();
     if (videoUrl && !/^https?:\/\/.+/.test(videoUrl)) {
       setError("O link do vídeo deve começar com http:// ou https://");
@@ -251,25 +331,19 @@ export function ContentDrawer({
         body: JSON.stringify(payload),
       });
       const data = await res.json() as {
-        success: boolean;
-        error?: string;
-        detail?: string;
-        id?: string;
+        success: boolean; error?: string; detail?: string; id?: string;
       };
 
       if (!res.ok || !data.success) {
-        const msg = [data.error, data.detail].filter(Boolean).join(" — ");
-        setError(msg || "Erro ao salvar conteúdo.");
+        setError([data.error, data.detail].filter(Boolean).join(" — ") || "Erro ao salvar conteúdo.");
         setLoading(false);
         return;
       }
 
       const contentId = isEditing ? editItem!.id : String(data.id ?? "");
 
-      // Upload all pending cards/images in parallel
       if (pendingFiles.length > 0 && contentId) {
         const uploadErrors: string[] = [];
-
         await Promise.all(
           pendingFiles.map(async (file, idx) => {
             const fd = new FormData();
@@ -280,23 +354,13 @@ export function ContentDrawer({
                 `/api/admin/editorial/${contentId}/attachments`,
                 { method: "POST", body: fd }
               );
-              const uploadData = await uploadRes.json() as {
-                success: boolean;
-                error?: string;
-              };
-              if (!uploadRes.ok || !uploadData.success) {
-                uploadErrors.push(file.name);
-              }
-            } catch {
-              uploadErrors.push(file.name);
-            }
+              const uploadData = await uploadRes.json() as { success: boolean; error?: string };
+              if (!uploadRes.ok || !uploadData.success) uploadErrors.push(file.name);
+            } catch { uploadErrors.push(file.name); }
           })
         );
-
         if (uploadErrors.length > 0) {
-          setError(
-            `Conteúdo salvo. Falha ao enviar: ${uploadErrors.join(", ")}. Você pode adicioná-los ao editar.`
-          );
+          setError(`Conteúdo salvo. Falha ao enviar: ${uploadErrors.join(", ")}. Você pode adicioná-los ao editar.`);
           setLoading(false);
           return;
         }
@@ -313,16 +377,11 @@ export function ContentDrawer({
   async function handleDelete() {
     if (!isEditing || !editItem) return;
     if (!confirm("Excluir este conteúdo definitivamente?")) return;
-
     setLoading(true);
     setError(null);
-
     try {
-      const res = await fetch(`/api/admin/editorial/${editItem.id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`/api/admin/editorial/${editItem.id}`, { method: "DELETE" });
       const data = await res.json() as { success: boolean; error?: string };
-
       if (!res.ok || !data.success) {
         setError(data.error ?? "Erro ao excluir.");
       } else {
@@ -342,7 +401,6 @@ export function ContentDrawer({
 
   return (
     <>
-      {/* Backdrop */}
       {open && (
         <div
           className="fixed inset-0 z-40 bg-black/15 backdrop-blur-[2px]"
@@ -350,10 +408,9 @@ export function ContentDrawer({
         />
       )}
 
-      {/* Panel */}
       <div
         className={cn(
-          "fixed top-0 right-0 z-50 h-full w-[420px] bg-white flex flex-col",
+          "fixed top-0 right-0 z-50 h-full w-[440px] bg-white flex flex-col",
           "shadow-[-8px_0_40px_rgba(0,0,0,0.12)]",
           "transition-transform duration-300 ease-out",
           open ? "translate-x-0" : "translate-x-full"
@@ -373,39 +430,24 @@ export function ContentDrawer({
         </div>
 
         {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col flex-1 overflow-hidden"
-        >
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
 
             {/* 1. Categoria */}
             <div>
               <label className={labelClass}>Categoria</label>
-              <select
-                value={form.categoryId}
-                onChange={(e) => set("categoryId", e.target.value)}
-                className={inputClass}
-              >
+              <select value={form.categoryId} onChange={(e) => set("categoryId", e.target.value)} className={inputClass}>
                 <option value="">Sem categoria</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
+                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
 
             {/* 2. Cliente */}
             <div>
               <label className={labelClass}>Cliente *</label>
-              <select
-                value={form.clientId}
-                onChange={(e) => set("clientId", e.target.value)}
-                className={inputClass}
-              >
+              <select value={form.clientId} onChange={(e) => set("clientId", e.target.value)} className={inputClass}>
                 <option value="">Selecionar cliente</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
+                {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
 
@@ -413,15 +455,9 @@ export function ContentDrawer({
             {responsibles.length > 0 && (
               <div>
                 <label className={labelClass}>Responsável</label>
-                <select
-                  value={form.responsibleId}
-                  onChange={(e) => set("responsibleId", e.target.value)}
-                  className={inputClass}
-                >
+                <select value={form.responsibleId} onChange={(e) => set("responsibleId", e.target.value)} className={inputClass}>
                   <option value="">Sem responsável</option>
-                  {responsibles.map((r) => (
-                    <option key={r.id} value={r.id}>{r.name}</option>
-                  ))}
+                  {responsibles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
                 </select>
               </div>
             )}
@@ -488,10 +524,7 @@ export function ContentDrawer({
             <div>
               <label className={labelClass}>Link do vídeo</label>
               <div className="relative">
-                <Link2
-                  size={12}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-vitti-fg-muted/40 pointer-events-none"
-                />
+                <Link2 size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-vitti-fg-muted/40 pointer-events-none" />
                 <input
                   type="url"
                   value={form.videoUrl}
@@ -509,29 +542,16 @@ export function ContentDrawer({
             <div>
               <label className={labelClass}>Cards / imagens</label>
 
-              {/* Existing attachments (edit mode) */}
               {existingAttachments.length > 0 && (
                 <div className="mb-2 space-y-1.5">
                   {existingAttachments.map((att) => (
-                    <div
-                      key={att.id}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-vitti-blue/[0.04] border border-vitti-blue/[0.08]"
-                    >
+                    <div key={att.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-vitti-blue/[0.04] border border-vitti-blue/[0.08]">
                       <Paperclip size={11} className="text-vitti-blue/50 shrink-0" />
-                      <span className="text-xs font-light text-vitti-fg flex-1 truncate">
-                        {att.fileName}
-                      </span>
-                      <span className="text-[10px] text-vitti-fg-muted/50 shrink-0">
-                        {formatBytes(att.fileSize)}
-                      </span>
+                      <span className="text-xs font-light text-vitti-fg flex-1 truncate">{att.fileName}</span>
+                      <span className="text-[10px] text-vitti-fg-muted/50 shrink-0">{formatBytes(att.fileSize)}</span>
                       {att.url && (
-                        <a
-                          href={att.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1 rounded hover:bg-vitti-blue/10 text-vitti-blue/60 hover:text-vitti-blue transition-colors shrink-0"
-                          title="Baixar"
-                        >
+                        <a href={att.url} target="_blank" rel="noopener noreferrer"
+                          className="p-1 rounded hover:bg-vitti-blue/10 text-vitti-blue/60 hover:text-vitti-blue transition-colors shrink-0" title="Baixar">
                           <Download size={11} />
                         </a>
                       )}
@@ -542,40 +562,26 @@ export function ContentDrawer({
                         className="p-1 rounded hover:bg-red-50 text-vitti-fg-muted/30 hover:text-red-400 transition-colors shrink-0 disabled:opacity-40"
                         title="Remover"
                       >
-                        {deletingAttachmentId === att.id ? (
-                          <Loader2 size={10} className="animate-spin" />
-                        ) : (
-                          <X size={10} />
-                        )}
+                        {deletingAttachmentId === att.id
+                          ? <Loader2 size={10} className="animate-spin" />
+                          : <X size={10} />}
                       </button>
                     </div>
                   ))}
                 </div>
               )}
 
-              {/* Pending files preview */}
               {pendingFiles.length > 0 && (
                 <div className="mb-2 space-y-1.5">
                   {pendingFiles.map((file, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-vitti-blue/20 bg-vitti-blue/[0.03]"
-                    >
+                    <div key={idx} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-vitti-blue/20 bg-vitti-blue/[0.03]">
                       <Paperclip size={11} className="text-vitti-blue/50 shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-light text-vitti-fg truncate">
-                          {file.name}
-                        </div>
-                        <div className="text-[10px] text-vitti-fg-muted/50">
-                          {formatBytes(file.size)} · Será enviado ao salvar
-                        </div>
+                        <div className="text-xs font-light text-vitti-fg truncate">{file.name}</div>
+                        <div className="text-[10px] text-vitti-fg-muted/50">{formatBytes(file.size)} · Será enviado ao salvar</div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => removePendingFile(idx)}
-                        className="p-1 rounded hover:bg-black/[0.04] text-vitti-fg-muted/40 hover:text-red-400 transition-all shrink-0"
-                        title="Remover"
-                      >
+                      <button type="button" onClick={() => removePendingFile(idx)}
+                        className="p-1 rounded hover:bg-black/[0.04] text-vitti-fg-muted/40 hover:text-red-400 transition-all shrink-0">
                         <X size={10} />
                       </button>
                     </div>
@@ -583,105 +589,171 @@ export function ContentDrawer({
                 </div>
               )}
 
-              {/* Add files button */}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="w-full flex items-center gap-2 border border-dashed border-black/[0.15] rounded-lg px-3 py-2.5 hover:border-vitti-blue/30 hover:bg-vitti-blue/[0.02] transition-all group"
               >
-                <Paperclip
-                  size={13}
-                  className="text-vitti-fg-muted/40 group-hover:text-vitti-blue/50 transition-colors shrink-0"
-                />
+                <Paperclip size={13} className="text-vitti-fg-muted/40 group-hover:text-vitti-blue/50 transition-colors shrink-0" />
                 <span className="text-xs font-light text-vitti-fg-muted/50 group-hover:text-vitti-blue/60 transition-colors">
                   {pendingFiles.length > 0 || existingAttachments.length > 0
                     ? "Adicionar mais cards / imagens"
                     : "Clique para anexar cards / imagens"}
                 </span>
               </button>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
+              <input ref={fileInputRef} type="file" multiple
                 accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
-                className="hidden"
-                onChange={handleFilesSelected}
-              />
+                className="hidden" onChange={handleFilesSelected} />
               <p className="text-[10px] text-vitti-fg-muted/45 mt-1 font-light">
                 JPG, PNG, WebP ou PDF · Múltiplos arquivos permitidos
               </p>
             </div>
 
-            {/* 11. Considerações (visual placeholder) */}
-            <div>
-              <label className={labelClass}>Considerações</label>
-              <div className="w-full flex items-start gap-2 border border-dashed border-black/[0.1] rounded-lg px-3 py-2.5 bg-black/[0.015] text-vitti-fg-muted/40 cursor-not-allowed min-h-[52px]">
-                <MessageSquare size={13} className="mt-0.5 shrink-0" />
-                <span className="text-xs font-light italic">
-                  Chat de considerações (em breve)
-                </span>
-              </div>
-            </div>
-
-            {/* 12. Status */}
+            {/* 11. Status */}
             <div>
               <label className={labelClass}>Status</label>
-              <select
-                value={form.statusId}
-                onChange={(e) => set("statusId", e.target.value)}
-                className={inputClass}
-              >
+              <select value={form.statusId} onChange={(e) => set("statusId", e.target.value)} className={inputClass}>
                 <option value="">Sem status</option>
-                {statuses.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
+                {statuses.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
 
-            {/* Error */}
+            {/* Form error */}
             {error && (
               <p className="text-[11px] text-red-500 font-light bg-red-50 px-3 py-2 rounded-lg border border-red-100">
                 {error}
               </p>
             )}
+
+            {/* ── Considerações ─────────────────────────────────────── */}
+            <div className="pt-2 border-t border-black/[0.06]">
+              <div className="flex items-center gap-2 mb-3">
+                <MessageSquare size={13} className="text-vitti-fg-muted/40" />
+                <span className="text-[10px] font-medium text-vitti-fg-muted/65 uppercase tracking-wide">
+                  Considerações
+                  {comments.length > 0 && (
+                    <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-vitti-blue/10 text-vitti-blue/60 text-[9px] font-medium normal-case tracking-normal">
+                      {comments.length}
+                    </span>
+                  )}
+                </span>
+              </div>
+
+              {!isEditing ? (
+                /* New content — not saved yet */
+                <div className="flex items-start gap-2 px-3 py-3 rounded-lg bg-black/[0.02] border border-dashed border-black/[0.08]">
+                  <MessageSquare size={12} className="text-vitti-fg-muted/30 mt-0.5 shrink-0" />
+                  <p className="text-[11px] font-light text-vitti-fg-muted/50 italic leading-relaxed">
+                    As considerações poderão ser adicionadas após salvar o conteúdo.
+                  </p>
+                </div>
+              ) : loadingComments ? (
+                <div className="flex items-center gap-2 py-4 justify-center">
+                  <Loader2 size={14} className="animate-spin text-vitti-fg-muted/30" />
+                  <span className="text-[11px] text-vitti-fg-muted/40 font-light">Carregando...</span>
+                </div>
+              ) : (
+                <>
+                  {/* Comment list */}
+                  {comments.length > 0 && (
+                    <div className="mb-3 max-h-[220px] overflow-y-auto space-y-2 pr-0.5">
+                      {comments.map((c) => (
+                        <div
+                          key={c.id}
+                          className="group px-3 py-2.5 rounded-xl bg-black/[0.02] border border-black/[0.05]"
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="text-[10px] font-medium text-vitti-fg/80 truncate">
+                              {c.authorName}
+                            </span>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className="text-[9px] text-vitti-fg-muted/40">
+                                {formatCommentTime(c.createdAt)}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteComment(c.id)}
+                                className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-vitti-fg-muted/30 hover:text-red-400 transition-all"
+                                title="Excluir"
+                              >
+                                <X size={9} />
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-[11px] font-light text-vitti-fg/70 leading-relaxed whitespace-pre-wrap">
+                            {c.message}
+                          </p>
+                        </div>
+                      ))}
+                      <div ref={commentsEndRef} />
+                    </div>
+                  )}
+
+                  {comments.length === 0 && (
+                    <p className="text-[11px] text-vitti-fg-muted/40 italic mb-3 px-1">
+                      Nenhuma consideração ainda.
+                    </p>
+                  )}
+
+                  {/* New comment input */}
+                  <div className="space-y-2">
+                    <textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                          e.preventDefault();
+                          handleSubmitComment();
+                        }
+                      }}
+                      placeholder="Escreva uma consideração... (Ctrl+Enter para enviar)"
+                      rows={2}
+                      className={cn(
+                        "w-full text-xs font-light text-vitti-fg border border-black/[0.1] rounded-lg px-3 py-2 bg-white",
+                        "focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 placeholder:text-vitti-fg-muted/35 resize-none"
+                      )}
+                    />
+                    {commentError && (
+                      <p className="text-[10px] text-red-500 font-light">{commentError}</p>
+                    )}
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleSubmitComment}
+                        disabled={submittingComment || !newComment.trim()}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-vitti-blue/[0.08] border border-vitti-blue/[0.15] text-[11px] font-light text-vitti-blue hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {submittingComment
+                          ? <Loader2 size={11} className="animate-spin" />
+                          : <Send size={11} />}
+                        {submittingComment ? "Enviando..." : "Adicionar"}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
           </div>
 
           {/* Footer */}
           <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-black/[0.06] shrink-0 bg-white">
             {isEditing ? (
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={loading}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-200 text-[11px] font-light text-red-400 hover:bg-red-50 hover:text-red-500 transition-all disabled:opacity-40"
-              >
+              <button type="button" onClick={handleDelete} disabled={loading}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-200 text-[11px] font-light text-red-400 hover:bg-red-50 hover:text-red-500 transition-all disabled:opacity-40">
                 <Trash2 size={11} />
                 Excluir
               </button>
-            ) : (
-              <div />
-            )}
+            ) : <div />}
 
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={loading}
-                className="px-3.5 py-2 rounded-lg border border-black/[0.1] text-[11px] font-light text-vitti-fg-muted hover:bg-black/[0.02] transition-all disabled:opacity-40"
-              >
+              <button type="button" onClick={onClose} disabled={loading}
+                className="px-3.5 py-2 rounded-lg border border-black/[0.1] text-[11px] font-light text-vitti-fg-muted hover:bg-black/[0.02] transition-all disabled:opacity-40">
                 Cancelar
               </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-vitti-blue text-white text-[11px] font-light hover:bg-vitti-blue/90 transition-all disabled:opacity-50"
-              >
-                {loading ? (
-                  <Loader2 size={11} className="animate-spin" />
-                ) : (
-                  <Save size={11} />
-                )}
+              <button type="submit" disabled={loading}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-vitti-blue text-white text-[11px] font-light hover:bg-vitti-blue/90 transition-all disabled:opacity-50">
+                {loading ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
                 {isEditing ? "Salvar" : "Criar"}
               </button>
             </div>

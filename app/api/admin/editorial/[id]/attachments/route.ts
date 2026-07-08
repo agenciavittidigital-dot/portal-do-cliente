@@ -25,6 +25,8 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+
   const auth = await requireAdmin();
   if (auth.error)
     return NextResponse.json(
@@ -32,7 +34,6 @@ export async function GET(
       { status: auth.status }
     );
 
-  const { id } = await params;
   const admin = createAdminClient();
 
   const { data, error } = await admin
