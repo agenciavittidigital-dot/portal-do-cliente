@@ -58,8 +58,9 @@ const DEFAULT_PERMISSIONS: Array<{
   { key: "view_reports",     name: "Ver Relatórios",         description: "Permite acessar relatórios do cliente.",             module: "reports"   },
   { key: "view_finance",     name: "Ver Financeiro",         description: "Permite acessar a área financeira do cliente.",      module: "finance"   },
   { key: "view_calls",       name: "Ver Calls",              description: "Permite acessar registros e links de calls.",        module: "calls"     },
-  { key: "view_education",   name: "Ver Educação",           description: "Permite acessar conteúdos educacionais.",            module: "education" },
-  { key: "admin_clients",    name: "Administrar Clientes",   description: "Permite gerenciar clientes no painel admin.",        module: "admin"     },
+  { key: "view_education",   name: "Ver Educação",            description: "Permite acessar conteúdos educacionais.",            module: "education" },
+  { key: "view_calendar",    name: "Ver Calendário Editorial", description: "Permite acessar o calendário editorial do cliente.", module: "calendar"  },
+  { key: "admin_clients",    name: "Administrar Clientes",    description: "Permite gerenciar clientes no painel admin.",        module: "admin"     },
   { key: "admin_dashboards", name: "Administrar Dashboards", description: "Permite configurar dashboards, blocos e métricas.",  module: "admin"     },
   { key: "admin_users",      name: "Administrar Usuários",   description: "Permite gerenciar usuários, vínculos e permissões.", module: "admin"     },
 ];

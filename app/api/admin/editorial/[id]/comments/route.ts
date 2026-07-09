@@ -1,38 +1,58 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
 import { createAdminClient } from "@/lib/supabase/admin";
-
-async function requireAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { user: null, error: "Não autenticado.", status: 401 };
-  const ctx = await loadUserContext(user.id);
-  if (!ctx.isAdmin) return { user, error: "Acesso restrito.", status: 403 };
-  return { user, error: null, status: 200 };
-}
 
 function authorName(profile: { name?: string | null; email?: string | null } | null): string {
   if (!profile) return "Admin Vitti";
   return String(profile.name || profile.email || "Admin Vitti");
 }
 
+async function resolveUserAuth() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { user: null, ctx: null };
+
+  const cookieStore = await cookies();
+  const activeClientId = cookieStore.get("active_client_id")?.value;
+  const ctx = await loadUserContext(user.id, activeClientId);
+
+  return { user, ctx };
+}
+
+async function validateContentAccess(contentId: string, clientId: string): Promise<boolean> {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("editorial_contents")
+    .select("client_id")
+    .eq("id", contentId)
+    .maybeSingle();
+  return !!data && String(data.client_id) === clientId;
+}
+
 // GET /api/admin/editorial/[id]/comments
+// Accessible by admin (all content) and client_user (own client's content only)
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
 
-  const auth = await requireAdmin();
-  if (auth.error)
-    return NextResponse.json(
-      { success: false, error: auth.error },
-      { status: auth.status }
-    );
+  const { user, ctx } = await resolveUserAuth();
+  if (!user || !ctx)
+    return NextResponse.json({ success: false, error: "Não autenticado." }, { status: 401 });
+
+  if (!ctx.isAdmin) {
+    if (!ctx.client)
+      return NextResponse.json({ success: false, error: "Acesso restrito." }, { status: 403 });
+    const allowed = await validateContentAccess(id, ctx.client.id);
+    if (!allowed)
+      return NextResponse.json({ success: false, error: "Acesso restrito." }, { status: 403 });
+  }
 
   const admin = createAdminClient();
 
@@ -43,12 +63,8 @@ export async function GET(
     .order("created_at", { ascending: true });
 
   if (error)
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
 
-  // Resolve author names in a single batch query
   const authorIds = [...new Set((data ?? []).map((r) => r.author_id).filter(Boolean))];
   const profilesMap = new Map<string, { name: string | null; email: string | null }>();
 
@@ -75,27 +91,30 @@ export async function GET(
 }
 
 // POST /api/admin/editorial/[id]/comments
+// Accessible by admin and client_user (own client's content only)
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
 
-  const auth = await requireAdmin();
-  if (auth.error)
-    return NextResponse.json(
-      { success: false, error: auth.error },
-      { status: auth.status }
-    );
+  const { user, ctx } = await resolveUserAuth();
+  if (!user || !ctx)
+    return NextResponse.json({ success: false, error: "Não autenticado." }, { status: 401 });
+
+  if (!ctx.isAdmin) {
+    if (!ctx.client)
+      return NextResponse.json({ success: false, error: "Acesso restrito." }, { status: 403 });
+    const allowed = await validateContentAccess(id, ctx.client.id);
+    if (!allowed)
+      return NextResponse.json({ success: false, error: "Acesso restrito." }, { status: 403 });
+  }
 
   let body: unknown;
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json(
-      { success: false, error: "Body inválido." },
-      { status: 400 }
-    );
+    return NextResponse.json({ success: false, error: "Body inválido." }, { status: 400 });
   }
 
   const b = body as Record<string, unknown>;
@@ -109,22 +128,15 @@ export async function POST(
 
   const admin = createAdminClient();
 
-  // Resolve current user's profile
   const { data: profile } = await admin
     .from("profiles")
     .select("id, name, email")
-    .eq("auth_user_id", auth.user!.id)
+    .eq("auth_user_id", user.id)
     .maybeSingle();
-
-  const insertPayload = {
-    content_id: id,
-    author_id: profile?.id ?? null,
-    message,
-  };
 
   const { data: insertedRaw, error: insertError } = await admin
     .from("editorial_comments")
-    .insert(insertPayload)
+    .insert({ content_id: id, author_id: profile?.id ?? null, message })
     .select("id, message, created_at, author_id")
     .single();
 
@@ -150,17 +162,16 @@ export async function POST(
   return NextResponse.json({ success: true, comment });
 }
 
-// DELETE /api/admin/editorial/[id]/comments?commentId=xxx
+// DELETE /api/admin/editorial/[id]/comments?commentId=xxx — admin only
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireAdmin();
-  if (auth.error)
-    return NextResponse.json(
-      { success: false, error: auth.error },
-      { status: auth.status }
-    );
+  const { user, ctx } = await resolveUserAuth();
+  if (!user || !ctx)
+    return NextResponse.json({ success: false, error: "Não autenticado." }, { status: 401 });
+  if (!ctx.isAdmin)
+    return NextResponse.json({ success: false, error: "Acesso restrito." }, { status: 403 });
 
   const { id } = await params;
   const commentId = req.nextUrl.searchParams.get("commentId");
@@ -171,7 +182,6 @@ export async function DELETE(
     );
 
   const admin = createAdminClient();
-
   const { error } = await admin
     .from("editorial_comments")
     .delete()

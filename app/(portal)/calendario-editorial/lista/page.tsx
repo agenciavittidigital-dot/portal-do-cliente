@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
 import { redirect } from "next/navigation";
@@ -17,24 +18,30 @@ export default async function CalendarioEditorialListaPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const ctx = await loadUserContext(user.id);
-  if (!ctx.isAdmin) redirect("/dashboard");
+  const cookieStore = await cookies();
+  const activeClientId = cookieStore.get("active_client_id")?.value;
+  const ctx = await loadUserContext(user.id, activeClientId);
 
-  const [allClients, categories, statuses, responsibles, contents] =
+  const isAdmin = ctx.isAdmin;
+
+  // client_user sem cliente vinculado não tem o que ver
+  if (!isAdmin && !ctx.client) redirect("/dashboard");
+
+  const [adminClientsList, categories, statuses, responsibles, contents] =
     await Promise.all([
-      listAdminClients(),
+      isAdmin ? listAdminClients() : Promise.resolve([]),
       listEditorialCategories(),
       listEditorialStatuses(),
       listEditorialResponsibles(),
-      listEditorialContents(),
+      listEditorialContents(isAdmin ? undefined : { clientId: ctx.client!.id }),
     ]);
 
-  const clients = allClients.map((c) => ({ id: c.id, name: c.name }));
+  const clients = adminClientsList.map((c) => ({ id: c.id, name: c.name }));
 
   return (
     <CalendarioEditorialShell
       view="lista"
-      isAdmin
+      isAdmin={isAdmin}
       clients={clients}
       categories={categories}
       statuses={statuses}

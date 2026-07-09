@@ -80,7 +80,6 @@ const ALL_NAV_ITEMS: NavItemDef[] = [
     icon: CalendarDays,
     permission: "view_calendar",
     alsoActiveOn: ["/calendario-editorial/lista"],
-    adminOnly: true,
     children: [
       { label: "Calendário", href: "/calendario-editorial/calendario" },
       { label: "Lista editorial", href: "/calendario-editorial/lista" },

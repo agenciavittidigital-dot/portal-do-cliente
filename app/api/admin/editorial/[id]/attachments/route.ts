@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -9,6 +10,7 @@ import {
   getSignedDownloadUrl,
 } from "@/lib/storage/portal-files";
 
+// Used only for POST and DELETE (write operations)
 async function requireAdmin() {
   const supabase = await createClient();
   const {
@@ -20,19 +22,50 @@ async function requireAdmin() {
   return { user, error: null, status: 200 };
 }
 
+// Used for GET — allows admin and client_user (with ownership check)
+async function resolveUserAuth() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { user: null, ctx: null };
+
+  const cookieStore = await cookies();
+  const activeClientId = cookieStore.get("active_client_id")?.value;
+  const ctx = await loadUserContext(user.id, activeClientId);
+
+  return { user, ctx };
+}
+
+async function validateContentAccess(contentId: string, clientId: string): Promise<boolean> {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("editorial_contents")
+    .select("client_id")
+    .eq("id", contentId)
+    .maybeSingle();
+  return !!data && String(data.client_id) === clientId;
+}
+
 // GET /api/admin/editorial/[id]/attachments
+// Accessible by admin (all content) and client_user (own client's content only)
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
 
-  const auth = await requireAdmin();
-  if (auth.error)
-    return NextResponse.json(
-      { success: false, error: auth.error },
-      { status: auth.status }
-    );
+  const { user, ctx } = await resolveUserAuth();
+  if (!user || !ctx)
+    return NextResponse.json({ success: false, error: "Não autenticado." }, { status: 401 });
+
+  if (!ctx.isAdmin) {
+    if (!ctx.client)
+      return NextResponse.json({ success: false, error: "Acesso restrito." }, { status: 403 });
+    const allowed = await validateContentAccess(id, ctx.client.id);
+    if (!allowed)
+      return NextResponse.json({ success: false, error: "Acesso restrito." }, { status: 403 });
+  }
 
   const admin = createAdminClient();
 
@@ -69,7 +102,7 @@ export async function GET(
   return NextResponse.json({ success: true, attachments });
 }
 
-// POST /api/admin/editorial/[id]/attachments
+// POST /api/admin/editorial/[id]/attachments — admin only
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -181,7 +214,7 @@ export async function POST(
   });
 }
 
-// DELETE /api/admin/editorial/[id]/attachments?attachmentId=xxx
+// DELETE /api/admin/editorial/[id]/attachments?attachmentId=xxx — admin only
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CalendarDays, List, Plus, Users } from "lucide-react";
+import { CalendarDays, List, Plus, Users, Tag, CircleDot, CalendarRange } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { CalendarioView } from "./CalendarioView";
 import { ListaEditorialView } from "./ListaEditorialView";
 import { ContentDrawer } from "./ContentDrawer";
+import { ContentViewDrawer } from "./ContentViewDrawer";
 import type { CalendarioContentItem } from "./CalendarioView";
 import type { ListaContentItem } from "./ListaEditorialView";
 import type { DrawerEditItem } from "./ContentDrawer";
@@ -53,6 +54,48 @@ interface CalendarioEditorialShellProps {
 const FALLBACK_CAT = { name: "Sem categoria", color: "#94A3B8" };
 const FALLBACK_ST  = { name: "Sem status",    color: "#94A3B8" };
 
+type DatePreset = "all" | "today" | "week" | "month" | "custom";
+
+function applyDateFilter(
+  scheduledAt: string | null,
+  preset: DatePreset,
+  customStart: string,
+  customEnd: string,
+): boolean {
+  if (preset === "all") return true;
+  if (!scheduledAt) return false;
+  const d = new Date(scheduledAt);
+  const now = new Date();
+  if (preset === "today") {
+    return (
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate()
+    );
+  }
+  if (preset === "week") {
+    const day = now.getDay(); // 0=Sun
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - ((day + 6) % 7));
+    monday.setHours(0, 0, 0, 0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+    return d >= monday && d <= sunday;
+  }
+  if (preset === "month") {
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  }
+  if (preset === "custom") {
+    const start = customStart ? new Date(customStart + "T00:00:00") : null;
+    const end = customEnd ? new Date(customEnd + "T23:59:59") : null;
+    if (start && d < start) return false;
+    if (end && d > end) return false;
+    return true;
+  }
+  return true;
+}
+
 export function CalendarioEditorialShell({
   view,
   isAdmin,
@@ -64,15 +107,28 @@ export function CalendarioEditorialShell({
 }: CalendarioEditorialShellProps) {
   const router = useRouter();
   const [selectedClientId, setSelectedClientId] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [selectedStatusId, setSelectedStatusId] = useState("");
+  const [datePreset, setDatePreset] = useState<DatePreset>("all");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editItem, setEditItem] = useState<DrawerEditItem | null>(null);
   const [initialDate, setInitialDate] = useState<string | undefined>(undefined);
+  const [viewDrawerOpen, setViewDrawerOpen] = useState(false);
+  const [viewItem, setViewItem] = useState<ContentRow | null>(null);
 
   const filtered = selectedClientId
     ? contents.filter((c) => c.clientId === selectedClientId)
     : contents;
 
-  const calendarItems: CalendarioContentItem[] = filtered
+  const calendarFiltered = filtered.filter((c) => {
+    if (selectedCategoryId && c.categoryId !== selectedCategoryId) return false;
+    if (selectedStatusId && c.statusId !== selectedStatusId) return false;
+    return true;
+  });
+
+  const calendarItems: CalendarioContentItem[] = calendarFiltered
     .filter((c) => c.scheduledAt !== null)
     .map((c) => ({
       id: c.id,
@@ -86,9 +142,33 @@ export function CalendarioEditorialShell({
         : FALLBACK_ST,
     }));
 
+  // Derive available filter options from post-client-filter data
+  const availableCategories = Array.from(
+    new Map(
+      filtered
+        .filter((c) => c.categoryId && c.categoryName)
+        .map((c) => [c.categoryId!, { id: c.categoryId!, name: c.categoryName! }])
+    ).values()
+  ).sort((a, b) => a.name.localeCompare(b.name));
+
+  const availableStatuses = Array.from(
+    new Map(
+      filtered
+        .filter((c) => c.statusId && c.statusName)
+        .map((c) => [c.statusId!, { id: c.statusId!, name: c.statusName! }])
+    ).values()
+  ).sort((a, b) => a.name.localeCompare(b.name));
+
+  const listaFiltered = filtered.filter((c) => {
+    if (selectedCategoryId && c.categoryId !== selectedCategoryId) return false;
+    if (selectedStatusId && c.statusId !== selectedStatusId) return false;
+    if (!applyDateFilter(c.scheduledAt, datePreset, customStart, customEnd)) return false;
+    return true;
+  });
+
   const responsiblesMap = new Map(responsibles.map((r) => [r.id, r.name]));
 
-  const listaItems: ListaContentItem[] = filtered.map((c) => ({
+  const listaItems: ListaContentItem[] = listaFiltered.map((c) => ({
     id: c.id,
     title: c.title,
     description: c.description,
@@ -118,6 +198,13 @@ export function CalendarioEditorialShell({
     setEditItem(null);
     setInitialDate(date);
     setDrawerOpen(true);
+  }
+
+  function openViewFromCalendar(item: CalendarioContentItem) {
+    const full = contents.find((c) => c.id === item.id) ?? null;
+    if (!full) return;
+    setViewItem(full);
+    setViewDrawerOpen(true);
   }
 
   function openEditFromCalendar(item: CalendarioContentItem) {
@@ -179,7 +266,7 @@ export function CalendarioEditorialShell({
               <h2 className="text-xl font-light text-vitti-blue tracking-wide">
                 Calendário Editorial
               </h2>
-              <Badge label="Admin" variant="info" />
+              {isAdmin && <Badge label="Admin" variant="info" />}
             </div>
           </div>
           <p className="text-sm text-vitti-blue/50 mt-1.5 font-light">
@@ -187,36 +274,129 @@ export function CalendarioEditorialShell({
           </p>
         </div>
 
-        <button
-          onClick={openNew}
-          className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-vitti-blue text-white text-xs font-light hover:bg-vitti-blue/90 transition-all"
-        >
-          <Plus size={12} />
-          Novo conteúdo
-        </button>
+        {isAdmin && (
+          <button
+            onClick={openNew}
+            className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-vitti-blue text-white text-xs font-light hover:bg-vitti-blue/90 transition-all"
+          >
+            <Plus size={12} />
+            Novo conteúdo
+          </button>
+        )}
       </div>
 
-      {/* Admin: filtro de cliente */}
-      {isAdmin && clients.length > 0 && (
-        <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-black/[0.06] bg-white/50 backdrop-blur-sm w-fit">
-          <Users size={13} className="text-vitti-fg-muted/50 shrink-0" />
+      {/* Filtros */}
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Cliente (admin only) */}
+        {isAdmin && clients.length > 0 && (
+          <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-black/[0.06] bg-white/50 backdrop-blur-sm">
+            <Users size={13} className="text-vitti-fg-muted/50 shrink-0" />
+            <span className="text-[11px] text-vitti-fg-muted/60 font-light shrink-0">
+              Cliente:
+            </span>
+            <select
+              value={selectedClientId}
+              onChange={(e) => {
+                setSelectedClientId(e.target.value);
+                setSelectedCategoryId("");
+                setSelectedStatusId("");
+              }}
+              className="text-xs font-light text-vitti-fg bg-transparent border-none focus:outline-none focus:ring-0 min-w-[180px] cursor-pointer"
+            >
+              <option value="">Todos os clientes</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Categoria (ambas as views) */}
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-black/[0.06] bg-white/50 backdrop-blur-sm">
+          <Tag size={13} className="text-vitti-fg-muted/50 shrink-0" />
           <span className="text-[11px] text-vitti-fg-muted/60 font-light shrink-0">
-            Cliente:
+            Categoria:
           </span>
           <select
-            value={selectedClientId}
-            onChange={(e) => setSelectedClientId(e.target.value)}
-            className="text-xs font-light text-vitti-fg bg-transparent border-none focus:outline-none focus:ring-0 min-w-[180px] cursor-pointer"
+            value={selectedCategoryId}
+            onChange={(e) => setSelectedCategoryId(e.target.value)}
+            className="text-xs font-light text-vitti-fg bg-transparent border-none focus:outline-none focus:ring-0 min-w-[140px] cursor-pointer"
           >
-            <option value="">Todos os clientes</option>
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
+            <option value="">Todas</option>
+            {availableCategories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
               </option>
             ))}
           </select>
         </div>
-      )}
+
+        {/* Status (ambas as views) */}
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-black/[0.06] bg-white/50 backdrop-blur-sm">
+          <CircleDot size={13} className="text-vitti-fg-muted/50 shrink-0" />
+          <span className="text-[11px] text-vitti-fg-muted/60 font-light shrink-0">
+            Status:
+          </span>
+          <select
+            value={selectedStatusId}
+            onChange={(e) => setSelectedStatusId(e.target.value)}
+            className="text-xs font-light text-vitti-fg bg-transparent border-none focus:outline-none focus:ring-0 min-w-[140px] cursor-pointer"
+          >
+            <option value="">Todos</option>
+            {availableStatuses.map((st) => (
+              <option key={st.id} value={st.id}>
+                {st.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Data (only on lista) */}
+        {view === "lista" && (
+          <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-black/[0.06] bg-white/50 backdrop-blur-sm flex-wrap">
+            <CalendarRange size={13} className="text-vitti-fg-muted/50 shrink-0" />
+            <span className="text-[11px] text-vitti-fg-muted/60 font-light shrink-0">
+              Data:
+            </span>
+            <select
+              value={datePreset}
+              onChange={(e) => {
+                setDatePreset(e.target.value as DatePreset);
+                if (e.target.value !== "custom") {
+                  setCustomStart("");
+                  setCustomEnd("");
+                }
+              }}
+              className="text-xs font-light text-vitti-fg bg-transparent border-none focus:outline-none focus:ring-0 min-w-[130px] cursor-pointer"
+            >
+              <option value="all">Todas as datas</option>
+              <option value="today">Hoje</option>
+              <option value="week">Esta semana</option>
+              <option value="month">Este mês</option>
+              <option value="custom">Personalizado</option>
+            </select>
+            {datePreset === "custom" && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={customStart}
+                  onChange={(e) => setCustomStart(e.target.value)}
+                  className="text-xs font-light text-vitti-fg bg-transparent border border-black/[0.10] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 cursor-pointer"
+                />
+                <span className="text-[11px] text-vitti-fg-muted/40 font-light">até</span>
+                <input
+                  type="date"
+                  value={customEnd}
+                  onChange={(e) => setCustomEnd(e.target.value)}
+                  className="text-xs font-light text-vitti-fg bg-transparent border border-black/[0.10] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 cursor-pointer"
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Sub-tab bar */}
       <div className="flex items-end gap-0 border-b border-black/[0.07]">
@@ -250,29 +430,39 @@ export function CalendarioEditorialShell({
       {view === "calendario" && (
         <CalendarioView
           items={calendarItems}
-          onSelectItem={openEditFromCalendar}
-          onAddItem={openNewOnDate}
+          onSelectItem={isAdmin ? openEditFromCalendar : openViewFromCalendar}
+          onAddItem={isAdmin ? openNewOnDate : undefined}
         />
       )}
       {view === "lista" && (
         <ListaEditorialView
           items={listaItems}
           isAdmin={isAdmin}
-          onSelectItem={openEditFromLista}
+          onSelectItem={isAdmin ? openEditFromLista : undefined}
         />
       )}
 
-      {/* Drawer */}
-      <ContentDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        onSaved={handleSaved}
-        categories={categories}
-        statuses={statuses}
-        clients={clients}
+      {/* Drawer de edição — apenas para admin */}
+      {isAdmin && (
+        <ContentDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          onSaved={handleSaved}
+          categories={categories}
+          statuses={statuses}
+          clients={clients}
+          responsibles={responsibles}
+          editItem={editItem}
+          initialScheduledAt={initialDate}
+        />
+      )}
+
+      {/* Drawer de leitura — para todos */}
+      <ContentViewDrawer
+        open={viewDrawerOpen}
+        item={viewItem}
         responsibles={responsibles}
-        editItem={editItem}
-        initialScheduledAt={initialDate}
+        onClose={() => setViewDrawerOpen(false)}
       />
     </div>
   );

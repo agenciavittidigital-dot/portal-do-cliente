@@ -144,6 +144,7 @@ const HEADERS = [
 
 export function ListaEditorialView({
   items = [],
+  isAdmin = false,
   onSelectItem,
 }: ListaEditorialViewProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -658,7 +659,7 @@ export function ListaEditorialView({
                                   </div>
                                 )}
 
-                                {/* New comment input */}
+                                {/* Nova consideração */}
                                 <div
                                   className="space-y-1.5"
                                   onClick={(e) => e.stopPropagation()}
@@ -721,16 +722,18 @@ export function ListaEditorialView({
                           </div>
                         </div>
 
-                        {/* Editar button */}
-                        <div className="flex justify-end mt-4 pt-4 border-t border-black/[0.05]">
-                          <button
-                            onClick={() => onSelectItem?.(item)}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-black/[0.1] text-[11px] font-light text-vitti-fg-muted hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all"
-                          >
-                            <Pencil size={11} />
-                            Editar conteúdo
-                          </button>
-                        </div>
+                        {/* Editar — apenas admin */}
+                        {isAdmin && (
+                          <div className="flex justify-end mt-4 pt-4 border-t border-black/[0.05]">
+                            <button
+                              onClick={() => onSelectItem?.(item)}
+                              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-black/[0.1] text-[11px] font-light text-vitti-fg-muted hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all"
+                            >
+                              <Pencil size={11} />
+                              Editar conteúdo
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
