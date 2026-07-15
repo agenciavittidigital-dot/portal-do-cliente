@@ -46,6 +46,20 @@ export interface EditorialResponsible {
   name: string;
 }
 
+// ── Status label normalization ────────────────────────────────────────────────
+// Maps legacy DB names to current display labels without requiring a DB migration.
+// Keys are matched case-insensitively to handle any capitalisation stored in the DB.
+const STATUS_LABEL_MAP: [RegExp, string][] = [
+  [/^pauta em produ[çc][aã]o$/i, "Pauta em Validação"],
+];
+
+function normalizeStatusName(name: string): string {
+  for (const [pattern, label] of STATUS_LABEL_MAP) {
+    if (pattern.test(name)) return label;
+  }
+  return name;
+}
+
 // ── Queries ───────────────────────────────────────────────────────────────────
 
 export async function listEditorialCategories(): Promise<EditorialCategory[]> {
@@ -73,7 +87,7 @@ export async function listEditorialStatuses(): Promise<EditorialStatus[]> {
   if (error) console.error("[editorial] listStatuses:", error.message);
   return (data ?? []).map((r) => ({
     id: String(r.id),
-    name: String(r.name),
+    name: normalizeStatusName(String(r.name)),
     color: String(r.color),
     position: Number(r.position),
   }));
@@ -150,7 +164,7 @@ export async function listEditorialContents(opts?: {
       categoryName: cat ? String(cat.name) : null,
       categoryColor: cat ? String(cat.color) : null,
       statusId: r.status_id ? String(r.status_id) : null,
-      statusName: st ? String(st.name) : null,
+      statusName: st ? normalizeStatusName(String(st.name)) : null,
       statusColor: st ? String(st.color) : null,
       title: String(r.title),
       description: r.description ? String(r.description) : null,

@@ -41,6 +41,15 @@ export interface StatusOption   { id: string; name: string; color: string }
 export interface ClientOption   { id: string; name: string }
 export interface ResponsibleOption { id: string; name: string }
 
+export interface InitialFilters {
+  client:     string;
+  category:   string;
+  status:     string;
+  datePreset: string;
+  startDate:  string;
+  endDate:    string;
+}
+
 interface CalendarioEditorialShellProps {
   view: "calendario" | "lista";
   isAdmin: boolean;
@@ -49,6 +58,7 @@ interface CalendarioEditorialShellProps {
   statuses: StatusOption[];
   responsibles: ResponsibleOption[];
   contents: ContentRow[];
+  initialFilters?: InitialFilters;
 }
 
 const FALLBACK_CAT = { name: "Sem categoria", color: "#94A3B8" };
@@ -104,14 +114,15 @@ export function CalendarioEditorialShell({
   statuses,
   responsibles,
   contents,
+  initialFilters,
 }: CalendarioEditorialShellProps) {
   const router = useRouter();
-  const [selectedClientId, setSelectedClientId] = useState("");
-  const [selectedCategoryId, setSelectedCategoryId] = useState("");
-  const [selectedStatusId, setSelectedStatusId] = useState("");
-  const [datePreset, setDatePreset] = useState<DatePreset>("all");
-  const [customStart, setCustomStart] = useState("");
-  const [customEnd, setCustomEnd] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState(initialFilters?.client ?? "");
+  const [selectedCategoryId, setSelectedCategoryId] = useState(initialFilters?.category ?? "");
+  const [selectedStatusId, setSelectedStatusId] = useState(initialFilters?.status ?? "");
+  const [datePreset, setDatePreset] = useState<DatePreset>((initialFilters?.datePreset as DatePreset) ?? "all");
+  const [customStart, setCustomStart] = useState(initialFilters?.startDate ?? "");
+  const [customEnd, setCustomEnd] = useState(initialFilters?.endDate ?? "");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editItem, setEditItem] = useState<DrawerEditItem | null>(null);
   const [initialDate, setInitialDate] = useState<string | undefined>(undefined);
@@ -250,6 +261,18 @@ export function CalendarioEditorialShell({
   function handleSaved() {
     setDrawerOpen(false);
     router.refresh();
+  }
+
+  function buildViewHref(basePath: string): string {
+    const sp = new URLSearchParams();
+    if (selectedClientId)              sp.set("client",     selectedClientId);
+    if (selectedCategoryId)            sp.set("category",   selectedCategoryId);
+    if (selectedStatusId)              sp.set("status",     selectedStatusId);
+    if (datePreset !== "all")          sp.set("datePreset", datePreset);
+    if (customStart)                   sp.set("startDate",  customStart);
+    if (customEnd)                     sp.set("endDate",    customEnd);
+    const q = sp.toString();
+    return `${basePath}${q ? `?${q}` : ""}`;
   }
 
   return (
@@ -401,7 +424,7 @@ export function CalendarioEditorialShell({
       {/* Sub-tab bar */}
       <div className="flex items-end gap-0 border-b border-black/[0.07]">
         <Link
-          href="/calendario-editorial/calendario"
+          href={buildViewHref("/calendario-editorial/calendario")}
           className={cn(
             "flex items-center gap-1.5 px-4 py-2.5 text-xs font-light transition-all border-b-2 -mb-px",
             view === "calendario"
@@ -413,7 +436,7 @@ export function CalendarioEditorialShell({
           Calendário
         </Link>
         <Link
-          href="/calendario-editorial/lista"
+          href={buildViewHref("/calendario-editorial/lista")}
           className={cn(
             "flex items-center gap-1.5 px-4 py-2.5 text-xs font-light transition-all border-b-2 -mb-px",
             view === "lista"

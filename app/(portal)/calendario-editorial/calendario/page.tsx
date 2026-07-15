@@ -11,7 +11,11 @@ import {
 } from "@/lib/data/editorial";
 import { CalendarioEditorialShell } from "@/components/calendario-editorial/CalendarioEditorialShell";
 
-export default async function CalendarioEditorialCalendarioPage() {
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+export default async function CalendarioEditorialCalendarioPage({ searchParams }: PageProps) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -38,6 +42,17 @@ export default async function CalendarioEditorialCalendarioPage() {
 
   const clients = adminClientsList.map((c) => ({ id: c.id, name: c.name }));
 
+  const p = await searchParams;
+  const str = (v: string | string[] | undefined) => (typeof v === "string" ? v : "");
+  const initialFilters = {
+    client:     str(p.client),
+    category:   str(p.category),
+    status:     str(p.status),
+    datePreset: str(p.datePreset) || "all",
+    startDate:  str(p.startDate),
+    endDate:    str(p.endDate),
+  };
+
   return (
     <CalendarioEditorialShell
       view="calendario"
@@ -47,6 +62,7 @@ export default async function CalendarioEditorialCalendarioPage() {
       statuses={statuses}
       responsibles={responsibles}
       contents={contents}
+      initialFilters={initialFilters}
     />
   );
 }
