@@ -1,9 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CalendarDays, List, Plus, Users, Tag, CircleDot, CalendarRange } from "lucide-react";
+import {
+  CalendarDays,
+  List,
+  Plus,
+  Users,
+  Tag,
+  CircleDot,
+  CalendarRange,
+  ChevronDown,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { CalendarioView } from "./CalendarioView";
@@ -48,6 +57,7 @@ export interface InitialFilters {
   datePreset: string;
   startDate:  string;
   endDate:    string;
+  month:      string;
 }
 
 interface CalendarioEditorialShellProps {
@@ -64,47 +74,153 @@ interface CalendarioEditorialShellProps {
 const FALLBACK_CAT = { name: "Sem categoria", color: "#94A3B8" };
 const FALLBACK_ST  = { name: "Sem status",    color: "#94A3B8" };
 
-type DatePreset = "all" | "today" | "week" | "month" | "custom";
+type DatePreset =
+  | "all"
+  | "week"
+  | "next-week"
+  | "month"
+  | "next-month"
+  | "last-7"
+  | "last-30"
+  | "no-date"
+  | "month-picker"
+  | "custom";
+
+// ── Month list helpers ──────────────────────────────────────────────────────
+
+const MONTH_NAMES_PT = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
+
+function generateMonths(): { value: string; label: string }[] {
+  const now = new Date();
+  const result: { value: string; label: string }[] = [];
+  for (let offset = -6; offset <= 18; offset++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const label = `${MONTH_NAMES_PT[d.getMonth()]} ${d.getFullYear()}`;
+    result.push({ value, label });
+  }
+  return result;
+}
+
+const MONTHS = generateMonths();
+
+function getMonthLabel(value: string): string {
+  if (!value) return "Meses";
+  const [y, m] = value.split("-").map(Number);
+  return `${MONTH_NAMES_PT[m - 1]} ${y}`;
+}
+
+function getDateLabel(
+  preset: DatePreset,
+  selectedMonth: string,
+  customStart: string,
+  customEnd: string,
+): string {
+  switch (preset) {
+    case "all":          return "Todas as datas";
+    case "week":         return "Esta semana";
+    case "next-week":    return "Próxima semana";
+    case "month":        return "Este mês";
+    case "next-month":   return "Próximo mês";
+    case "last-7":       return "Últimos 7 dias";
+    case "last-30":      return "Últimos 30 dias";
+    case "no-date":      return "Sem data de postagem";
+    case "month-picker": return getMonthLabel(selectedMonth);
+    case "custom":
+      if (customStart && customEnd) return `${customStart} – ${customEnd}`;
+      if (customStart) return `A partir de ${customStart}`;
+      if (customEnd)   return `Até ${customEnd}`;
+      return "Personalizado";
+    default: return "Data";
+  }
+}
+
+// ── Date filter logic (always uses scheduledAt / Data da Postagem) ──────────
 
 function applyDateFilter(
   scheduledAt: string | null,
   preset: DatePreset,
   customStart: string,
   customEnd: string,
+  selectedMonth: string,
 ): boolean {
   if (preset === "all") return true;
+
+  // "Sem data de postagem" — must have null scheduledAt
+  if (preset === "no-date") return scheduledAt === null;
+
+  // All remaining presets require a date
   if (!scheduledAt) return false;
-  const d = new Date(scheduledAt);
+
+  const d   = new Date(scheduledAt);
   const now = new Date();
-  if (preset === "today") {
-    return (
-      d.getFullYear() === now.getFullYear() &&
-      d.getMonth() === now.getMonth() &&
-      d.getDate() === now.getDate()
-    );
-  }
+
   if (preset === "week") {
-    const day = now.getDay(); // 0=Sun
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - ((day + 6) % 7));
-    monday.setHours(0, 0, 0, 0);
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    sunday.setHours(23, 59, 59, 999);
-    return d >= monday && d <= sunday;
+    const thisMonday = new Date(now);
+    thisMonday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    thisMonday.setHours(0, 0, 0, 0);
+    const thisSunday = new Date(thisMonday);
+    thisSunday.setDate(thisMonday.getDate() + 6);
+    thisSunday.setHours(23, 59, 59, 999);
+    return d >= thisMonday && d <= thisSunday;
   }
+
+  if (preset === "next-week") {
+    const thisMonday = new Date(now);
+    thisMonday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    thisMonday.setHours(0, 0, 0, 0);
+    const nextMonday = new Date(thisMonday);
+    nextMonday.setDate(thisMonday.getDate() + 7);
+    const nextSunday = new Date(nextMonday);
+    nextSunday.setDate(nextMonday.getDate() + 6);
+    nextSunday.setHours(23, 59, 59, 999);
+    return d >= nextMonday && d <= nextSunday;
+  }
+
   if (preset === "month") {
     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
   }
+
+  if (preset === "next-month") {
+    const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return d.getFullYear() === next.getFullYear() && d.getMonth() === next.getMonth();
+  }
+
+  if (preset === "last-7") {
+    const cutoff = new Date(now);
+    cutoff.setDate(now.getDate() - 7);
+    cutoff.setHours(0, 0, 0, 0);
+    return d >= cutoff;
+  }
+
+  if (preset === "last-30") {
+    const cutoff = new Date(now);
+    cutoff.setDate(now.getDate() - 30);
+    cutoff.setHours(0, 0, 0, 0);
+    return d >= cutoff;
+  }
+
+  if (preset === "month-picker") {
+    if (!selectedMonth) return true;
+    const [y, m] = selectedMonth.split("-").map(Number);
+    return d.getFullYear() === y && d.getMonth() === m - 1;
+  }
+
   if (preset === "custom") {
     const start = customStart ? new Date(customStart + "T00:00:00") : null;
-    const end = customEnd ? new Date(customEnd + "T23:59:59") : null;
+    const end   = customEnd   ? new Date(customEnd   + "T23:59:59") : null;
     if (start && d < start) return false;
-    if (end && d > end) return false;
+    if (end   && d > end)   return false;
     return true;
   }
+
   return true;
 }
+
+// ── Main component ──────────────────────────────────────────────────────────
 
 export function CalendarioEditorialShell({
   view,
@@ -117,17 +233,39 @@ export function CalendarioEditorialShell({
   initialFilters,
 }: CalendarioEditorialShellProps) {
   const router = useRouter();
-  const [selectedClientId, setSelectedClientId] = useState(initialFilters?.client ?? "");
-  const [selectedCategoryId, setSelectedCategoryId] = useState(initialFilters?.category ?? "");
-  const [selectedStatusId, setSelectedStatusId] = useState(initialFilters?.status ?? "");
-  const [datePreset, setDatePreset] = useState<DatePreset>((initialFilters?.datePreset as DatePreset) ?? "all");
-  const [customStart, setCustomStart] = useState(initialFilters?.startDate ?? "");
-  const [customEnd, setCustomEnd] = useState(initialFilters?.endDate ?? "");
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editItem, setEditItem] = useState<DrawerEditItem | null>(null);
-  const [initialDate, setInitialDate] = useState<string | undefined>(undefined);
+
+  const [selectedClientId,   setSelectedClientId]   = useState(initialFilters?.client     ?? "");
+  const [selectedCategoryId, setSelectedCategoryId] = useState(initialFilters?.category   ?? "");
+  const [selectedStatusId,   setSelectedStatusId]   = useState(initialFilters?.status     ?? "");
+  const [datePreset,         setDatePreset]          = useState<DatePreset>((initialFilters?.datePreset as DatePreset) ?? "all");
+  const [customStart,        setCustomStart]         = useState(initialFilters?.startDate  ?? "");
+  const [customEnd,          setCustomEnd]           = useState(initialFilters?.endDate    ?? "");
+  const [selectedMonth,      setSelectedMonth]       = useState(initialFilters?.month      ?? "");
+
+  // Date dropdown UI state
+  const [dateDropdownOpen, setDateDropdownOpen] = useState(false);
+  const [monthsExpanded,   setMonthsExpanded]   = useState(false);
+  const dateDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Drawer state
+  const [drawerOpen,     setDrawerOpen]     = useState(false);
+  const [editItem,       setEditItem]       = useState<DrawerEditItem | null>(null);
+  const [initialDate,    setInitialDate]    = useState<string | undefined>(undefined);
   const [viewDrawerOpen, setViewDrawerOpen] = useState(false);
-  const [viewItem, setViewItem] = useState<ContentRow | null>(null);
+  const [viewItem,       setViewItem]       = useState<ContentRow | null>(null);
+
+  // Close date dropdown on outside click
+  useEffect(() => {
+    function handleOutsideClick(e: MouseEvent) {
+      if (dateDropdownRef.current && !dateDropdownRef.current.contains(e.target as Node)) {
+        setDateDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
+  // ── Filtering ─────────────────────────────────────────────────────────────
 
   const filtered = selectedClientId
     ? contents.filter((c) => c.clientId === selectedClientId)
@@ -135,7 +273,7 @@ export function CalendarioEditorialShell({
 
   const calendarFiltered = filtered.filter((c) => {
     if (selectedCategoryId && c.categoryId !== selectedCategoryId) return false;
-    if (selectedStatusId && c.statusId !== selectedStatusId) return false;
+    if (selectedStatusId   && c.statusId   !== selectedStatusId)   return false;
     return true;
   });
 
@@ -145,15 +283,10 @@ export function CalendarioEditorialShell({
       id: c.id,
       title: c.title,
       scheduledAt: c.scheduledAt!,
-      category: c.categoryName
-        ? { name: c.categoryName, color: c.categoryColor! }
-        : FALLBACK_CAT,
-      status: c.statusName
-        ? { name: c.statusName, color: c.statusColor! }
-        : FALLBACK_ST,
+      category: c.categoryName ? { name: c.categoryName, color: c.categoryColor! } : FALLBACK_CAT,
+      status:   c.statusName   ? { name: c.statusName,   color: c.statusColor!   } : FALLBACK_ST,
     }));
 
-  // Derive available filter options from post-client-filter data
   const availableCategories = Array.from(
     new Map(
       filtered
@@ -172,8 +305,8 @@ export function CalendarioEditorialShell({
 
   const listaFiltered = filtered.filter((c) => {
     if (selectedCategoryId && c.categoryId !== selectedCategoryId) return false;
-    if (selectedStatusId && c.statusId !== selectedStatusId) return false;
-    if (!applyDateFilter(c.scheduledAt, datePreset, customStart, customEnd)) return false;
+    if (selectedStatusId   && c.statusId   !== selectedStatusId)   return false;
+    if (!applyDateFilter(c.scheduledAt, datePreset, customStart, customEnd, selectedMonth)) return false;
     return true;
   });
 
@@ -191,13 +324,11 @@ export function CalendarioEditorialShell({
     videoUrl: c.videoUrl,
     attachmentCount: c.attachmentCount,
     commentCount: c.commentCount,
-    category: c.categoryName
-      ? { name: c.categoryName, color: c.categoryColor! }
-      : FALLBACK_CAT,
-    status: c.statusName
-      ? { name: c.statusName, color: c.statusColor! }
-      : FALLBACK_ST,
+    category: c.categoryName ? { name: c.categoryName, color: c.categoryColor! } : FALLBACK_CAT,
+    status:   c.statusName   ? { name: c.statusName,   color: c.statusColor!   } : FALLBACK_ST,
   }));
+
+  // ── Actions ───────────────────────────────────────────────────────────────
 
   function openNew() {
     setEditItem(null);
@@ -265,15 +396,18 @@ export function CalendarioEditorialShell({
 
   function buildViewHref(basePath: string): string {
     const sp = new URLSearchParams();
-    if (selectedClientId)              sp.set("client",     selectedClientId);
-    if (selectedCategoryId)            sp.set("category",   selectedCategoryId);
-    if (selectedStatusId)              sp.set("status",     selectedStatusId);
-    if (datePreset !== "all")          sp.set("datePreset", datePreset);
-    if (customStart)                   sp.set("startDate",  customStart);
-    if (customEnd)                     sp.set("endDate",    customEnd);
+    if (selectedClientId)                                      sp.set("client",     selectedClientId);
+    if (selectedCategoryId)                                    sp.set("category",   selectedCategoryId);
+    if (selectedStatusId)                                      sp.set("status",     selectedStatusId);
+    if (datePreset !== "all")                                  sp.set("datePreset", datePreset);
+    if (datePreset === "month-picker" && selectedMonth)        sp.set("month",      selectedMonth);
+    if (customStart)                                           sp.set("startDate",  customStart);
+    if (customEnd)                                             sp.set("endDate",    customEnd);
     const q = sp.toString();
     return `${basePath}${q ? `?${q}` : ""}`;
   }
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-5 max-w-[1200px]">
@@ -310,13 +444,12 @@ export function CalendarioEditorialShell({
 
       {/* Filtros */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Cliente (admin only) */}
+
+        {/* Cliente — admin only */}
         {isAdmin && clients.length > 0 && (
           <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-black/[0.06] bg-white/50 backdrop-blur-sm">
             <Users size={13} className="text-vitti-fg-muted/50 shrink-0" />
-            <span className="text-[11px] text-vitti-fg-muted/60 font-light shrink-0">
-              Cliente:
-            </span>
+            <span className="text-[11px] text-vitti-fg-muted/60 font-light shrink-0">Cliente:</span>
             <select
               value={selectedClientId}
               onChange={(e) => {
@@ -328,20 +461,16 @@ export function CalendarioEditorialShell({
             >
               <option value="">Todos os clientes</option>
               {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
+                <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           </div>
         )}
 
-        {/* Categoria (ambas as views) */}
+        {/* Categoria */}
         <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-black/[0.06] bg-white/50 backdrop-blur-sm">
           <Tag size={13} className="text-vitti-fg-muted/50 shrink-0" />
-          <span className="text-[11px] text-vitti-fg-muted/60 font-light shrink-0">
-            Categoria:
-          </span>
+          <span className="text-[11px] text-vitti-fg-muted/60 font-light shrink-0">Categoria:</span>
           <select
             value={selectedCategoryId}
             onChange={(e) => setSelectedCategoryId(e.target.value)}
@@ -349,19 +478,15 @@ export function CalendarioEditorialShell({
           >
             <option value="">Todas</option>
             {availableCategories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
           </select>
         </div>
 
-        {/* Status (ambas as views) */}
+        {/* Status */}
         <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-black/[0.06] bg-white/50 backdrop-blur-sm">
           <CircleDot size={13} className="text-vitti-fg-muted/50 shrink-0" />
-          <span className="text-[11px] text-vitti-fg-muted/60 font-light shrink-0">
-            Status:
-          </span>
+          <span className="text-[11px] text-vitti-fg-muted/60 font-light shrink-0">Status:</span>
           <select
             value={selectedStatusId}
             onChange={(e) => setSelectedStatusId(e.target.value)}
@@ -369,52 +494,185 @@ export function CalendarioEditorialShell({
           >
             <option value="">Todos</option>
             {availableStatuses.map((st) => (
-              <option key={st.id} value={st.id}>
-                {st.name}
-              </option>
+              <option key={st.id} value={st.id}>{st.name}</option>
             ))}
           </select>
         </div>
 
-        {/* Data (only on lista) */}
+        {/* Data — lista only, custom dropdown */}
         {view === "lista" && (
-          <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-black/[0.06] bg-white/50 backdrop-blur-sm flex-wrap">
-            <CalendarRange size={13} className="text-vitti-fg-muted/50 shrink-0" />
-            <span className="text-[11px] text-vitti-fg-muted/60 font-light shrink-0">
-              Data:
-            </span>
-            <select
-              value={datePreset}
-              onChange={(e) => {
-                setDatePreset(e.target.value as DatePreset);
-                if (e.target.value !== "custom") {
-                  setCustomStart("");
-                  setCustomEnd("");
-                }
+          <div className="relative" ref={dateDropdownRef}>
+            {/* Trigger button */}
+            <button
+              type="button"
+              onClick={() => {
+                const opening = !dateDropdownOpen;
+                setDateDropdownOpen(opening);
+                // Auto-expand months sub-list when re-opening with a month already selected
+                if (opening && datePreset === "month-picker") setMonthsExpanded(true);
               }}
-              className="text-xs font-light text-vitti-fg bg-transparent border-none focus:outline-none focus:ring-0 min-w-[130px] cursor-pointer"
+              className={cn(
+                "flex items-center gap-2.5 px-4 py-3 rounded-xl border border-black/[0.06] bg-white/50 backdrop-blur-sm transition-colors",
+                dateDropdownOpen ? "border-vitti-blue/20 bg-white/80" : "hover:bg-white/80"
+              )}
             >
-              <option value="all">Todas as datas</option>
-              <option value="today">Hoje</option>
-              <option value="week">Esta semana</option>
-              <option value="month">Este mês</option>
-              <option value="custom">Personalizado</option>
-            </select>
-            {datePreset === "custom" && (
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  value={customStart}
-                  onChange={(e) => setCustomStart(e.target.value)}
-                  className="text-xs font-light text-vitti-fg bg-transparent border border-black/[0.10] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 cursor-pointer"
-                />
-                <span className="text-[11px] text-vitti-fg-muted/40 font-light">até</span>
-                <input
-                  type="date"
-                  value={customEnd}
-                  onChange={(e) => setCustomEnd(e.target.value)}
-                  className="text-xs font-light text-vitti-fg bg-transparent border border-black/[0.10] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 cursor-pointer"
-                />
+              <CalendarRange size={13} className="text-vitti-fg-muted/50 shrink-0" />
+              <span className="text-[11px] text-vitti-fg-muted/60 font-light shrink-0">Data:</span>
+              <span className="text-xs font-light text-vitti-fg min-w-[110px] text-left">
+                {getDateLabel(datePreset, selectedMonth, customStart, customEnd)}
+              </span>
+              <ChevronDown
+                size={11}
+                className={cn(
+                  "text-vitti-fg-muted/40 transition-transform shrink-0",
+                  dateDropdownOpen && "rotate-180"
+                )}
+              />
+            </button>
+
+            {/* Dropdown panel */}
+            {dateDropdownOpen && (
+              <div className="absolute top-full left-0 mt-1.5 z-30 bg-white border border-black/[0.08] rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.1)] w-[230px] py-1.5 overflow-hidden">
+
+                {/* Preset options */}
+                {(
+                  [
+                    { value: "all",        label: "Todas as datas" },
+                    { value: "week",       label: "Esta semana" },
+                    { value: "next-week",  label: "Próxima semana" },
+                    { value: "month",      label: "Este mês" },
+                    { value: "next-month", label: "Próximo mês" },
+                    { value: "last-7",     label: "Últimos 7 dias" },
+                    { value: "last-30",    label: "Últimos 30 dias" },
+                    { value: "no-date",    label: "Sem data de postagem" },
+                  ] as { value: DatePreset; label: string }[]
+                ).map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => {
+                      setDatePreset(opt.value);
+                      setSelectedMonth("");
+                      setCustomStart("");
+                      setCustomEnd("");
+                      setMonthsExpanded(false);
+                      setDateDropdownOpen(false);
+                    }}
+                    className={cn(
+                      "w-full text-left px-4 py-2 text-xs font-light transition-colors",
+                      datePreset === opt.value
+                        ? "text-vitti-blue bg-vitti-blue/[0.06]"
+                        : "text-vitti-fg hover:bg-black/[0.03]"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+
+                <div className="my-1 border-t border-black/[0.05]" />
+
+                {/* Meses — expandable sub-list */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setMonthsExpanded((v) => !v)}
+                    className={cn(
+                      "w-full text-left px-4 py-2 text-xs font-light transition-colors flex items-center justify-between",
+                      datePreset === "month-picker"
+                        ? "text-vitti-blue bg-vitti-blue/[0.06]"
+                        : "text-vitti-fg hover:bg-black/[0.03]"
+                    )}
+                  >
+                    <span>Meses</span>
+                    <ChevronDown
+                      size={11}
+                      className={cn(
+                        "text-vitti-fg-muted/40 transition-transform",
+                        monthsExpanded && "rotate-180"
+                      )}
+                    />
+                  </button>
+
+                  {monthsExpanded && (
+                    <div className="max-h-[196px] overflow-y-auto border-t border-black/[0.04] bg-black/[0.01]">
+                      {MONTHS.map((m) => (
+                        <button
+                          key={m.value}
+                          type="button"
+                          onClick={() => {
+                            setDatePreset("month-picker");
+                            setSelectedMonth(m.value);
+                            setCustomStart("");
+                            setCustomEnd("");
+                            setDateDropdownOpen(false);
+                          }}
+                          className={cn(
+                            "w-full text-left px-6 py-1.5 text-xs font-light transition-colors",
+                            datePreset === "month-picker" && selectedMonth === m.value
+                              ? "text-vitti-blue bg-vitti-blue/[0.06]"
+                              : "text-vitti-fg/80 hover:bg-black/[0.03]"
+                          )}
+                        >
+                          {m.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="my-1 border-t border-black/[0.05]" />
+
+                {/* Personalizado */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDatePreset("custom");
+                      setSelectedMonth("");
+                      setMonthsExpanded(false);
+                    }}
+                    className={cn(
+                      "w-full text-left px-4 py-2 text-xs font-light transition-colors",
+                      datePreset === "custom"
+                        ? "text-vitti-blue bg-vitti-blue/[0.06]"
+                        : "text-vitti-fg hover:bg-black/[0.03]"
+                    )}
+                  >
+                    Personalizado
+                  </button>
+
+                  {datePreset === "custom" && (
+                    <div className="px-4 pb-3 pt-1.5 space-y-2 border-t border-black/[0.04]">
+                      <div>
+                        <p className="text-[10px] font-light text-vitti-fg-muted/50 mb-1">De</p>
+                        <input
+                          type="date"
+                          value={customStart}
+                          onChange={(e) => setCustomStart(e.target.value)}
+                          className="w-full text-xs font-light text-vitti-fg bg-white border border-black/[0.1] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 cursor-pointer"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-light text-vitti-fg-muted/50 mb-1">Até</p>
+                        <input
+                          type="date"
+                          value={customEnd}
+                          onChange={(e) => setCustomEnd(e.target.value)}
+                          className="w-full text-xs font-light text-vitti-fg bg-white border border-black/[0.1] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 cursor-pointer"
+                        />
+                      </div>
+                      {(customStart || customEnd) && (
+                        <button
+                          type="button"
+                          onClick={() => setDateDropdownOpen(false)}
+                          className="w-full text-center text-[10px] font-light text-vitti-blue py-1 border border-vitti-blue/20 rounded-lg hover:text-vitti-blue/70 transition-colors"
+                        >
+                          Aplicar
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

@@ -51,6 +51,7 @@ export default async function CalendarioEditorialCalendarioPage({ searchParams }
     datePreset: str(p.datePreset) || "all",
     startDate:  str(p.startDate),
     endDate:    str(p.endDate),
+    month:      str(p.month),
   };
 
   return (
