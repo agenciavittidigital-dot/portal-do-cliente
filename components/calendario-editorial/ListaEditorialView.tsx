@@ -62,7 +62,7 @@ interface ListaEditorialViewProps {
 const GRID_ADMIN =
   "78px 108px 108px minmax(130px,1fr) 108px 108px 84px 100px 96px 108px 108px 28px";
 const GRID_CLIENT =
-  "78px 108px 108px minmax(130px,1fr) 108px 108px 100px 96px 108px 108px 28px";
+  "78px minmax(130px,1fr) 108px 108px 100px 96px 108px 108px 28px";
 
 function formatDate(iso?: string | null): string {
   if (!iso) return "—";
@@ -146,8 +146,6 @@ const HEADERS_ADMIN = [
 
 const HEADERS_CLIENT = [
   "Categoria",
-  "Cliente",
-  "Responsável",
   "Título",
   "Descrição",
   "Legenda",
@@ -403,15 +401,19 @@ export function ListaEditorialView({
                         />
                       </div>
 
-                      {/* 2. Cliente */}
-                      <span className="text-[10px] font-light text-vitti-fg truncate pr-2">
-                        {item.clientName}
-                      </span>
+                      {/* 2. Cliente — admin only */}
+                      {isAdmin && (
+                        <span className="text-[10px] font-light text-vitti-fg truncate pr-2">
+                          {item.clientName}
+                        </span>
+                      )}
 
-                      {/* 3. Responsável */}
-                      <span className="text-[10px] font-light text-vitti-fg truncate pr-2">
-                        {item.responsibleName ?? "—"}
-                      </span>
+                      {/* 3. Responsável — admin only */}
+                      {isAdmin && (
+                        <span className="text-[10px] font-light text-vitti-fg truncate pr-2">
+                          {item.responsibleName ?? "—"}
+                        </span>
+                      )}
 
                       {/* 4. Título */}
                       <span className="text-[10px] font-light text-vitti-fg truncate pr-3">
@@ -529,17 +531,21 @@ export function ListaEditorialView({
                             </FV>
                           </div>
 
-                          {/* 2. Cliente */}
-                          <div>
-                            <FL>Cliente</FL>
-                            <FV>{item.clientName}</FV>
-                          </div>
+                          {/* 2. Cliente — admin only */}
+                          {isAdmin && (
+                            <div>
+                              <FL>Cliente</FL>
+                              <FV>{item.clientName}</FV>
+                            </div>
+                          )}
 
-                          {/* 3. Responsável */}
-                          <div>
-                            <FL>Responsável</FL>
-                            <FV>{item.responsibleName ?? "—"}</FV>
-                          </div>
+                          {/* 3. Responsável — admin only */}
+                          {isAdmin && (
+                            <div>
+                              <FL>Responsável</FL>
+                              <FV>{item.responsibleName ?? "—"}</FV>
+                            </div>
+                          )}
 
                           {/* 4. Título */}
                           <div className="col-span-3">

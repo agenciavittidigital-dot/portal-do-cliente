@@ -272,21 +272,23 @@ export function ContentViewDrawer({
               </div>
             </div>
 
-            {/* Cliente + Responsável */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <FL>Cliente</FL>
-                <FV>{item.clientName}</FV>
+            {/* Cliente + Responsável — admin only */}
+            {isAdmin && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <FL>Cliente</FL>
+                  <FV>{item.clientName}</FV>
+                </div>
+                <div>
+                  <FL>Responsável</FL>
+                  <FV>
+                    {item.responsibleId
+                      ? (responsiblesMap.get(item.responsibleId) ?? "—")
+                      : "—"}
+                  </FV>
+                </div>
               </div>
-              <div>
-                <FL>Responsável</FL>
-                <FV>
-                  {item.responsibleId
-                    ? (responsiblesMap.get(item.responsibleId) ?? "—")
-                    : "—"}
-                </FV>
-              </div>
-            </div>
+            )}
 
             {/* Título */}
             <div>
