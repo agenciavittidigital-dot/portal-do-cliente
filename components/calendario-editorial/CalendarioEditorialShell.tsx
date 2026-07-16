@@ -486,6 +486,7 @@ export function CalendarioEditorialShell({
         item={viewItem}
         responsibles={responsibles}
         onClose={() => setViewDrawerOpen(false)}
+        isAdmin={isAdmin}
       />
     </div>
   );

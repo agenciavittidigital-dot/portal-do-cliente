@@ -36,6 +36,7 @@ export interface ContentViewDrawerProps {
   item: ContentRow | null;
   responsibles: { id: string; name: string }[];
   onClose: () => void;
+  isAdmin?: boolean;
 }
 
 const FALLBACK_CAT = { name: "Sem categoria", color: "#94A3B8" };
@@ -113,6 +114,7 @@ export function ContentViewDrawer({
   item,
   responsibles,
   onClose,
+  isAdmin = false,
 }: ContentViewDrawerProps) {
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -321,11 +323,13 @@ export function ContentViewDrawer({
             </div>
 
             {/* Datas */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <FL>Data de entrega</FL>
-                <FV>{formatDate(item.deliveryAt)}</FV>
-              </div>
+            <div className={isAdmin ? "grid grid-cols-2 gap-4" : undefined}>
+              {isAdmin && (
+                <div>
+                  <FL>Data de entrega</FL>
+                  <FV>{formatDate(item.deliveryAt)}</FV>
+                </div>
+              )}
               <div>
                 <FL>Data e hora da postagem</FL>
                 <FV>{formatDateTime(item.scheduledAt)}</FV>

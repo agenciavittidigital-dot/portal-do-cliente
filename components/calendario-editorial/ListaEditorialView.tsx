@@ -58,9 +58,11 @@ interface ListaEditorialViewProps {
 }
 
 // Grid template: Categoria | Cliente | Responsável | Título | Descrição | Legenda |
-//               Entrega | Data postagem | Arquivo | Considerações | Status | Chevron
-const GRID =
+//               [Entrega — admin only] | Data postagem | Arquivo | Considerações | Status | Chevron
+const GRID_ADMIN =
   "78px 108px 108px minmax(130px,1fr) 108px 108px 84px 100px 96px 108px 108px 28px";
+const GRID_CLIENT =
+  "78px 108px 108px minmax(130px,1fr) 108px 108px 100px 96px 108px 108px 28px";
 
 function formatDate(iso?: string | null): string {
   if (!iso) return "—";
@@ -127,7 +129,7 @@ function FV({ children }: { children: React.ReactNode }) {
   );
 }
 
-const HEADERS = [
+const HEADERS_ADMIN = [
   "Categoria",
   "Cliente",
   "Responsável",
@@ -142,11 +144,28 @@ const HEADERS = [
   "",
 ];
 
+const HEADERS_CLIENT = [
+  "Categoria",
+  "Cliente",
+  "Responsável",
+  "Título",
+  "Descrição",
+  "Legenda",
+  "Data postagem",
+  "Arquivo",
+  "Considerações",
+  "Status",
+  "",
+];
+
 export function ListaEditorialView({
   items = [],
   isAdmin = false,
   onSelectItem,
 }: ListaEditorialViewProps) {
+  const GRID = isAdmin ? GRID_ADMIN : GRID_CLIENT;
+  const HEADERS = isAdmin ? HEADERS_ADMIN : HEADERS_CLIENT;
+
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [attachmentsCache, setAttachmentsCache] = useState<
     Record<string, AttachmentItem[]>
@@ -409,10 +428,12 @@ export function ListaEditorialView({
                         {clip(item.caption)}
                       </span>
 
-                      {/* 7. Data de entrega */}
-                      <span className="text-[10px] font-light text-vitti-fg pr-2">
-                        {formatDate(item.deliveryAt)}
-                      </span>
+                      {/* 7. Data de entrega — admin only */}
+                      {isAdmin && (
+                        <span className="text-[10px] font-light text-vitti-fg pr-2">
+                          {formatDate(item.deliveryAt)}
+                        </span>
+                      )}
 
                       {/* 8. Data postagem */}
                       <span className="text-[10px] font-light text-vitti-fg pr-2">
@@ -558,11 +579,13 @@ export function ListaEditorialView({
                             </FV>
                           </div>
 
-                          {/* 7. Data de entrega */}
-                          <div>
-                            <FL>Data de entrega</FL>
-                            <FV>{formatDate(item.deliveryAt)}</FV>
-                          </div>
+                          {/* 7. Data de entrega — admin only */}
+                          {isAdmin && (
+                            <div>
+                              <FL>Data de entrega</FL>
+                              <FV>{formatDate(item.deliveryAt)}</FV>
+                            </div>
+                          )}
 
                           {/* 8. Data e hora da postagem */}
                           <div>
