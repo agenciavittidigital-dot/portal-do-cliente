@@ -20,6 +20,7 @@ export const WINDSOR_SYNC_FIELDS = [
   "date",
   "datasource",
   "account_name",
+  "campaign_id",
   "source",
   "campaign",
   "clicks",
@@ -157,5 +158,13 @@ export async function fetchWindsorSyncData(): Promise<WindsorApiResponse> {
   const from = new Date(today);
   from.setUTCDate(from.getUTCDate() - 6);
   const dateFrom = from.toISOString().slice(0, 10);
+  return fetchWindsor(WINDSOR_SYNC_FIELDS.join(","), { dateFrom, dateTo });
+}
+
+// Sync com período customizado — usado pelo endpoint de ressincronização estendida
+export async function fetchWindsorSyncDataForRange(
+  dateFrom: string,
+  dateTo: string
+): Promise<WindsorApiResponse> {
   return fetchWindsor(WINDSOR_SYNC_FIELDS.join(","), { dateFrom, dateTo });
 }

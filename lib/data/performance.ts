@@ -342,7 +342,8 @@ export async function loadMetaAdsCampaigns(
       .gte("date", startDate)
       .lte("date", endDate)
       .not("account_name", "ilike", "%demo%")
-      .not("campaign_id", "ilike", "%demo%");
+      .not("campaign_id", "ilike", "%demo%")
+      .order("date", { ascending: false });
 
     if (error || !data?.length) return [];
 
@@ -378,6 +379,11 @@ export async function loadMetaAdsCampaigns(
         existing.messages_started += messages_started;
         existing.purchases += purchases;
         if (!existing.campaignObjective) existing.campaignObjective = objective;
+        // Rows are ordered DESC: first seen = most recent name. Use subsequent rows
+        // only as fallback when the most recent row had a null name.
+        if (!existing.campaignName && typeof name === "string" && name) {
+          existing.campaignName = name;
+        }
       } else {
         byId.set(id, {
           campaignName: typeof name === "string" && name ? name : null,
@@ -438,7 +444,8 @@ export async function loadGoogleAdsCampaigns(
       .eq("client_id", clientId)
       .eq("channel", "google_ads")
       .gte("date", startDate)
-      .lte("date", endDate);
+      .lte("date", endDate)
+      .order("date", { ascending: false });
 
     if (error || !data?.length) return [];
 
@@ -457,6 +464,9 @@ export async function loadGoogleAdsCampaigns(
         existing.impressions += impressions;
         existing.clicks += clicks;
         existing.leads += leads;
+        if (!existing.campaignName && typeof name === "string" && name) {
+          existing.campaignName = name;
+        }
       } else {
         byId.set(id, {
           campaignName: typeof name === "string" && name ? name : null,

@@ -11,6 +11,7 @@ export const GOOGLE_ADS_SYNC_FIELDS = [
   "date",
   "datasource",
   "account_name",
+  "campaign_id",
   "source",
   "campaign",
   "clicks",
@@ -249,9 +250,12 @@ export async function syncGoogleAdsMappedAccounts(): Promise<GoogleAdsSyncResult
 
     const date = safeStr(raw.date) ?? new Date().toISOString().slice(0, 10);
     const campaignName = safeStr(raw.campaign ?? raw.campaign_name);
-    const campaignId = campaignName
+
+    // Usa ID real da Google/Windsor quando disponível; slug como fallback.
+    const rawCampaignId = safeStr(raw.campaign_id);
+    const campaignId = rawCampaignId ?? (campaignName
       ? `${slugify(accountName)}_${slugify(campaignName)}`
-      : slugify(accountName);
+      : slugify(accountName));
 
     const key = [
       integ.clientId,

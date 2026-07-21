@@ -1,5 +1,5 @@
 import "server-only";
-import { fetchWindsorSyncData, WINDSOR_SYNC_FIELDS } from "./client";
+import { fetchWindsorSyncData, fetchWindsorSyncDataForRange, WINDSOR_SYNC_FIELDS } from "./client";
 import {
   extractFromActions,
   LEAD_ACTION_TYPES,
@@ -188,10 +188,15 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
     const date = safeStr(raw.date) ?? new Date().toISOString().slice(0, 10);
     const campaignName = safeStr(raw.campaign ?? raw.campaign_name);
 
-    // campaign_id: fallback estável que não muda entre syncs para o mesmo par account+campaign
-    const campaignId = campaignName
+    // campaign_id: usa o ID real do Meta Ads retornado pela Windsor quando disponível.
+    // IDs reais (numéricos, ex: "120213523456789") são estáveis e não mudam quando a
+    // campanha é renomeada — isso garante que renomeações não gerem duplicatas no portal.
+    // Slug derivado do nome é mantido apenas como fallback caso Windsor não retorne campaign_id.
+    const rawCampaignId = safeStr(raw.campaign_id);
+    const slugCampaignId = campaignName
       ? `${slugify(accountName)}_${slugify(campaignName)}`
       : slugify(accountName);
+    const campaignId = rawCampaignId ?? slugCampaignId;
 
     // ad_id: usa o real quando Windsor retorna; fallback para slug derivado de ad_name; senão "unknown"
     const rawAdId = safeStr(raw.ad_id);
@@ -420,6 +425,325 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
   base.upserted = rows.length;
 
   // ── 7. Amostra dos registros gravados (sem dados sensíveis) ───────────────
+  base.sampleSaved = [...aggregated.values()].slice(0, 3).map((r) => ({
+    date: r.date,
+    accountName: r.accountName,
+    campaignName: r.campaignName,
+    spend: r.spend,
+    clicks: r.clicks,
+    impressions: r.impressions,
+    leads: r.leads,
+  }));
+
+  return { ...base, success: true };
+}
+
+// ── Sync estendido por período e cliente ──────────────────────────────────────
+//
+// Usado pelo endpoint de ressincronização controlada (/api/admin/windsor/extended-sync).
+// Aceita range de datas customizado e filtro opcional por clientId.
+// Lógica idêntica ao sync normal, mas sem restrição de 7 dias e com escopo por cliente.
+
+export interface PeriodSyncOptions {
+  clientId?: string;
+  dateFrom: string;
+  dateTo: string;
+}
+
+export async function syncWindsorForPeriod(options: PeriodSyncOptions): Promise<SyncResult> {
+  const { clientId, dateFrom, dateTo } = options;
+  const dateRange = `${dateFrom}/${dateTo}`;
+
+  const base: SyncResult = {
+    success: false,
+    totalFetched: 0,
+    mappedRecords: 0,
+    groupedRecords: 0,
+    skippedUnmapped: 0,
+    upserted: 0,
+    errors: 0,
+    datePreset: dateRange,
+    fieldsSynced: [...WINDSOR_SYNC_FIELDS],
+    unmappedAccounts: [],
+    sampleSaved: [],
+  };
+
+  const response = await fetchWindsorSyncDataForRange(dateFrom, dateTo);
+
+  if (response.error) {
+    const detail = response.errorDetail ? ` — ${response.errorDetail}` : "";
+    return { ...base, error: response.error + detail };
+  }
+
+  if (!response.data?.length) {
+    return { ...base, success: true };
+  }
+
+  base.totalFetched = response.data.length;
+
+  const admin = createAdminClient();
+
+  // Carrega mapeamentos — filtrado por cliente quando clientId é fornecido
+  let integQuery = admin
+    .from("client_integrations")
+    .select("id, client_id, account_id, account_name")
+    .eq("provider", "windsor")
+    .eq("channel", "meta_ads")
+    .eq("status", "active");
+
+  if (clientId) {
+    integQuery = integQuery.eq("client_id", clientId);
+  }
+
+  const { data: integrationRows, error: integError } = await integQuery;
+
+  if (integError) {
+    return { ...base, error: "Erro ao carregar mapeamentos.", errorDetail: integError.message };
+  }
+
+  const integByName = new Map<string, Integration>();
+  for (const row of integrationRows ?? []) {
+    const name = String(row.account_name ?? "").trim();
+    if (!name) continue;
+    integByName.set(name, {
+      integrationId: String(row.id),
+      clientId: String(row.client_id),
+      accountId: String(row.account_id ?? ""),
+      accountName: name,
+    });
+  }
+
+  const aggregated = new Map<string, AggregatedRecord>();
+  const unmappedSet = new Set<string>();
+
+  for (const raw of response.data) {
+    const accountName = String(raw.account_name ?? "").trim();
+    if (!accountName) continue;
+
+    const integ = integByName.get(accountName);
+    if (!integ) {
+      unmappedSet.add(accountName);
+      base.skippedUnmapped++;
+      continue;
+    }
+
+    const date = safeStr(raw.date) ?? new Date().toISOString().slice(0, 10);
+    const campaignName = safeStr(raw.campaign ?? raw.campaign_name);
+
+    const rawCampaignId = safeStr(raw.campaign_id);
+    const slugCampaignId = campaignName
+      ? `${slugify(accountName)}_${slugify(campaignName)}`
+      : slugify(accountName);
+    const campaignId = rawCampaignId ?? slugCampaignId;
+
+    const rawAdId = safeStr(raw.ad_id);
+    const adName = safeStr(raw.ad_name);
+    const adId = rawAdId
+      ? rawAdId
+      : adName
+      ? `adname_${slugify(adName)}`
+      : "unknown";
+
+    const key = [
+      integ.clientId,
+      integ.integrationId,
+      "meta_ads",
+      date,
+      campaignId,
+      "unknown",
+      adId,
+    ].join("::");
+
+    const rawLeads =
+      safeNum(raw.actions_onsite_conversion_lead_grouped) ||
+      safeNum(raw.leads) ||
+      extractFromActions(raw.actions, LEAD_ACTION_TYPES);
+    const rawMessages =
+      safeNum(raw.actions_onsite_conversion_messaging_conversation_started_7d) ||
+      safeNum(raw.messages_started) ||
+      extractFromActions(raw.actions, MESSAGE_ACTION_TYPES);
+    const rawPurchases =
+      safeNum(raw.actions_offsite_conversion_fb_pixel_purchase) ||
+      safeNum(raw.purchases) ||
+      extractFromActions(raw.actions, PURCHASE_ACTION_TYPES);
+    const rawPurchaseValue =
+      safeNum(raw.action_values_offsite_conversion_fb_pixel_purchase) ||
+      safeNum(raw.purchase_value) ||
+      extractFromActions(raw.action_values, PURCHASE_ACTION_TYPES);
+
+    const existing = aggregated.get(key);
+    if (existing) {
+      const rawSpend = safeNum(raw.spend);
+      existing.spend += rawSpend;
+      existing.clicks += safeNum(raw.clicks);
+      existing.impressions += safeNum(raw.impressions);
+      existing.reach += safeNum(raw.reach);
+      existing.leads += rawLeads;
+      existing.messages_started += rawMessages;
+      existing.purchases += rawPurchases;
+      existing.purchase_value += rawPurchaseValue;
+      existing.engagements += safeNum(raw.engagements);
+      existing.video_views_25 += safeNum(raw.video_views_25);
+      existing.video_views_75 += safeNum(raw.video_views_75);
+      existing.landing_page_views += safeNum(raw.actions_landing_page_view);
+      existing.roasWeightedSum += safeNum(raw.roas) * rawSpend;
+      existing.groupedCount++;
+      if (!existing.thumbnail_url) existing.thumbnail_url = safeStr(raw.thumbnail_url);
+      if (!existing.campaignObjective) existing.campaignObjective = safeStr(raw.wcf__objetivo);
+    } else {
+      const rawSpend = safeNum(raw.spend);
+      aggregated.set(key, {
+        integration: integ,
+        date,
+        accountName,
+        campaignName,
+        campaignObjective: safeStr(raw.wcf__objetivo),
+        campaignId,
+        adId,
+        adName,
+        spend: rawSpend,
+        clicks: safeNum(raw.clicks),
+        impressions: safeNum(raw.impressions),
+        reach: safeNum(raw.reach),
+        leads: rawLeads,
+        messages_started: rawMessages,
+        purchases: rawPurchases,
+        purchase_value: rawPurchaseValue,
+        engagements: safeNum(raw.engagements),
+        video_views_25: safeNum(raw.video_views_25),
+        video_views_75: safeNum(raw.video_views_75),
+        landing_page_views: safeNum(raw.actions_landing_page_view),
+        roasWeightedSum: safeNum(raw.roas) * rawSpend,
+        groupedCount: 1,
+        rawSample: raw as Record<string, unknown>,
+        thumbnail_url: safeStr(raw.thumbnail_url),
+      });
+    }
+
+    base.mappedRecords++;
+  }
+
+  base.unmappedAccounts = [...unmappedSet].slice(0, 10);
+  base.groupedRecords = aggregated.size;
+
+  if (aggregated.size === 0) {
+    return { ...base, success: true };
+  }
+
+  // Limpeza de linhas "unknown" ad_id substituídas por dados de anúncio real
+  const hasRealAdIds = [...aggregated.values()].some((r) => r.adId !== "unknown");
+
+  if (hasRealAdIds) {
+    type CleanKey = { clientId: string; integrationId: string; dates: string[] };
+    const cleanByInteg = new Map<string, CleanKey>();
+
+    for (const rec of aggregated.values()) {
+      if (rec.adId === "unknown") continue;
+      const mapKey = `${rec.integration.clientId}::${rec.integration.integrationId}`;
+      const existing = cleanByInteg.get(mapKey);
+      if (existing) {
+        if (!existing.dates.includes(rec.date)) existing.dates.push(rec.date);
+      } else {
+        cleanByInteg.set(mapKey, {
+          clientId: rec.integration.clientId,
+          integrationId: rec.integration.integrationId,
+          dates: [rec.date],
+        });
+      }
+    }
+
+    for (const ck of cleanByInteg.values()) {
+      await admin
+        .from("performance_daily")
+        .delete()
+        .eq("client_id", ck.clientId)
+        .eq("integration_id", ck.integrationId)
+        .eq("channel", "meta_ads")
+        .in("date", ck.dates)
+        .eq("ad_id", "unknown");
+    }
+  }
+
+  // Monta payload de upsert
+  const syncedAt = new Date().toISOString();
+  const rows: Record<string, unknown>[] = [];
+
+  for (const rec of aggregated.values()) {
+    const cpc = rec.clicks > 0 ? rec.spend / rec.clicks : 0;
+    const cpm = rec.impressions > 0 ? (rec.spend / rec.impressions) * 1000 : 0;
+    const ctr = rec.impressions > 0 ? (rec.clicks / rec.impressions) * 100 : 0;
+    const frequency = rec.reach > 0 ? rec.impressions / rec.reach : 0;
+    const roas = rec.purchase_value > 0 && rec.spend > 0
+      ? rec.purchase_value / rec.spend
+      : rec.roasWeightedSum > 0 && rec.spend > 0
+      ? rec.roasWeightedSum / rec.spend
+      : 0;
+
+    rows.push({
+      client_id: rec.integration.clientId,
+      integration_id: rec.integration.integrationId,
+      channel: "meta_ads",
+      date: rec.date,
+      account_id: rec.integration.accountId,
+      account_name: rec.accountName,
+      campaign_id: rec.campaignId,
+      campaign_name: rec.campaignName,
+      campaign_objective: rec.campaignObjective,
+      adset_id: "unknown",
+      adset_name: null,
+      ad_id: rec.adId,
+      ad_name: rec.adName,
+      spend: rec.spend,
+      clicks: rec.clicks,
+      impressions: rec.impressions,
+      reach: rec.reach,
+      frequency,
+      ctr,
+      cpc,
+      cpm,
+      leads: rec.leads,
+      messages_started: rec.messages_started,
+      purchases: rec.purchases,
+      purchase_value: rec.purchase_value,
+      roas,
+      engagements: rec.engagements,
+      video_views_25: rec.video_views_25,
+      video_views_75: rec.video_views_75,
+      landing_page_views: rec.landing_page_views,
+      thumbnail_url: rec.thumbnail_url,
+      raw_data: {
+        windsor_raw_sample: rec.rawSample,
+        sync_meta: {
+          synced_at: syncedAt,
+          date_preset: dateRange,
+          integration_id: rec.integration.integrationId,
+          matched_by: "account_name",
+          grouped_count: rec.groupedCount,
+          fields_synced: WINDSOR_SYNC_FIELDS,
+          extended_sync: true,
+        },
+      },
+      updated_at: syncedAt,
+    });
+  }
+
+  const { error: upsertError } = await admin
+    .from("performance_daily")
+    .upsert(rows, {
+      onConflict: "client_id,integration_id,channel,date,campaign_id,adset_id,ad_id",
+      ignoreDuplicates: false,
+    });
+
+  if (upsertError) {
+    return {
+      ...base,
+      error: "Falha ao gravar em performance_daily.",
+      errorDetail: upsertError.message,
+    };
+  }
+
+  base.upserted = rows.length;
+
   base.sampleSaved = [...aggregated.values()].slice(0, 3).map((r) => ({
     date: r.date,
     accountName: r.accountName,
