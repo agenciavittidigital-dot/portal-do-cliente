@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import type { NextRequest } from "next/server";
+import { notifyNewEditorialComment } from "@/lib/email/notify-new-editorial-comment";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
@@ -150,14 +151,24 @@ export async function POST(
       { status: 500 }
     );
 
+  const resolvedAuthorName = authorName(
+    profile ? { name: profile.name, email: profile.email } : null
+  );
+
   const comment = {
     id: String(insertedRaw.id),
     message: String(insertedRaw.message),
     createdAt: String(insertedRaw.created_at),
-    authorName: authorName(
-      profile ? { name: profile.name, email: profile.email } : null
-    ),
+    authorName: resolvedAuthorName,
   };
+
+  after(() =>
+    notifyNewEditorialComment({
+      contentId: id,
+      authorName: resolvedAuthorName,
+      message,
+    })
+  );
 
   return NextResponse.json({ success: true, comment });
 }
