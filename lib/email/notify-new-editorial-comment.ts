@@ -19,14 +19,21 @@ export interface NotifyEditorialCommentParams {
   contentId: string;
   authorName: string;
   message: string;
+  recipientProfileIds: string[];
 }
 
 export async function notifyNewEditorialComment({
   contentId,
   authorName,
   message,
+  recipientProfileIds,
 }: NotifyEditorialCommentParams): Promise<void> {
   try {
+    if (!recipientProfileIds.length) {
+      console.warn("[notify-editorial-comment] Nenhum destinatário fornecido.");
+      return;
+    }
+
     const admin = createAdminClient();
 
     // 1. Fetch content title and client_id
@@ -57,62 +64,26 @@ export async function notifyNewEditorialComment({
 
     const clientName = client.name;
 
-    // 3. Fetch active client_users for this client (tolerant on error)
-    let clientUserProfiles: Array<{ name: string | null; email: string | null }> = [];
-
-    const { data: clientUserRows, error: cuError } = await admin
-      .from("client_users")
-      .select("profile_id")
-      .eq("client_id", String(clientId))
-      .eq("status", "active");
-
-    if (cuError) {
-      console.error("[notify-editorial-comment] Erro ao buscar client_users:", cuError.message);
-    } else if (clientUserRows?.length) {
-      const profileIds = clientUserRows.map((r) => String(r.profile_id));
-
-      // 4. Fetch active client_user profiles with emails
-      const { data: profileData, error: profilesError } = await admin
-        .from("profiles")
-        .select("name, email")
-        .in("id", profileIds)
-        .eq("status", "active")
-        .eq("global_role", "client_user")
-        .not("email", "is", null);
-
-      if (profilesError) {
-        console.error("[notify-editorial-comment] Erro ao buscar profiles de client_users:", profilesError.message);
-      } else {
-        clientUserProfiles = profileData ?? [];
-      }
-    }
-
-    // 5. Fetch active vitti_admin profiles
-    let adminProfiles: Array<{ name: string | null; email: string | null }> = [];
-
-    const { data: adminData, error: adminError } = await admin
+    // 3. Fetch name + email for the validated recipient profile IDs
+    const { data: profileData, error: profilesError } = await admin
       .from("profiles")
       .select("name, email")
-      .eq("global_role", "vitti_admin")
-      .eq("status", "active")
+      .in("id", recipientProfileIds)
       .not("email", "is", null);
 
-    if (adminError) {
-      console.error("[notify-editorial-comment] Erro ao buscar vitti_admin:", adminError.message);
-    } else {
-      adminProfiles = adminData ?? [];
-    }
-
-    // 6. Merge and deduplicate by email (case-insensitive)
-    const allRecipients = [...clientUserProfiles, ...adminProfiles];
-
-    if (!allRecipients.length) {
-      console.warn("[notify-editorial-comment] Nenhum destinatário encontrado.");
+    if (profilesError) {
+      console.error("[notify-editorial-comment] Erro ao buscar profiles:", profilesError.message);
       return;
     }
 
+    if (!profileData?.length) {
+      console.warn("[notify-editorial-comment] Nenhum perfil encontrado para os IDs fornecidos.");
+      return;
+    }
+
+    // 4. Deduplicate by email (case-insensitive)
     const seen = new Set<string>();
-    const recipients = allRecipients.filter((p) => {
+    const recipients = profileData.filter((p) => {
       if (!p.email) return false;
       const key = p.email.toLowerCase();
       if (seen.has(key)) return false;
@@ -122,7 +93,7 @@ export async function notifyNewEditorialComment({
 
     if (!recipients.length) return;
 
-    // 6. Send one email per recipient, each isolated
+    // 5. Send one email per recipient, each isolated
     const safeSubjectTitle = String(title).replace(/[\r\n]+/g, " ");
     const subject = `Nova consideração — ${safeSubjectTitle}`;
     const portalUrl = "https://portaldoparceiro.vittidigital.com/calendario-editorial/lista";

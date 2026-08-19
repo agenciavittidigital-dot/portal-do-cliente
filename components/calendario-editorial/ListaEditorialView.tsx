@@ -19,6 +19,7 @@ import { CategoryTag } from "./CategoryTag";
 import { StatusBadge } from "./StatusBadge";
 import { ArtPreviewModal } from "./ArtPreviewModal";
 import type { ModalAttachment } from "./ArtPreviewModal";
+import { NotificationRecipientsSelect } from "./NotificationRecipientsSelect";
 
 export interface ListaContentItem {
   id: string;
@@ -177,6 +178,7 @@ export function ListaEditorialView({
   const [submittingComment, setSubmittingComment] = useState<Set<string>>(new Set());
   const [commentErrors, setCommentErrors] = useState<Record<string, string>>({});
   const [localCommentCounts, setLocalCommentCounts] = useState<Record<string, number>>({});
+  const [selectedProfileIds, setSelectedProfileIds] = useState<Record<string, string[]>>({});
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -241,7 +243,8 @@ export function ListaEditorialView({
 
   async function handleAddComment(itemId: string) {
     const text = (newCommentText[itemId] ?? "").trim();
-    if (!text) return;
+    const ids = selectedProfileIds[itemId] ?? [];
+    if (!text || !ids.length) return;
 
     setSubmittingComment((prev) => new Set(prev).add(itemId));
     setCommentErrors((prev) => ({ ...prev, [itemId]: "" }));
@@ -250,7 +253,7 @@ export function ListaEditorialView({
       const res = await fetch(`/api/admin/editorial/${itemId}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ message: text, notificationRecipientProfileIds: ids }),
       });
       const data = await res.json() as {
         success: boolean;
@@ -281,6 +284,7 @@ export function ListaEditorialView({
       });
 
       setNewCommentText((prev) => ({ ...prev, [itemId]: "" }));
+      setSelectedProfileIds((prev) => ({ ...prev, [itemId]: [] }));
     } catch {
       setCommentErrors((prev) => ({ ...prev, [itemId]: "Erro de conexão." }));
     } finally {
@@ -711,6 +715,16 @@ export function ListaEditorialView({
                                     rows={2}
                                     className="w-full text-[11px] font-light text-vitti-fg border border-black/[0.1] rounded-lg px-2.5 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 placeholder:text-vitti-fg/25 resize-none"
                                   />
+                                  <NotificationRecipientsSelect
+                                    contentId={item.id}
+                                    value={selectedProfileIds[item.id] ?? []}
+                                    onChange={(ids) =>
+                                      setSelectedProfileIds((prev) => ({
+                                        ...prev,
+                                        [item.id]: ids,
+                                      }))
+                                    }
+                                  />
                                   {commentErrors[item.id] && (
                                     <p className="text-[10px] font-light text-red-400">
                                       {commentErrors[item.id]}
@@ -722,7 +736,8 @@ export function ListaEditorialView({
                                       onClick={() => handleAddComment(item.id)}
                                       disabled={
                                         submittingComment.has(item.id) ||
-                                        !(newCommentText[item.id] ?? "").trim()
+                                        !(newCommentText[item.id] ?? "").trim() ||
+                                        !(selectedProfileIds[item.id]?.length)
                                       }
                                       className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-vitti-blue/[0.07] border border-vitti-blue/[0.15] text-[10px] font-light text-vitti-blue hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                     >

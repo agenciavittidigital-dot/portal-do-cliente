@@ -15,6 +15,7 @@ import { CategoryTag } from "./CategoryTag";
 import { StatusBadge } from "./StatusBadge";
 import { ArtPreviewModal } from "./ArtPreviewModal";
 import type { ContentRow } from "./CalendarioEditorialShell";
+import { NotificationRecipientsSelect } from "./NotificationRecipientsSelect";
 
 interface CommentItem {
   id: string;
@@ -124,6 +125,7 @@ export function ContentViewDrawer({
   const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
   const [loadingAttachments, setLoadingAttachments] = useState(false);
   const [attachmentError, setAttachmentError] = useState(false);
+  const [selectedProfileIds, setSelectedProfileIds] = useState<string[]>([]);
   const [artModalOpen, setArtModalOpen] = useState(false);
   const [artModalIndex, setArtModalIndex] = useState(0);
 
@@ -138,9 +140,11 @@ export function ContentViewDrawer({
       setAttachmentError(false);
       setArtModalOpen(false);
       setArtModalIndex(0);
+      setSelectedProfileIds([]);
       return;
     }
 
+    setSelectedProfileIds([]);
     setLoadingComments(true);
     fetch(`/api/admin/editorial/${item.id}/comments`)
       .then((r) => r.json())
@@ -171,14 +175,17 @@ export function ContentViewDrawer({
   }, [open, item?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleAddComment() {
-    if (!item || !newComment.trim()) return;
+    if (!item || !newComment.trim() || selectedProfileIds.length === 0) return;
     setSubmitting(true);
     setCommentError("");
     try {
       const res = await fetch(`/api/admin/editorial/${item.id}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: newComment.trim() }),
+        body: JSON.stringify({
+          message: newComment.trim(),
+          notificationRecipientProfileIds: selectedProfileIds,
+        }),
       });
       const data = (await res.json()) as {
         success: boolean;
@@ -195,6 +202,7 @@ export function ContentViewDrawer({
       }
       if (data.comment) setComments((prev) => [...prev, data.comment!]);
       setNewComment("");
+      setSelectedProfileIds([]);
     } catch {
       setCommentError("Erro de conexão.");
     } finally {
@@ -454,6 +462,11 @@ export function ContentViewDrawer({
                       rows={3}
                       className="w-full text-xs font-light text-vitti-fg border border-black/[0.1] rounded-lg px-3 py-2.5 bg-white focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 placeholder:text-vitti-fg/25 resize-none"
                     />
+                    <NotificationRecipientsSelect
+                      contentId={item.id}
+                      value={selectedProfileIds}
+                      onChange={setSelectedProfileIds}
+                    />
                     {commentError && (
                       <p className="text-[10px] font-light text-red-400">
                         {commentError}
@@ -463,7 +476,7 @@ export function ContentViewDrawer({
                       <button
                         type="button"
                         onClick={handleAddComment}
-                        disabled={submitting || !newComment.trim()}
+                        disabled={submitting || !newComment.trim() || selectedProfileIds.length === 0}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-vitti-blue/[0.07] border border-vitti-blue/[0.15] text-[10px] font-light text-vitti-blue hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {submitting ? (

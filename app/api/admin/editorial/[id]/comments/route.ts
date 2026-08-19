@@ -1,6 +1,7 @@
 import { NextResponse, after } from "next/server";
 import type { NextRequest } from "next/server";
 import { notifyNewEditorialComment } from "@/lib/email/notify-new-editorial-comment";
+import { getEligibleNotificationRecipients } from "@/lib/data/editorial-recipients";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
@@ -127,6 +128,55 @@ export async function POST(
       { status: 400 }
     );
 
+  // Validate notificationRecipientProfileIds
+  const rawIds = b.notificationRecipientProfileIds;
+
+  if (!Array.isArray(rawIds) || rawIds.length === 0)
+    return NextResponse.json(
+      { success: false, error: "Selecione pelo menos 1 destinatário para a notificação." },
+      { status: 400 }
+    );
+
+  const UUID_RE =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  if (!rawIds.every((v): v is string => typeof v === "string" && UUID_RE.test(v)))
+    return NextResponse.json(
+      { success: false, error: "IDs de destinatários inválidos." },
+      { status: 400 }
+    );
+
+  const submittedUniqueIds = [...new Set(rawIds)];
+
+  // ALL-OR-NOTHING: every submitted ID must belong to the eligible set
+  let eligible: Awaited<ReturnType<typeof getEligibleNotificationRecipients>>;
+  try {
+    eligible = await getEligibleNotificationRecipients(id);
+  } catch {
+    return NextResponse.json(
+      { success: false, error: "Erro interno ao validar destinatários." },
+      { status: 500 }
+    );
+  }
+
+  if (eligible === null)
+    return NextResponse.json(
+      { success: false, error: "Conteúdo não encontrado." },
+      { status: 400 }
+    );
+
+  const eligibleSet = new Set(eligible.map((r) => r.id));
+  const validatedIds = submittedUniqueIds.filter((pid) => eligibleSet.has(pid));
+
+  if (validatedIds.length !== submittedUniqueIds.length)
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Um ou mais destinatários selecionados não são válidos para este conteúdo.",
+      },
+      { status: 400 }
+    );
+
   const admin = createAdminClient();
 
   const { data: profile } = await admin
@@ -167,6 +217,7 @@ export async function POST(
       contentId: id,
       authorName: resolvedAuthorName,
       message,
+      recipientProfileIds: validatedIds,
     })
   );
 

@@ -13,6 +13,7 @@ import {
   Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NotificationRecipientsSelect } from "./NotificationRecipientsSelect";
 
 interface CategoryOption { id: string; name: string; color: string }
 interface StatusOption   { id: string; name: string; color: string }
@@ -152,6 +153,7 @@ export function ContentDrawer({
   const [newComment, setNewComment] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
+  const [selectedProfileIds, setSelectedProfileIds] = useState<string[]>([]);
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
   const isEditing = !!editItem;
@@ -164,12 +166,14 @@ export function ContentDrawer({
       setComments([]);
       setNewComment("");
       setCommentError(null);
+      setSelectedProfileIds([]);
       return;
     }
     setError(null);
     setPendingFiles([]);
     setNewComment("");
     setCommentError(null);
+    setSelectedProfileIds([]);
 
     if (editItem) {
       setForm({
@@ -255,14 +259,17 @@ export function ContentDrawer({
   }
 
   async function handleSubmitComment() {
-    if (!editItem?.id || !newComment.trim()) return;
+    if (!editItem?.id || !newComment.trim() || selectedProfileIds.length === 0) return;
     setSubmittingComment(true);
     setCommentError(null);
     try {
       const res = await fetch(`/api/admin/editorial/${editItem.id}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: newComment.trim() }),
+        body: JSON.stringify({
+          message: newComment.trim(),
+          notificationRecipientProfileIds: selectedProfileIds,
+        }),
       });
       const data = await res.json() as { success: boolean; comment?: CommentItem; error?: string; code?: string };
       if (!res.ok || !data.success) {
@@ -271,6 +278,7 @@ export function ContentDrawer({
       } else if (data.comment) {
         setComments((prev) => [...prev, data.comment!]);
         setNewComment("");
+        setSelectedProfileIds([]);
       }
     } catch {
       setCommentError("Erro de conexão. Tente novamente.");
@@ -713,6 +721,11 @@ export function ContentDrawer({
                         "focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 placeholder:text-vitti-fg-muted/35 resize-none"
                       )}
                     />
+                    <NotificationRecipientsSelect
+                      contentId={editItem.id}
+                      value={selectedProfileIds}
+                      onChange={setSelectedProfileIds}
+                    />
                     {commentError && (
                       <p className="text-[10px] text-red-500 font-light">{commentError}</p>
                     )}
@@ -720,7 +733,7 @@ export function ContentDrawer({
                       <button
                         type="button"
                         onClick={handleSubmitComment}
-                        disabled={submittingComment || !newComment.trim()}
+                        disabled={submittingComment || !newComment.trim() || selectedProfileIds.length === 0}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-vitti-blue/[0.08] border border-vitti-blue/[0.15] text-[11px] font-light text-vitti-blue hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {submittingComment
