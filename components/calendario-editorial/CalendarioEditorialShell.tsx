@@ -389,6 +389,13 @@ export function CalendarioEditorialShell({
     setDrawerOpen(true);
   }
 
+  function openViewFromLista(item: ListaContentItem) {
+    const full = contents.find((c) => c.id === item.id) ?? null;
+    if (!full) return;
+    setViewItem(full);
+    setViewDrawerOpen(true);
+  }
+
   function handleSaved() {
     setDrawerOpen(false);
     router.refresh();
@@ -719,7 +726,7 @@ export function CalendarioEditorialShell({
         <ListaEditorialView
           items={listaItems}
           isAdmin={isAdmin}
-          onSelectItem={isAdmin ? openEditFromLista : undefined}
+          onSelectItem={isAdmin ? openEditFromLista : openViewFromLista}
         />
       )}
 

@@ -33,26 +33,42 @@ export interface KeywordsSyncResult {
   rowsSkipped: number;
   rowsUpserted: number;
   integrationsMatched: number;
+  dateRange: string;
   syncedAt: string;
 }
 
-export async function syncGoogleAdsKeywords(): Promise<KeywordsSyncResult> {
+// dateFrom/dateTo opcionais — padrão: últimos 30 dias (hoje-29 → hoje).
+// Mesmo padrão de parâmetros usado pelo sync principal Google Ads.
+export async function syncGoogleAdsKeywords(
+  dateFrom?: string,
+  dateTo?: string,
+): Promise<KeywordsSyncResult> {
   const syncedAt = new Date().toISOString();
-  const admin = createAdminClient();
+
+  const today = new Date();
+  const resolvedTo = dateTo ?? today.toISOString().slice(0, 10);
+  const fromDay = new Date(today);
+  fromDay.setUTCDate(fromDay.getUTCDate() - 29);
+  const resolvedFrom = dateFrom ?? fromDay.toISOString().slice(0, 10);
+  const dateRange = `${resolvedFrom}/${resolvedTo}`;
+
+  const base: KeywordsSyncResult = {
+    success: false,
+    rowsFetched: 0,
+    googleAdsRows: 0,
+    rowsSkipped: 0,
+    rowsUpserted: 0,
+    integrationsMatched: 0,
+    dateRange,
+    syncedAt,
+  };
 
   const status = getWindsorStatus();
   if (!status.configured) {
-    return {
-      success: false,
-      error: status.reason,
-      rowsFetched: 0,
-      googleAdsRows: 0,
-      rowsSkipped: 0,
-      rowsUpserted: 0,
-      integrationsMatched: 0,
-      syncedAt,
-    };
+    return { ...base, error: status.reason };
   }
+
+  const admin = createAdminClient();
 
   // ── 1. Carrega integrações Google Ads ativas ──────────────────────────────
   const { data: integrations, error: intErr } = await admin
@@ -64,14 +80,8 @@ export async function syncGoogleAdsKeywords(): Promise<KeywordsSyncResult> {
 
   if (intErr || !integrations?.length) {
     return {
-      success: false,
+      ...base,
       error: intErr?.message ?? "Nenhuma integração Google Ads ativa encontrada.",
-      rowsFetched: 0,
-      googleAdsRows: 0,
-      rowsSkipped: 0,
-      rowsUpserted: 0,
-      integrationsMatched: 0,
-      syncedAt,
     };
   }
 
@@ -87,7 +97,8 @@ export async function syncGoogleAdsKeywords(): Promise<KeywordsSyncResult> {
   const url = new URL(WINDSOR_ALL_ENDPOINT);
   url.searchParams.set("api_key", apiKey);
   url.searchParams.set("fields", KEYWORD_SYNC_FIELDS.join(","));
-  url.searchParams.set("date_preset", "last_7d");
+  url.searchParams.set("date_from", resolvedFrom);
+  url.searchParams.set("date_to", resolvedTo);
 
   let allData: Record<string, unknown>[] = [];
 
@@ -102,14 +113,8 @@ export async function syncGoogleAdsKeywords(): Promise<KeywordsSyncResult> {
       const raw = await res.text().catch(() => "");
       const safe = raw.replace(/api_key=[^\s&"']*/gi, "api_key=***").slice(0, 400);
       return {
-        success: false,
+        ...base,
         error: `Windsor respondeu HTTP ${res.status}: ${safe}`,
-        rowsFetched: 0,
-        googleAdsRows: 0,
-        rowsSkipped: 0,
-        rowsUpserted: 0,
-        integrationsMatched: 0,
-        syncedAt,
       };
     }
 
@@ -118,18 +123,15 @@ export async function syncGoogleAdsKeywords(): Promise<KeywordsSyncResult> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Erro desconhecido";
     return {
-      success: false,
+      ...base,
       error: `Falha na conexão com Windsor: ${msg}`,
-      rowsFetched: 0,
-      googleAdsRows: 0,
-      rowsSkipped: 0,
-      rowsUpserted: 0,
-      integrationsMatched: 0,
-      syncedAt,
     };
   }
 
+  base.rowsFetched = allData.length;
+
   const googleRows = allData.filter((r) => isGoogleAds(r.datasource));
+  base.googleAdsRows = googleRows.length;
 
   // ── 3. Agrega por (client_id, integration_id, date, campaign_name, keyword_text) ──
   interface AggRow {
@@ -185,16 +187,11 @@ export async function syncGoogleAdsKeywords(): Promise<KeywordsSyncResult> {
     }
   }
 
+  base.rowsSkipped = skipped;
+  base.integrationsMatched = matchedIds.size;
+
   if (agg.size === 0) {
-    return {
-      success: true,
-      rowsFetched: allData.length,
-      googleAdsRows: googleRows.length,
-      rowsSkipped: skipped,
-      rowsUpserted: 0,
-      integrationsMatched: matchedIds.size,
-      syncedAt,
-    };
+    return { ...base, success: true };
   }
 
   // ── 4. Upsert em lotes de 200 ─────────────────────────────────────────────
@@ -213,26 +210,14 @@ export async function syncGoogleAdsKeywords(): Promise<KeywordsSyncResult> {
 
     if (error) {
       return {
+        ...base,
         success: false,
         error: `Erro no upsert (lote ${i / BATCH + 1}): ${error.message}`,
-        rowsFetched: allData.length,
-        googleAdsRows: googleRows.length,
-        rowsSkipped: skipped,
         rowsUpserted: upserted,
-        integrationsMatched: matchedIds.size,
-        syncedAt,
       };
     }
     upserted += batch.length;
   }
 
-  return {
-    success: true,
-    rowsFetched: allData.length,
-    googleAdsRows: googleRows.length,
-    rowsSkipped: skipped,
-    rowsUpserted: upserted,
-    integrationsMatched: matchedIds.size,
-    syncedAt,
-  };
+  return { ...base, success: true, rowsUpserted: upserted };
 }

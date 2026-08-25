@@ -20,6 +20,9 @@ import { StatusBadge } from "./StatusBadge";
 import { ArtPreviewModal } from "./ArtPreviewModal";
 import type { ModalAttachment } from "./ArtPreviewModal";
 import { NotificationRecipientsSelect } from "./NotificationRecipientsSelect";
+import { useEditorialSuggestions } from "@/lib/hooks/useEditorialSuggestions";
+import { SuggestionInlineHighlight } from "./SuggestionInlineHighlight";
+import { SuggestionModal } from "./SuggestionModal";
 
 export interface ListaContentItem {
   id: string;
@@ -184,6 +187,42 @@ export function ListaEditorialView({
   const [modalOpen, setModalOpen] = useState(false);
   const [modalAttachments, setModalAttachments] = useState<ModalAttachment[]>([]);
   const [modalIndex, setModalIndex] = useState(0);
+
+  // Suggestion state — fetches only for the currently expanded item, only for client users
+  const { suggestions, submit: submitSuggestion } = useEditorialSuggestions(
+    expandedId,
+    !isAdmin && expandedId !== null,
+  );
+  const [suggestionModalOpen, setSuggestionModalOpen] = useState(false);
+  const [pendingField, setPendingField] = useState<"description" | "caption" | null>(null);
+  const [pendingSugSel, setPendingSugSel] = useState<{
+    start: number;
+    end: number;
+    text: string;
+  } | null>(null);
+
+  function handleSuggestDesc(s: number, e: number, t: string) {
+    setPendingField("description");
+    setPendingSugSel({ start: s, end: e, text: t });
+    setSuggestionModalOpen(true);
+  }
+  function handleSuggestCap(s: number, e: number, t: string) {
+    setPendingField("caption");
+    setPendingSugSel({ start: s, end: e, text: t });
+    setSuggestionModalOpen(true);
+  }
+  async function handleSuggestionSubmit(
+    proposed: string | null,
+  ): Promise<{ success: boolean; error?: string; conflict?: boolean }> {
+    if (!pendingField || !pendingSugSel) return { success: false, error: "Estado inválido." };
+    return submitSuggestion({
+      field: pendingField,
+      original_start: pendingSugSel.start,
+      original_end: pendingSugSel.end,
+      original_text: pendingSugSel.text,
+      proposed_text: proposed,
+    });
+  }
 
   // Lazy-load attachments when an expanded row has cards
   useEffect(() => {
@@ -561,14 +600,24 @@ export function ListaEditorialView({
                           <div className="col-span-3">
                             <FL>Descrição</FL>
                             <FV>
-                              {item.description ? (
-                                <span className="whitespace-pre-wrap">
-                                  {item.description}
-                                </span>
+                              {isAdmin ? (
+                                item.description ? (
+                                  <span className="whitespace-pre-wrap">
+                                    {item.description}
+                                  </span>
+                                ) : (
+                                  <span className="text-vitti-fg-muted/40 italic">
+                                    Sem descrição
+                                  </span>
+                                )
                               ) : (
-                                <span className="text-vitti-fg-muted/40 italic">
-                                  Sem descrição
-                                </span>
+                                <SuggestionInlineHighlight
+                                  text={item.description}
+                                  suggestions={suggestions}
+                                  field="description"
+                                  canSuggest
+                                  onSuggest={handleSuggestDesc}
+                                />
                               )}
                             </FV>
                           </div>
@@ -577,14 +626,24 @@ export function ListaEditorialView({
                           <div className="col-span-3">
                             <FL>Legenda</FL>
                             <FV>
-                              {item.caption ? (
-                                <span className="whitespace-pre-wrap">
-                                  {item.caption}
-                                </span>
+                              {isAdmin ? (
+                                item.caption ? (
+                                  <span className="whitespace-pre-wrap">
+                                    {item.caption}
+                                  </span>
+                                ) : (
+                                  <span className="text-vitti-fg-muted/40 italic">
+                                    Sem legenda
+                                  </span>
+                                )
                               ) : (
-                                <span className="text-vitti-fg-muted/40 italic">
-                                  Sem legenda
-                                </span>
+                                <SuggestionInlineHighlight
+                                  text={item.caption}
+                                  suggestions={suggestions}
+                                  field="caption"
+                                  canSuggest
+                                  onSuggest={handleSuggestCap}
+                                />
                               )}
                             </FV>
                           </div>
@@ -795,6 +854,19 @@ export function ListaEditorialView({
         currentIndex={modalIndex}
         onChangeIndex={setModalIndex}
         onClose={() => setModalOpen(false)}
+      />
+
+      {/* Suggestion modal — single instance for all rows */}
+      <SuggestionModal
+        open={suggestionModalOpen}
+        field={pendingField ?? "description"}
+        selectedText={pendingSugSel?.text ?? ""}
+        onClose={() => {
+          setSuggestionModalOpen(false);
+          setPendingField(null);
+          setPendingSugSel(null);
+        }}
+        onSubmit={handleSuggestionSubmit}
       />
     </>
   );

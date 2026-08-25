@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BarChart3, Calendar, ChevronDown, FileDown, Loader2, Search } from "lucide-react";
+import { BarChart3, Calendar, ChevronDown, FileDown, Loader2, Search, ShoppingCart } from "lucide-react";
 import { exportDashboardToPdf } from "@/lib/pdf/exportDashboard";
+import { ManualSalesModal } from "./ManualSalesModal";
 import {
   Area,
   AreaChart,
@@ -587,6 +588,8 @@ interface Props {
   initialStartDate?: string;
   initialEndDate?: string;
   clientName?: string;
+  isAdmin?: boolean;
+  clientId?: string;
 }
 
 export function GoogleAdsView({
@@ -597,6 +600,8 @@ export function GoogleAdsView({
   initialStartDate = "",
   initialEndDate = "",
   clientName = "",
+  isAdmin = false,
+  clientId,
 }: Props) {
   const router = useRouter();
   const dashboardRef = useRef<HTMLDivElement>(null);
@@ -605,6 +610,7 @@ export function GoogleAdsView({
   const [customEnd, setCustomEnd] = useState(initialEndDate);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [showManualSalesModal, setShowManualSalesModal] = useState(false);
 
   async function handleExportPdf() {
     if (!dashboardRef.current) return;
@@ -694,6 +700,15 @@ export function GoogleAdsView({
             <span className="text-[10px] text-red-400 font-light max-w-[220px] truncate">
               {pdfError}
             </span>
+          )}
+          {isAdmin && clientId && (
+            <button
+              onClick={() => setShowManualSalesModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/[0.08] text-[10px] font-light text-emerald-700 hover:bg-emerald-500/[0.15] transition-colors select-none"
+            >
+              <ShoppingCart size={9} className="shrink-0" />
+              Vendas manuais
+            </button>
           )}
           <button
             onClick={handleExportPdf}
@@ -793,6 +808,15 @@ export function GoogleAdsView({
         <CampaignsTable campaigns={campaigns} />
       </div>
 
+      {isAdmin && clientId && (
+        <ManualSalesModal
+          open={showManualSalesModal}
+          onClose={() => setShowManualSalesModal(false)}
+          clientId={clientId}
+          channel="google_ads"
+          onDataChange={() => router.refresh()}
+        />
+      )}
     </div>
   );
 }

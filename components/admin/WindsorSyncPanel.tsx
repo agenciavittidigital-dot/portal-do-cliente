@@ -118,9 +118,20 @@ export function WindsorSyncPanel() {
       </div>
 
       {/* ── Aviso ─────────────────────────────────────────────────── */}
-      <div className="px-5 py-3">
-        <div className="flex items-start gap-2 rounded-lg border border-amber-400/[0.12] bg-amber-400/[0.03] px-3.5 py-2.5">
-          <AlertTriangle size={11} className="text-amber-400/45 shrink-0 mt-0.5" />
+      <div className="px-5 py-3 space-y-2">
+        <div className="flex items-start gap-2 rounded-lg border border-black/[0.06] bg-black/[0.02] px-3.5 py-2.5">
+          <AlertTriangle size={11} className="text-[#5F6368]/35 shrink-0 mt-0.5" />
+          <p className="text-[10px] font-light text-[#5F6368]/55 leading-relaxed">
+            <span className="font-medium text-[#5F6368]/70">Escopo:</span> apenas{" "}
+            <span className="font-mono text-[9px]">Meta Ads principal</span>, últimos{" "}
+            <span className="font-mono text-[9px]">7 dias</span>. Google Ads, demográficos, regional e
+            keywords <span className="font-medium">não são executados</span> por este botão. Para atualizar
+            todos os dados de uma vez, use a{" "}
+            <span className="font-medium text-vitti-blue/60">Sincronização Completa</span> acima.
+          </p>
+        </div>
+        <div className="flex items-start gap-2 rounded-lg border border-amber-400/[0.10] bg-amber-400/[0.025] px-3.5 py-2.5">
+          <AlertTriangle size={11} className="text-amber-400/40 shrink-0 mt-0.5" />
           <p className="text-[10px] font-light text-amber-400/50 leading-relaxed">
             Somente contas mapeadas serão gravadas em{" "}
             <span className="font-mono text-[9px]">performance_daily</span>. A sincronização é

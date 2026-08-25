@@ -42,12 +42,14 @@ export interface RegionalSyncResult {
 
 // ── Core sync ─────────────────────────────────────────────────────────────────
 
-export async function syncWindsorRegionalBreakdown(): Promise<RegionalSyncResult> {
+export async function syncWindsorRegionalBreakdown(
+  opts?: { dateFrom?: string; dateTo?: string },
+): Promise<RegionalSyncResult> {
   const today = new Date();
-  const dateTo = today.toISOString().slice(0, 10);
+  const dateTo = opts?.dateTo ?? today.toISOString().slice(0, 10);
   const fromDay = new Date(today);
   fromDay.setUTCDate(fromDay.getUTCDate() - 6);
-  const dateFrom = fromDay.toISOString().slice(0, 10);
+  const dateFrom = opts?.dateFrom ?? fromDay.toISOString().slice(0, 10);
   const dateRange = `${dateFrom}/${dateTo}`;
 
   const base: RegionalSyncResult = {

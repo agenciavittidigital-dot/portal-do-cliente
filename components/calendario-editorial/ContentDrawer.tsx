@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationRecipientsSelect } from "./NotificationRecipientsSelect";
+import { SuggestionReviewPanel } from "./SuggestionReviewPanel";
+import { useEditorialSuggestions } from "@/lib/hooks/useEditorialSuggestions";
 
 interface CategoryOption { id: string; name: string; color: string }
 interface StatusOption   { id: string; name: string; color: string }
@@ -157,6 +159,13 @@ export function ContentDrawer({
   const commentsEndRef = useRef<HTMLDivElement>(null);
 
   const isEditing = !!editItem;
+
+  const {
+    suggestions,
+    loading: loadingSuggestions,
+    accept: acceptSuggestion,
+    reject: rejectSuggestion,
+  } = useEditorialSuggestions(editItem?.id ?? null, isEditing && open);
 
   useEffect(() => {
     if (!open) {
@@ -746,6 +755,16 @@ export function ContentDrawer({
                 </>
               )}
             </div>
+
+            {/* Sugestões — apenas quando editando conteúdo existente */}
+            {isEditing && (
+              <SuggestionReviewPanel
+                suggestions={suggestions}
+                loading={loadingSuggestions}
+                onAccept={acceptSuggestion}
+                onReject={rejectSuggestion}
+              />
+            )}
 
           </div>
 

@@ -37,6 +37,8 @@ interface Props {
   initialStartDate?: string;
   initialEndDate?: string;
   clientName?: string;
+  isAdmin?: boolean;
+  clientId?: string;
 }
 
 export function MetricasDashboard({
@@ -53,6 +55,8 @@ export function MetricasDashboard({
   initialStartDate,
   initialEndDate,
   clientName = "",
+  isAdmin = false,
+  clientId,
 }: Props) {
   // Plataformas habilitadas: lê available_channels de todos os dashboards e filtra PLATFORMS.
   // Array vazio = não configurado = mostrar todas (compatibilidade retroativa).
@@ -134,6 +138,8 @@ export function MetricasDashboard({
           initialStartDate={initialStartDate}
           initialEndDate={initialEndDate}
           clientName={clientName}
+          isAdmin={isAdmin}
+          clientId={clientId}
         />
       ) : blocksForChannel.length > 0 ? (
         selected === "meta_ads" ? (
@@ -148,6 +154,8 @@ export function MetricasDashboard({
             initialStartDate={initialStartDate}
             initialEndDate={initialEndDate}
             clientName={clientName}
+            isAdmin={isAdmin}
+            clientId={clientId}
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

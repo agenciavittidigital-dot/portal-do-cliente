@@ -165,12 +165,14 @@ async function fetchGoogleAdsData(dates: { dateFrom: string; dateTo: string }): 
 
 // ── Sync principal ────────────────────────────────────────────────────────────
 
-export async function syncGoogleAdsMappedAccounts(): Promise<GoogleAdsSyncResult> {
+export async function syncGoogleAdsMappedAccounts(
+  opts?: { dateFrom?: string; dateTo?: string },
+): Promise<GoogleAdsSyncResult> {
   const today = new Date();
-  const dateTo = today.toISOString().slice(0, 10);
+  const dateTo = opts?.dateTo ?? today.toISOString().slice(0, 10);
   const fromDay = new Date(today);
   fromDay.setUTCDate(fromDay.getUTCDate() - 6);
-  const dateFrom = fromDay.toISOString().slice(0, 10);
+  const dateFrom = opts?.dateFrom ?? fromDay.toISOString().slice(0, 10);
   const dateRange = `${dateFrom}/${dateTo}`;
 
   const base: GoogleAdsSyncResult = {

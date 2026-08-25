@@ -14,6 +14,9 @@ import { cn } from "@/lib/utils";
 import { CategoryTag } from "./CategoryTag";
 import { StatusBadge } from "./StatusBadge";
 import { ArtPreviewModal } from "./ArtPreviewModal";
+import { SuggestionInlineHighlight } from "./SuggestionInlineHighlight";
+import { SuggestionModal } from "./SuggestionModal";
+import { useEditorialSuggestions } from "@/lib/hooks/useEditorialSuggestions";
 import type { ContentRow } from "./CalendarioEditorialShell";
 import { NotificationRecipientsSelect } from "./NotificationRecipientsSelect";
 
@@ -128,6 +131,18 @@ export function ContentViewDrawer({
   const [selectedProfileIds, setSelectedProfileIds] = useState<string[]>([]);
   const [artModalOpen, setArtModalOpen] = useState(false);
   const [artModalIndex, setArtModalIndex] = useState(0);
+  const [suggestionModalOpen, setSuggestionModalOpen] = useState(false);
+  const [pendingField, setPendingField] = useState<"description" | "caption" | null>(null);
+  const [pendingSelection, setPendingSelection] = useState<{
+    start: number;
+    end: number;
+    text: string;
+  } | null>(null);
+
+  const { suggestions, submit: submitSuggestion } = useEditorialSuggestions(
+    item?.id ?? null,
+    open && !!item,
+  );
 
   const responsiblesMap = new Map(responsibles.map((r) => [r.id, r.name]));
 
@@ -141,6 +156,9 @@ export function ContentViewDrawer({
       setArtModalOpen(false);
       setArtModalIndex(0);
       setSelectedProfileIds([]);
+      setSuggestionModalOpen(false);
+      setPendingField(null);
+      setPendingSelection(null);
       return;
     }
 
@@ -210,6 +228,30 @@ export function ContentViewDrawer({
     }
   }
 
+  function handleSuggestDescription(start: number, end: number, text: string) {
+    setPendingField("description");
+    setPendingSelection({ start, end, text });
+    setSuggestionModalOpen(true);
+  }
+
+  function handleSuggestCaption(start: number, end: number, text: string) {
+    setPendingField("caption");
+    setPendingSelection({ start, end, text });
+    setSuggestionModalOpen(true);
+  }
+
+  async function handleSuggestionSubmit(proposedText: string | null) {
+    if (!pendingField || !pendingSelection)
+      return { success: false, error: "Seleção inválida." };
+    return submitSuggestion({
+      field: pendingField,
+      original_start: pendingSelection.start,
+      original_end: pendingSelection.end,
+      original_text: pendingSelection.text,
+      proposed_text: proposedText,
+    });
+  }
+
   const category = item?.categoryName
     ? { name: item.categoryName, color: item.categoryColor! }
     : FALLBACK_CAT;
@@ -235,6 +277,19 @@ export function ContentViewDrawer({
         currentIndex={artModalIndex}
         onChangeIndex={setArtModalIndex}
         onClose={() => setArtModalOpen(false)}
+      />
+
+      {/* Modal de sugestão de alteração */}
+      <SuggestionModal
+        open={suggestionModalOpen}
+        field={pendingField ?? "description"}
+        selectedText={pendingSelection?.text ?? ""}
+        onClose={() => {
+          setSuggestionModalOpen(false);
+          setPendingField(null);
+          setPendingSelection(null);
+        }}
+        onSubmit={handleSuggestionSubmit}
       />
 
       {/* Drawer */}
@@ -308,13 +363,13 @@ export function ContentViewDrawer({
             <div>
               <FL>Descrição</FL>
               <FV>
-                {item.description ? (
-                  <span className="whitespace-pre-wrap">{item.description}</span>
-                ) : (
-                  <span className="text-vitti-fg-muted/40 italic text-xs">
-                    Sem descrição
-                  </span>
-                )}
+                <SuggestionInlineHighlight
+                  text={item.description}
+                  suggestions={suggestions}
+                  field="description"
+                  canSuggest={!isAdmin}
+                  onSuggest={handleSuggestDescription}
+                />
               </FV>
             </div>
 
@@ -322,13 +377,13 @@ export function ContentViewDrawer({
             <div>
               <FL>Legenda</FL>
               <FV>
-                {item.caption ? (
-                  <span className="whitespace-pre-wrap">{item.caption}</span>
-                ) : (
-                  <span className="text-vitti-fg-muted/40 italic text-xs">
-                    Sem legenda
-                  </span>
-                )}
+                <SuggestionInlineHighlight
+                  text={item.caption}
+                  suggestions={suggestions}
+                  field="caption"
+                  canSuggest={!isAdmin}
+                  onSuggest={handleSuggestCaption}
+                />
               </FV>
             </div>
 

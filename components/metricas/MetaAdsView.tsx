@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, ChevronDown, BarChart3, Film, FileDown, Loader2 } from "lucide-react";
+import { Calendar, ChevronDown, BarChart3, Film, FileDown, Loader2, ShoppingCart } from "lucide-react";
 import { exportDashboardToPdf } from "@/lib/pdf/exportDashboard";
 import { cn } from "@/lib/utils";
 import {
@@ -27,6 +27,7 @@ import type {
 import type { CreativeRow, MetaAdsCampaignRow } from "@/lib/data/performance";
 import type { RegionRow, DemographicRow } from "@/lib/data/performance-breakdowns";
 import { RegionHeatmap } from "./RegionHeatmap";
+import { ManualSalesModal } from "./ManualSalesModal";
 
 // ── Opções do filtro de período ───────────────────────────────────────────────
 
@@ -1136,6 +1137,8 @@ interface MetaAdsViewProps {
   initialStartDate?: string;
   initialEndDate?: string;
   clientName?: string;
+  isAdmin?: boolean;
+  clientId?: string;
 }
 
 export function MetaAdsView({
@@ -1149,6 +1152,8 @@ export function MetaAdsView({
   initialStartDate = "",
   initialEndDate = "",
   clientName = "",
+  isAdmin = false,
+  clientId,
 }: MetaAdsViewProps) {
   const router = useRouter();
   const dashboardRef = useRef<HTMLDivElement>(null);
@@ -1160,6 +1165,7 @@ export function MetaAdsView({
   const [saleCardIdx, setSaleCardIdx] = useState(0);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [showManualSalesModal, setShowManualSalesModal] = useState(false);
 
   function handlePeriodChange(p: string, start: string, end: string) {
     setPeriod(p);
@@ -1324,6 +1330,15 @@ export function MetaAdsView({
                 {pdfError}
               </span>
             )}
+            {isAdmin && clientId && (
+              <button
+                onClick={() => setShowManualSalesModal(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/[0.08] text-[10px] font-light text-emerald-700 hover:bg-emerald-500/[0.15] transition-colors select-none"
+              >
+                <ShoppingCart size={9} className="shrink-0" />
+                Vendas manuais
+              </button>
+            )}
             <button
               onClick={handleExportPdf}
               disabled={exportingPdf}
@@ -1482,6 +1497,17 @@ export function MetaAdsView({
         <div data-pdf-section="campaigns">
           <MetaCampaignsTable campaigns={campaigns} />
         </div>
+      )}
+
+      {/* ── Modal de vendas manuais (admin only) ─────────────────── */}
+      {isAdmin && clientId && (
+        <ManualSalesModal
+          open={showManualSalesModal}
+          onClose={() => setShowManualSalesModal(false)}
+          clientId={clientId}
+          channel="meta_ads"
+          onDataChange={() => router.refresh()}
+        />
       )}
     </div>
   );

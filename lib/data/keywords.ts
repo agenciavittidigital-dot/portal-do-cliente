@@ -23,7 +23,11 @@ export async function loadGoogleAdsKeywords(
       .gte("date", startDate)
       .lte("date", endDate);
 
-    if (error || !data?.length) return [];
+    if (error) {
+      console.error("[loadGoogleAdsKeywords] Erro na consulta:", error.message);
+      return [];
+    }
+    if (!data?.length) return [];
 
     // Agrega por keyword_text somando impressões e cliques de múltiplas campanhas/dias
     const byKeyword = new Map<string, { impressions: number; clicks: number }>();

@@ -1,5 +1,5 @@
 import "server-only";
-import { fetchWindsorSyncData, fetchWindsorSyncDataForRange, WINDSOR_SYNC_FIELDS } from "./client";
+import { fetchWindsorSyncDataForRange, WINDSOR_SYNC_FIELDS } from "./client";
 import {
   extractFromActions,
   LEAD_ACTION_TYPES,
@@ -97,12 +97,14 @@ export interface SyncResult {
 
 // ── Core sync ─────────────────────────────────────────────────────────────────
 
-export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
+export async function syncWindsorMappedAccounts(
+  opts?: { dateFrom?: string; dateTo?: string },
+): Promise<SyncResult> {
   const today = new Date();
-  const dateTo = today.toISOString().slice(0, 10);
+  const dateTo = opts?.dateTo ?? today.toISOString().slice(0, 10);
   const fromDay = new Date(today);
   fromDay.setUTCDate(fromDay.getUTCDate() - 6);
-  const dateFrom = fromDay.toISOString().slice(0, 10);
+  const dateFrom = opts?.dateFrom ?? fromDay.toISOString().slice(0, 10);
   const dateRange = `${dateFrom}/${dateTo}`;
 
   const base: SyncResult = {
@@ -120,7 +122,7 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
   };
 
   // ── 1. Fetch Windsor (conjunto completo de campos) ────────────────────────
-  const response = await fetchWindsorSyncData();
+  const response = await fetchWindsorSyncDataForRange(dateFrom, dateTo);
 
   if (response.error) {
     const detail = response.errorDetail ? ` — ${response.errorDetail}` : "";
@@ -400,29 +402,45 @@ export async function syncWindsorMappedAccounts(): Promise<SyncResult> {
     });
   }
 
-  // ── 6. Upsert usando as colunas exatas da constraint ──────────────────────
+  // ── 6. Upsert em batches de 50 rows ──────────────────────────────────────
   //
-  // onConflict deve listar as colunas da constraint, não o nome da constraint.
-  // A constraint real é: client_id, integration_id, channel, date, campaign_id, adset_id, ad_id
-  // Isso garante idempotência: rodar duas vezes atualiza, nunca duplica.
+  // Um único upsert de 1.000–2.000 rows excede o statement_timeout do Supabase
+  // quando a maioria das rows são INSERTs novos (histórico de 30 dias não sincronizado).
+  // Batches de 50 distribuem o trabalho em múltiplas instruções, cada uma dentro do timeout.
+  // onConflict e ignoreDuplicates são idênticos ao upsert original.
 
-  const { error: upsertError } = await admin
-    .from("performance_daily")
-    .upsert(rows, {
-      onConflict: "client_id,integration_id,channel,date,campaign_id,adset_id,ad_id",
-      ignoreDuplicates: false,
-    });
+  const BATCH_SIZE = 50;
+  let totalUpserted = 0;
 
-  if (upsertError) {
-    console.error("[windsor/sync] Erro no upsert:", upsertError.message);
-    return {
-      ...base,
-      error: "Falha ao gravar em performance_daily.",
-      errorDetail: upsertError.message,
-    };
+  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+    const batch = rows.slice(i, i + BATCH_SIZE);
+    const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+    const totalBatches = Math.ceil(rows.length / BATCH_SIZE);
+
+    const { error: upsertError } = await admin
+      .from("performance_daily")
+      .upsert(batch, {
+        onConflict: "client_id,integration_id,channel,date,campaign_id,adset_id,ad_id",
+        ignoreDuplicates: false,
+      });
+
+    if (upsertError) {
+      console.error(
+        `[windsor/sync] Erro no upsert (batch ${batchNum}/${totalBatches}):`,
+        upsertError.message,
+      );
+      return {
+        ...base,
+        upserted: totalUpserted,
+        error: "Falha ao gravar em performance_daily.",
+        errorDetail: upsertError.message,
+      };
+    }
+
+    totalUpserted += batch.length;
   }
 
-  base.upserted = rows.length;
+  base.upserted = totalUpserted;
 
   // ── 7. Amostra dos registros gravados (sem dados sensíveis) ───────────────
   base.sampleSaved = [...aggregated.values()].slice(0, 3).map((r) => ({

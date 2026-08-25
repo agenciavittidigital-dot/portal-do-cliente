@@ -68,11 +68,29 @@ export async function loadPerformanceData(
       .not("account_name", "ilike", "%demo%")
       .not("campaign_id", "ilike", "%demo%");
 
-    if (error || !rawRows?.length) return null;
+    if (error) return null;
 
-    // Soma métricas base; recalcula derivadas para evitar médias de médias
+    // Busca vendas manuais para o mesmo período (sem filtro anti-demo — são registros intencionais)
+    const { data: manualRows } = await admin
+      .from("manual_sales")
+      .select("date, purchases, purchase_value")
+      .eq("client_id", clientId)
+      .eq("channel", channel)
+      .gte("date", startDate)
+      .lte("date", endDate);
+
+    const hasWindsor = !!rawRows?.length;
+    const hasManual = !!manualRows?.length;
+
+    // Sem dados em nenhuma fonte: retorna null (dashboard mostra estado vazio)
+    if (!hasWindsor && !hasManual) return null;
+
+    // Soma métricas base Windsor; recalcula derivadas para evitar médias de médias
     const s = (key: string) =>
-      rawRows.reduce((acc, r) => acc + (Number((r as Record<string, unknown>)[key]) || 0), 0);
+      (rawRows ?? []).reduce(
+        (acc, r) => acc + (Number((r as Record<string, unknown>)[key]) || 0),
+        0
+      );
 
     const totalSpend = s("spend");
     const totalImpressions = s("impressions");
@@ -86,11 +104,25 @@ export async function loadPerformanceData(
 
     // ROAS: média ponderada por spend dos valores armazenados pela Windsor.
     // Quando purchase_value = 0 mas Windsor retornou roas escalar, usa o valor Windsor.
-    const roasWeightedSum = rawRows.reduce((acc, r) => {
+    const roasWeightedSum = (rawRows ?? []).reduce((acc, r) => {
       const roasVal = Number((r as Record<string, unknown>).roas) || 0;
       const spendVal = Number((r as Record<string, unknown>).spend) || 0;
       return acc + roasVal * spendVal;
     }, 0);
+
+    // Totais de vendas manuais
+    const manualTotalPurchases = (manualRows ?? []).reduce(
+      (acc, r) => acc + (Number(r.purchases) || 0),
+      0
+    );
+    const manualTotalValue = (manualRows ?? []).reduce(
+      (acc, r) => acc + (Number(r.purchase_value) || 0),
+      0
+    );
+
+    // Totais finais: Windsor + manual
+    const finalPurchases = totalPurchases + manualTotalPurchases;
+    const finalPurchaseValue = totalPurchaseValue + manualTotalValue;
 
     const summary: PerformanceSummary = {
       spend: totalSpend,
@@ -101,19 +133,21 @@ export async function loadPerformanceData(
       ctr: totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : null,
       cpc: totalClicks > 0 ? totalSpend / totalClicks : null,
       cpm: totalImpressions > 0 ? (totalSpend / totalImpressions) * 1000 : null,
-      // Métricas de conversão: null quando Windsor não retornou dados (sum = 0)
+      // Métricas de conversão: null quando não há dados (sum = 0)
       leads: totalLeads > 0 ? totalLeads : null,
       cost_per_lead: totalLeads > 0 ? totalSpend / totalLeads : null,
       messages_started: totalMessages > 0 ? totalMessages : null,
       cost_per_message: totalMessages > 0 ? totalSpend / totalMessages : null,
-      purchases: totalPurchases > 0 ? totalPurchases : null,
-      cost_per_purchase: totalPurchases > 0 ? totalSpend / totalPurchases : null,
-      purchase_value: totalPurchaseValue > 0 ? totalPurchaseValue : null,
-      roas: totalPurchaseValue > 0 && totalSpend > 0
-        ? totalPurchaseValue / totalSpend
-        : roasWeightedSum > 0 && totalSpend > 0
-        ? roasWeightedSum / totalSpend
-        : null,
+      // purchases e purchase_value incluem vendas manuais
+      purchases: finalPurchases > 0 ? finalPurchases : null,
+      cost_per_purchase: finalPurchases > 0 ? totalSpend / finalPurchases : null,
+      purchase_value: finalPurchaseValue > 0 ? finalPurchaseValue : null,
+      roas:
+        finalPurchaseValue > 0 && totalSpend > 0
+          ? finalPurchaseValue / totalSpend
+          : roasWeightedSum > 0 && totalSpend > 0
+          ? roasWeightedSum / totalSpend
+          : null,
       engagements: s("engagements"),
       video_views_25: s("video_views_25"),
       video_views_75: s("video_views_75"),
@@ -125,7 +159,7 @@ export async function loadPerformanceData(
     // Isso garante que gráfico e tabela recebam sempre um ponto por data.
     const byDate = new Map<string, PerformanceRow>();
 
-    for (const raw of rawRows) {
+    for (const raw of rawRows ?? []) {
       const r = raw as Record<string, unknown>;
       const date = String(r.date);
       const spend = Number(r.spend) || 0;
@@ -181,6 +215,40 @@ export async function loadPerformanceData(
           cpm: impressions > 0 ? (spend / impressions) * 1000 : null,
           frequency: reach > 0 ? impressions / reach : null,
           cost_per_lead: leads > 0 ? spend / leads : null,
+        });
+      }
+    }
+
+    // Injeta vendas manuais por data (cria entrada se o dia não existe no Windsor)
+    for (const mr of manualRows ?? []) {
+      const dateStr = String(mr.date);
+      const manPurchases = Number(mr.purchases) || 0;
+      const manValue = Number(mr.purchase_value) || 0;
+
+      const existing = byDate.get(dateStr);
+      if (existing) {
+        existing.purchases += manPurchases;
+        existing.purchase_value += manValue;
+      } else {
+        byDate.set(dateStr, {
+          date: dateStr,
+          spend: 0,
+          impressions: 0,
+          reach: 0,
+          clicks: 0,
+          messages_started: 0,
+          leads: 0,
+          purchases: manPurchases,
+          purchase_value: manValue,
+          engagements: 0,
+          video_views_25: 0,
+          video_views_75: 0,
+          landing_page_views: 0,
+          ctr: null,
+          cpc: null,
+          cpm: null,
+          frequency: null,
+          cost_per_lead: null,
         });
       }
     }
@@ -345,9 +413,9 @@ export async function loadMetaAdsCampaigns(
       .not("campaign_id", "ilike", "%demo%")
       .order("date", { ascending: false });
 
-    if (error || !data?.length) return [];
+    if (error) return [];
 
-    const byId = new Map<string, {
+    type CampaignAccum = {
       campaignName: string | null;
       campaignObjective: string | null;
       spend: number;
@@ -356,9 +424,11 @@ export async function loadMetaAdsCampaigns(
       leads: number;
       messages_started: number;
       purchases: number;
-    }>();
+    };
 
-    for (const row of data) {
+    const byId = new Map<string, CampaignAccum>();
+
+    for (const row of data ?? []) {
       const r = row as Record<string, unknown>;
       const id = String(r.campaign_id ?? "unknown");
       const name = r.campaign_name;
@@ -397,6 +467,42 @@ export async function loadMetaAdsCampaigns(
         });
       }
     }
+
+    // Merge de vendas manuais Meta Ads com campaign_id definido.
+    // Spend e métricas de mídia permanecem exclusivamente do Windsor.
+    const { data: manualRows } = await admin
+      .from("manual_sales")
+      .select("campaign_id, campaign_name, purchases")
+      .eq("client_id", clientId)
+      .eq("channel", "meta_ads")
+      .gte("date", startDate)
+      .lte("date", endDate)
+      .not("campaign_id", "is", null);
+
+    for (const mr of manualRows ?? []) {
+      if (!mr.campaign_id) continue;
+      const id = String(mr.campaign_id);
+      const manPurchases = Number(mr.purchases) || 0;
+
+      const existing = byId.get(id);
+      if (existing) {
+        existing.purchases += manPurchases;
+      } else {
+        // Campanha sem dados Windsor no período: cria entrada com métricas de mídia zeradas
+        byId.set(id, {
+          campaignName: mr.campaign_name ?? null,
+          campaignObjective: null,
+          spend: 0,
+          impressions: 0,
+          clicks: 0,
+          leads: 0,
+          messages_started: 0,
+          purchases: manPurchases,
+        });
+      }
+    }
+
+    if (byId.size === 0) return [];
 
     return [...byId.entries()]
       .map(([campaignId, c]) => ({

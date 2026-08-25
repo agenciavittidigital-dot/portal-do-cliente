@@ -22,6 +22,28 @@ export async function exportDashboardToPdf(opts: ExportDashboardOptions): Promis
     import("jspdf"),
   ]);
 
+  // ── Load brand logo for PDF header ──────────────────────────────────────────
+  let logoDataUrl: string | null = null;
+  let logoAspect = 1;
+  try {
+    const resp = await fetch("/logo-vitti-icon.png");
+    const blob = await resp.blob();
+    logoDataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    logoAspect = await new Promise<number>((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img.naturalWidth / img.naturalHeight);
+      img.onerror = () => resolve(1);
+      img.src = logoDataUrl!;
+    });
+  } catch {
+    // Logo load failed — header renders without brand mark
+  }
+
   const origin = window.location.origin;
   const BLANK_GIF =
     "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
@@ -120,7 +142,7 @@ export async function exportDashboardToPdf(opts: ExportDashboardOptions): Promis
 
   // ── 5. Fallback PDF ──────────────────────────────────────────────────────────
   if (sections.length === 0) {
-    const pdf = buildHeader(jsPDF, clientName, platformLabel, periodLabel, 1, 1);
+    const pdf = buildHeader(jsPDF, clientName, platformLabel, periodLabel, 1, 1, logoDataUrl, logoAspect);
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(9);
     pdf.setTextColor(100, 100, 100);
@@ -142,7 +164,7 @@ export async function exportDashboardToPdf(opts: ExportDashboardOptions): Promis
   const totalPages = simulateLayout(sections.map((s) => s.heightMm));
 
   // ── 7. Build multi-page PDF ──────────────────────────────────────────────────
-  const pdf = buildHeader(jsPDF, clientName, platformLabel, periodLabel, 1, totalPages);
+  const pdf = buildHeader(jsPDF, clientName, platformLabel, periodLabel, 1, totalPages, logoDataUrl, logoAspect);
 
   let currentY = MARGIN + HEADER_H;  // current insertion point (mm from top)
   let pageNum = 1;
@@ -161,7 +183,7 @@ export async function exportDashboardToPdf(opts: ExportDashboardOptions): Promis
     if (heightMm + extra > availH && !firstOnPage) {
       pdf.addPage();
       pageNum++;
-      drawHeader(pdf, clientName, platformLabel, pageNum, totalPages);
+      drawHeader(pdf, clientName, platformLabel, pageNum, totalPages, logoDataUrl, logoAspect);
       currentY     = MARGIN + HEADER_H;
       firstOnPage  = true;
     }
@@ -184,7 +206,7 @@ export async function exportDashboardToPdf(opts: ExportDashboardOptions): Promis
         if (sliceCount > 0) {
           pdf.addPage();
           pageNum++;
-          drawHeader(pdf, clientName, platformLabel, pageNum, totalPages);
+          drawHeader(pdf, clientName, platformLabel, pageNum, totalPages, logoDataUrl, logoAspect);
           currentY    = MARGIN + HEADER_H;
           firstOnPage = true;
         }
@@ -269,7 +291,7 @@ function simulateLayout(heights: number[]): number {
 // ── PDF header builders ──────────────────────────────────────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function buildHeader(jsPDF: any, clientName: string, platformLabel: string, periodLabel: string, page: number, total: number) {
+function buildHeader(jsPDF: any, clientName: string, platformLabel: string, periodLabel: string, page: number, total: number, logoDataUrl: string | null = null, logoAspect = 1) {
   const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
   const now = new Date().toLocaleString("pt-BR", {
@@ -288,16 +310,13 @@ function buildHeader(jsPDF: any, clientName: string, platformLabel: string, peri
   pdf.setFillColor(23, 31, 56);
   pdf.rect(0, 0, PAGE_W, HEADER_H, "F");
 
-  // Left: brand
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(11);
-  pdf.setTextColor(255, 255, 255);
-  pdf.text("Vitti Digital", MARGIN, 9);
-
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(7);
-  pdf.setTextColor(99, 138, 204);
-  pdf.text("Portal do Cliente", MARGIN, 15);
+  // Left: brand logo (vertically centred in header band)
+  if (logoDataUrl) {
+    const logoH = 14;
+    const logoW = Math.min(logoH * logoAspect, 50);
+    const logoY = (HEADER_H - logoH) / 2;
+    pdf.addImage(logoDataUrl, "PNG", MARGIN, logoY, logoW, logoH);
+  }
 
   // Centre: client + platform + period
   pdf.setFont("helvetica", "bold");
@@ -325,7 +344,7 @@ function buildHeader(jsPDF: any, clientName: string, platformLabel: string, peri
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function drawHeader(pdf: any, clientName: string, platformLabel: string, page: number, total: number) {
+function drawHeader(pdf: any, clientName: string, platformLabel: string, page: number, total: number, logoDataUrl: string | null = null, logoAspect = 1) {
   // Same surface fill as buildHeader so every page has a consistent background
   pdf.setFillColor(248, 250, 252);
   pdf.rect(0, 0, PAGE_W, PAGE_H, "F");
@@ -333,15 +352,13 @@ function drawHeader(pdf: any, clientName: string, platformLabel: string, page: n
   pdf.setFillColor(23, 31, 56);
   pdf.rect(0, 0, PAGE_W, HEADER_H, "F");
 
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(11);
-  pdf.setTextColor(255, 255, 255);
-  pdf.text("Vitti Digital", MARGIN, 9);
-
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(7);
-  pdf.setTextColor(99, 138, 204);
-  pdf.text("Portal do Cliente", MARGIN, 15);
+  // Left: brand logo (vertically centred in header band)
+  if (logoDataUrl) {
+    const logoH = 14;
+    const logoW = Math.min(logoH * logoAspect, 50);
+    const logoY = (HEADER_H - logoH) / 2;
+    pdf.addImage(logoDataUrl, "PNG", MARGIN, logoY, logoW, logoH);
+  }
 
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(10);

@@ -100,6 +100,8 @@ export default async function MetricasPage({
             regionBreakdown={regionBreakdown ?? []}
             demographicBreakdown={demographicBreakdown ?? []}
             clientName={targetClientName}
+            isAdmin={isAdmin}
+            clientId={targetClientId ?? undefined}
             {...filterProps}
           />
         )}
@@ -150,6 +152,8 @@ export default async function MetricasPage({
           regionBreakdown={regionBreakdown ?? []}
           demographicBreakdown={demographicBreakdown ?? []}
           clientName={ctx?.client?.name ?? ""}
+          isAdmin={false}
+          clientId={targetClientId ?? undefined}
           {...filterProps}
         />
       ) : (

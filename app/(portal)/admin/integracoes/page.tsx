@@ -8,6 +8,7 @@ import { WindsorMetaRawProbePanel } from "@/components/admin/WindsorMetaRawProbe
 import { WindsorGoogleAdsPanel } from "@/components/admin/WindsorGoogleAdsPanel";
 import { WindsorRegionalSyncPanel } from "@/components/admin/WindsorRegionalSyncPanel";
 import { WindsorDemographicSyncPanel } from "@/components/admin/WindsorDemographicSyncPanel";
+import { WindsorFullSyncPanel } from "@/components/admin/WindsorFullSyncPanel";
 import { getWindsorStatus } from "@/lib/integrations/windsor/client";
 import { loadActiveClients } from "@/lib/data/dashboards";
 import Link from "next/link";
@@ -35,6 +36,19 @@ export default async function IntegracoesPage() {
           Windsor AI, sincronizações e ferramentas avançadas
         </p>
       </div>
+
+      {/* ── Sincronização Completa ──────────────────────────────── */}
+      <section>
+        <p className="text-[9px] text-vitti-blue/40 tracking-[0.2em] uppercase font-light mb-3">
+          Sincronização completa — recomendada
+        </p>
+        <WindsorFullSyncPanel />
+        <p className="text-[10px] font-light text-vitti-blue/35 mt-3 leading-relaxed">
+          Executa todos os processos simultaneamente com janela de 30 dias: Meta Ads, Google Ads,
+          demográficos, regional e keywords. Para diagnóstico ou sincronizações pontuais, use os
+          painéis individuais abaixo.
+        </p>
+      </section>
 
       {/* ── Meta Ads / Windsor ───────────────────────────────────── */}
       <section>

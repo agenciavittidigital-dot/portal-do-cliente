@@ -5,10 +5,12 @@ import { syncWindsorMappedAccounts } from "@/lib/integrations/windsor/sync";
 import { syncGoogleAdsMappedAccounts } from "@/lib/integrations/windsor/google-ads-sync";
 import { syncWindsorDemographicBreakdown } from "@/lib/integrations/windsor/demographic-sync";
 import { syncWindsorRegionalBreakdown } from "@/lib/integrations/windsor/regional-sync";
+import { syncGoogleAdsKeywords } from "@/lib/integrations/windsor/google-ads-keywords-sync";
 import type { SyncResult } from "@/lib/integrations/windsor/sync";
 import type { GoogleAdsSyncResult } from "@/lib/integrations/windsor/google-ads-sync";
 import type { DemographicSyncResult } from "@/lib/integrations/windsor/demographic-sync";
 import type { RegionalSyncResult } from "@/lib/integrations/windsor/regional-sync";
+import type { KeywordsSyncResult } from "@/lib/integrations/windsor/google-ads-keywords-sync";
 
 // Permite até 300s no Vercel Pro — necessário para 4 syncs paralelos com last_30d.
 export const maxDuration = 300;
@@ -22,6 +24,7 @@ export interface CronSyncResponse {
   googleAds: GoogleAdsSyncResult | null;
   demographic: DemographicSyncResult | null;
   regional: RegionalSyncResult | null;
+  keywords: KeywordsSyncResult | null;
   error?: string;
 }
 
@@ -93,6 +96,20 @@ function regionalFallback(cause: unknown): RegionalSyncResult {
   };
 }
 
+function keywordsFallback(cause: unknown): KeywordsSyncResult {
+  return {
+    success: false,
+    rowsFetched: 0,
+    googleAdsRows: 0,
+    rowsSkipped: 0,
+    rowsUpserted: 0,
+    integrationsMatched: 0,
+    dateRange: "",
+    syncedAt: new Date().toISOString(),
+    error: cause instanceof Error ? cause.message : "Erro inesperado durante sync de palavras-chave.",
+  };
+}
+
 // ── Handler principal (GET — compatível com Vercel Cron e chamadas externas) ──
 //
 // Autenticação: Authorization: Bearer <WINDSOR_CRON_SECRET>
@@ -117,6 +134,7 @@ export async function GET(request: NextRequest): Promise<Response> {
         googleAds: null,
         demographic: null,
         regional: null,
+        keywords: null,
         error: "Não autorizado.",
       },
       { status: 401 }
@@ -125,14 +143,15 @@ export async function GET(request: NextRequest): Promise<Response> {
 
   const executedAt = new Date().toISOString();
 
-  // Executa os 4 syncs em paralelo.
+  // Executa os 5 syncs em paralelo.
   // Promise.allSettled garante que uma falha não cancela os demais.
-  const [metaSettled, googleSettled, demographicSettled, regionalSettled] =
+  const [metaSettled, googleSettled, demographicSettled, regionalSettled, keywordsSettled] =
     await Promise.allSettled([
       syncWindsorMappedAccounts(),
       syncGoogleAdsMappedAccounts(),
       syncWindsorDemographicBreakdown(),
       syncWindsorRegionalBreakdown(),
+      syncGoogleAdsKeywords(),
     ]);
 
   const meta: SyncResult =
@@ -155,12 +174,22 @@ export async function GET(request: NextRequest): Promise<Response> {
       ? regionalSettled.value
       : regionalFallback(regionalSettled.reason);
 
+  const keywords: KeywordsSyncResult =
+    keywordsSettled.status === "fulfilled"
+      ? keywordsSettled.value
+      : keywordsFallback(keywordsSettled.reason);
+
+  if (!keywords.success) {
+    console.error("[google-ads-keywords-sync]", keywords.error ?? "Falha sem mensagem.");
+  }
+
   const overallSuccess =
     meta.success && googleAds.success && demographic.success && regional.success;
 
-  // 200 → todos OK; 207 → ao menos um falhou (partial success)
+  // 200 → todos OK; 207 → ao menos um falhou (partial success).
+  // keywords.success não entra em overallSuccess — falha isolada não degrada o cron principal.
   return NextResponse.json<CronSyncResponse>(
-    { success: overallSuccess, executedAt, meta, googleAds, demographic, regional },
+    { success: overallSuccess, executedAt, meta, googleAds, demographic, regional, keywords },
     { status: overallSuccess ? 200 : 207 }
   );
 }
