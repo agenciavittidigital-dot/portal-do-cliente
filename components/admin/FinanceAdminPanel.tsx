@@ -19,6 +19,7 @@ import {
   Trash2,
 } from "lucide-react";
 import type { AdminInvoiceRow, InvoiceStatus } from "@/lib/data/invoices-admin";
+import { PaymentsAdminSection } from "@/components/admin/PaymentsAdminSection";
 import type { AdminClientRow } from "@/lib/data/clients-admin";
 import type { InvoiceListResponse, InvoiceCreateResponse } from "@/app/api/admin/finance/invoices/route";
 import type { InvoicePatchResponse } from "@/app/api/admin/finance/invoices/[id]/route";
@@ -893,9 +894,11 @@ export function FinanceAdminPanel({ allClients }: { allClients: AdminClientRow[]
         <p className="text-[9px] font-light text-[#5F6368]/55 leading-relaxed">
           <span className="text-[#5F6368]/70">Notas fiscais por upload</span> — faça upload do arquivo
           da NF (PDF, PNG ou JPEG). O arquivo fica em storage privado e o download é gerado com
-          link temporário. Boletos e cobranças automáticas ficam para sprint futura.
+          link temporário.
         </p>
       </div>
+
+      <PaymentsAdminSection clientId={selectedClientId} />
 
       {/* Edit / Create modal */}
       {editingInvoice !== null && (

@@ -21,7 +21,7 @@ export default async function AdminFinanceiroPage() {
           </div>
         </div>
         <p className="text-sm text-vitti-blue/50 mt-1.5 font-light">
-          Gerencie notas fiscais por cliente — registro manual de NFs emitidas.
+          Gerencie notas fiscais e boletos por cliente.
         </p>
       </div>
 

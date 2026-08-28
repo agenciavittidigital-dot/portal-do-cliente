@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import {
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   CreditCard,
   Download,
 } from "lucide-react";
@@ -57,8 +59,11 @@ interface Props {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function PaymentHistorySection({ payments, downloadUrls }: Props) {
+  const [expanded, setExpanded] = useState(false);
   const [filterVal, setFilterVal] = useState("");
   const [page, setPage] = useState(1);
+
+  if (payments.length === 0) return null;
 
   // Opções de filtro por mês/ano de paid_at ou due_date
   const filterMap = new Map<string, string>();
@@ -96,6 +101,19 @@ export function PaymentHistorySection({ payments, downloadUrls }: Props) {
   const pageRows   = filtered.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
 
   return (
+    <div className="mt-4">
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="flex items-center gap-1.5 text-[10px] font-light text-[#455cab]/50 hover:text-[#455cab]/80 transition-colors mb-3"
+      >
+        {expanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+        {expanded ? "Ocultar histórico de pagamentos" : "Ver histórico de pagamentos"}
+        <span className="text-[9px] text-[#171f38]/30 font-light ml-0.5">
+          ({payments.length} {payments.length === 1 ? "pagamento" : "pagamentos"})
+        </span>
+      </button>
+
+      {expanded && (
     <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-hidden">
       {/* Cabeçalho */}
       <div className="px-4 py-3.5 border-b border-slate-200/60 flex items-center justify-between gap-3 flex-wrap">
@@ -237,6 +255,8 @@ export function PaymentHistorySection({ payments, downloadUrls }: Props) {
             )}
           </div>
         </div>
+      )}
+    </div>
       )}
     </div>
   );
