@@ -15,6 +15,7 @@ import {
   Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getPlatformLabel } from "@/lib/editorial-platforms";
 import { CategoryTag } from "./CategoryTag";
 import { StatusBadge } from "./StatusBadge";
 import { ArtPreviewModal } from "./ArtPreviewModal";
@@ -38,6 +39,7 @@ export interface ListaContentItem {
   videoUrl: string | null;
   attachmentCount: number;
   commentCount: number;
+  platforms: string[];
 }
 
 interface AttachmentItem {
@@ -64,9 +66,9 @@ interface ListaEditorialViewProps {
 // Grid template: Categoria | Cliente | Responsável | Título | Descrição | Legenda |
 //               [Entrega — admin only] | Data postagem | Arquivo | Considerações | Status | Chevron
 const GRID_ADMIN =
-  "78px 108px 108px minmax(130px,1fr) 108px 108px 84px 100px 96px 108px 108px 28px";
+  "78px 72px 108px 108px minmax(130px,1fr) 108px 108px 84px 100px 96px 108px 108px 28px";
 const GRID_CLIENT =
-  "78px minmax(130px,1fr) 108px 108px 100px 96px 108px 108px 28px";
+  "78px 72px minmax(130px,1fr) 108px 108px 100px 96px 108px 108px 28px";
 
 function formatDate(iso?: string | null): string {
   if (!iso) return "—";
@@ -135,6 +137,7 @@ function FV({ children }: { children: React.ReactNode }) {
 
 const HEADERS_ADMIN = [
   "Categoria",
+  "Plataforma",
   "Cliente",
   "Responsável",
   "Título",
@@ -150,6 +153,7 @@ const HEADERS_ADMIN = [
 
 const HEADERS_CLIENT = [
   "Categoria",
+  "Plataforma",
   "Título",
   "Descrição",
   "Legenda",
@@ -388,7 +392,7 @@ export function ListaEditorialView({
     <>
       <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-hidden">
         <div className="overflow-x-auto">
-          <div className="min-w-[1200px]">
+          <div className="min-w-[1300px]">
 
             {/* ── Header ─────────────────────────────────────────────── */}
             <div
@@ -442,6 +446,24 @@ export function ListaEditorialView({
                           color={item.category.color}
                           small
                         />
+                      </div>
+
+                      {/* 2. Plataforma */}
+                      <div className="pr-1">
+                        {item.platforms.length === 0 ? (
+                          <span className="text-[10px] font-light text-vitti-fg/40">—</span>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <span className="text-[9px] font-light text-vitti-fg truncate">
+                              {getPlatformLabel(item.platforms[0])}
+                            </span>
+                            {item.platforms.length > 1 && (
+                              <span className="text-[9px] font-light text-vitti-fg-muted/50">
+                                +{item.platforms.length - 1}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* 2. Cliente — admin only */}
@@ -573,6 +595,25 @@ export function ListaEditorialView({
                               />
                             </FV>
                           </div>
+
+                          {/* Plataformas */}
+                          {item.platforms.length > 0 && (
+                            <div>
+                              <FL>Plataformas</FL>
+                              <FV>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {item.platforms.map((p) => (
+                                    <span
+                                      key={p}
+                                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-light border border-black/[0.1] text-vitti-fg-muted/70 bg-black/[0.02]"
+                                    >
+                                      {getPlatformLabel(p)}
+                                    </span>
+                                  ))}
+                                </div>
+                              </FV>
+                            </div>
+                          )}
 
                           {/* 2. Cliente — admin only */}
                           {isAdmin && (

@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isValidEditorialPlatform } from "@/lib/editorial-platforms";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -63,6 +64,22 @@ export async function PATCH(
   if (b.scheduled_at !== undefined)  patch.scheduled_at = b.scheduled_at || null;
   if (b.delivery_at !== undefined)   patch.delivery_at = b.delivery_at || null;
   if (b.video_url !== undefined)     patch.video_url = b.video_url ? String(b.video_url).trim() : null;
+  if (b.platforms !== undefined) {
+    if (!Array.isArray(b.platforms)) {
+      return NextResponse.json(
+        { success: false, error: "platforms deve ser um array." },
+        { status: 400 }
+      );
+    }
+    const unknowns = (b.platforms as unknown[]).filter((v) => !isValidEditorialPlatform(v));
+    if (unknowns.length > 0) {
+      return NextResponse.json(
+        { success: false, error: `Plataforma inválida: ${(unknowns as string[]).join(", ")}` },
+        { status: 400 }
+      );
+    }
+    patch.platforms = [...new Set(b.platforms as string[])];
+  }
 
   const admin = createAdminClient();
   const { error } = await admin

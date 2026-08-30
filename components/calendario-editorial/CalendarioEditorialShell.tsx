@@ -43,6 +43,7 @@ export interface ContentRow {
   videoUrl: string | null;
   attachmentCount: number;
   commentCount: number;
+  platforms: string[];
 }
 
 export interface CategoryOption { id: string; name: string; color: string }
@@ -324,6 +325,7 @@ export function CalendarioEditorialShell({
     videoUrl: c.videoUrl,
     attachmentCount: c.attachmentCount,
     commentCount: c.commentCount,
+    platforms: c.platforms,
     category: c.categoryName ? { name: c.categoryName, color: c.categoryColor! } : FALLBACK_CAT,
     status:   c.statusName   ? { name: c.statusName,   color: c.statusColor!   } : FALLBACK_ST,
   }));
@@ -364,6 +366,7 @@ export function CalendarioEditorialShell({
       scheduledAt: full.scheduledAt,
       deliveryAt: full.deliveryAt,
       videoUrl: full.videoUrl,
+      platforms: full.platforms,
     });
     setInitialDate(undefined);
     setDrawerOpen(true);
@@ -384,6 +387,7 @@ export function CalendarioEditorialShell({
       scheduledAt: full.scheduledAt,
       deliveryAt: full.deliveryAt,
       videoUrl: full.videoUrl,
+      platforms: full.platforms,
     });
     setInitialDate(undefined);
     setDrawerOpen(true);

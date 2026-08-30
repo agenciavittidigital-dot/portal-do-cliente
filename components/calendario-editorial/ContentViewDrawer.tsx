@@ -18,6 +18,7 @@ import { SuggestionInlineHighlight } from "./SuggestionInlineHighlight";
 import { SuggestionModal } from "./SuggestionModal";
 import { useEditorialSuggestions } from "@/lib/hooks/useEditorialSuggestions";
 import type { ContentRow } from "./CalendarioEditorialShell";
+import { getPlatformLabel } from "@/lib/editorial-platforms";
 import { NotificationRecipientsSelect } from "./NotificationRecipientsSelect";
 
 interface CommentItem {
@@ -334,6 +335,25 @@ export function ContentViewDrawer({
                 <StatusBadge name={status.name} color={status.color} />
               </div>
             </div>
+
+            {/* Plataformas */}
+            {item.platforms.length > 0 && (
+              <div>
+                <FL>Plataformas</FL>
+                <FV>
+                  <div className="flex flex-wrap gap-1.5 mt-0.5">
+                    {item.platforms.map((p) => (
+                      <span
+                        key={p}
+                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-light border border-black/[0.1] text-vitti-fg-muted/70 bg-black/[0.02]"
+                      >
+                        {getPlatformLabel(p)}
+                      </span>
+                    ))}
+                  </div>
+                </FV>
+              </div>
+            )}
 
             {/* Cliente + Responsável — admin only */}
             {isAdmin && (

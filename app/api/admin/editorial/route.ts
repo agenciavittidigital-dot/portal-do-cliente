@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listEditorialContents } from "@/lib/data/editorial";
+import { isValidEditorialPlatform } from "@/lib/editorial-platforms";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -62,6 +63,26 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Validate platforms
+  const rawPlatforms = b.platforms;
+  let platforms: string[] = [];
+  if (rawPlatforms !== undefined) {
+    if (!Array.isArray(rawPlatforms)) {
+      return NextResponse.json(
+        { success: false, error: "platforms deve ser um array." },
+        { status: 400 }
+      );
+    }
+    const unknowns = (rawPlatforms as unknown[]).filter((v) => !isValidEditorialPlatform(v));
+    if (unknowns.length > 0) {
+      return NextResponse.json(
+        { success: false, error: `Plataforma inválida: ${(unknowns as string[]).join(", ")}` },
+        { status: 400 }
+      );
+    }
+    platforms = [...new Set(rawPlatforms as string[])];
+  }
+
   const admin = createAdminClient();
 
   const { data: profile } = await admin
@@ -83,6 +104,7 @@ export async function POST(req: NextRequest) {
       scheduled_at: b.scheduled_at ?? null,
       delivery_at: b.delivery_at ?? null,
       video_url: b.video_url ? String(b.video_url).trim() : null,
+      platforms,
       created_by: profile?.id ?? null,
     })
     .select("id")

@@ -13,6 +13,7 @@ import {
   Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EDITORIAL_PLATFORMS } from "@/lib/editorial-platforms";
 import { NotificationRecipientsSelect } from "./NotificationRecipientsSelect";
 import { SuggestionReviewPanel } from "./SuggestionReviewPanel";
 import { useEditorialSuggestions } from "@/lib/hooks/useEditorialSuggestions";
@@ -49,6 +50,7 @@ export interface DrawerEditItem {
   scheduledAt: string | null;
   deliveryAt: string | null;
   videoUrl: string | null;
+  platforms?: string[];
 }
 
 interface ContentDrawerProps {
@@ -142,6 +144,7 @@ export function ContentDrawer({
   initialScheduledAt,
 }: ContentDrawerProps) {
   const [form, setForm] = useState<FormState>(EMPTY);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -176,6 +179,7 @@ export function ContentDrawer({
       setNewComment("");
       setCommentError(null);
       setSelectedProfileIds([]);
+      setSelectedPlatforms([]);
       return;
     }
     setError(null);
@@ -199,6 +203,7 @@ export function ContentDrawer({
         statusId:   editItem.statusId   ?? "",
         videoUrl:   editItem.videoUrl   ?? "",
       });
+      setSelectedPlatforms(editItem.platforms ?? []);
 
       // Load attachments and comments in parallel
       fetch(`/api/admin/editorial/${editItem.id}/attachments`)
@@ -217,6 +222,7 @@ export function ContentDrawer({
         ...EMPTY,
         scheduledAt: initialScheduledAt ? `${initialScheduledAt}T09:00` : "",
       });
+      setSelectedPlatforms([]);
       setExistingAttachments([]);
       setComments([]);
     }
@@ -336,6 +342,7 @@ export function ContentDrawer({
         : null,
       delivery_at: form.deliveryAt || null,
       video_url:   videoUrl || null,
+      platforms:   selectedPlatforms,
     };
 
     try {
@@ -457,6 +464,35 @@ export function ContentDrawer({
                 <option value="">Sem categoria</option>
                 {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
+            </div>
+
+            {/* Plataforma */}
+            <div>
+              <label className={labelClass}>Plataforma</label>
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {EDITORIAL_PLATFORMS.map((p) => {
+                  const isActive = selectedPlatforms.includes(p.key);
+                  return (
+                    <button
+                      key={p.key}
+                      type="button"
+                      onClick={() =>
+                        setSelectedPlatforms((prev) =>
+                          isActive ? prev.filter((k) => k !== p.key) : [...prev, p.key]
+                        )
+                      }
+                      className={cn(
+                        "px-2.5 py-1 rounded-full text-[10px] font-light border transition-all",
+                        isActive
+                          ? "bg-vitti-blue/[0.08] border-vitti-blue/30 text-vitti-blue"
+                          : "bg-transparent border-black/[0.1] text-vitti-fg-muted/55 hover:border-black/[0.18] hover:text-vitti-fg"
+                      )}
+                    >
+                      {p.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* 2. Cliente */}

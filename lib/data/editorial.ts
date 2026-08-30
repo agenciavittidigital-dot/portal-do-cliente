@@ -37,6 +37,7 @@ export interface EditorialContent {
   videoUrl: string | null;
   attachmentCount: number;
   commentCount: number;
+  platforms: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -101,7 +102,7 @@ export async function listEditorialContents(opts?: {
   let contentsQuery = admin
     .from("editorial_contents")
     .select(
-      "id, client_id, category_id, status_id, title, description, caption, scheduled_at, delivery_at, responsible_id, video_url, created_at, updated_at"
+      "id, client_id, category_id, status_id, title, description, caption, scheduled_at, delivery_at, responsible_id, video_url, platforms, created_at, updated_at"
     )
     .order("scheduled_at", { ascending: true })
     .order("created_at", { ascending: true });
@@ -175,6 +176,7 @@ export async function listEditorialContents(opts?: {
       videoUrl: r.video_url ? String(r.video_url) : null,
       attachmentCount: attachCountMap.get(String(r.id)) ?? 0,
       commentCount: commentCountMap.get(String(r.id)) ?? 0,
+      platforms: Array.isArray(r.platforms) ? (r.platforms as string[]) : [],
       createdAt: String(r.created_at),
       updatedAt: String(r.updated_at),
     };
