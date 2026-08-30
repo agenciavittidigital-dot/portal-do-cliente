@@ -127,11 +127,25 @@ export async function PATCH(
   ) {
     patch.status = b.status as PaymentStatus;
   }
-  if ("paymentMethod" in b) {
-    patch.paymentMethod =
+  if ("paymentMethod" in b || "pixCode" in b || "boletoUrl" in b || "digitableLine" in b) {
+    const explicit =
       typeof b.paymentMethod === "string" && b.paymentMethod.trim()
         ? b.paymentMethod.trim()
         : null;
+    const hasPixCode =
+      typeof b.pixCode === "string" && !!b.pixCode.trim();
+    const hasBoleto =
+      (typeof b.boletoUrl === "string" && !!b.boletoUrl.trim()) ||
+      (typeof b.digitableLine === "string" && !!b.digitableLine.trim());
+
+    if (explicit) {
+      patch.paymentMethod = explicit;
+    } else if (hasPixCode) {
+      patch.paymentMethod = "pix";
+    } else if (hasBoleto) {
+      patch.paymentMethod = "boleto";
+    }
+    // else: omitido — DB preserva o valor existente
   }
   if ("boletoUrl" in b) {
     patch.boletoUrl =

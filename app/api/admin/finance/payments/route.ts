@@ -56,6 +56,19 @@ function getString(fd: FormData, key: string): string | null {
   return typeof v === "string" && v.trim() ? v.trim() : null;
 }
 
+function resolvePaymentMethodForCreate(
+  explicit: string | null,
+  pixCode: string | null,
+  boletoFilePath: string | null,
+  boletoUrl: string | null,
+  digitableLine: string | null,
+): string | null {
+  if (explicit) return explicit;
+  if (pixCode) return "pix";
+  if (boletoFilePath || boletoUrl || digitableLine) return "boleto";
+  return null;
+}
+
 // ── GET /api/admin/finance/payments?clientId=... ───────────────────────────────
 
 export async function GET(req: NextRequest): Promise<Response> {
@@ -167,6 +180,25 @@ export async function POST(req: NextRequest): Promise<Response> {
     }
   }
 
+  const resolvedMethod = resolvePaymentMethodForCreate(
+    paymentMethod,
+    pixCode,
+    boletoFilePath,
+    boletoUrl,
+    digitableLine,
+  );
+  if (!resolvedMethod) {
+    if (boletoFilePath) await deletePortalFile(boletoFilePath).catch(() => {});
+    return NextResponse.json<PaymentCreateResponse>(
+      {
+        success: false,
+        error: "Método de pagamento obrigatório.",
+        detail: "Informe o método ou forneça dados de PIX, boleto ou linha digitável.",
+      },
+      { status: 400 }
+    );
+  }
+
   try {
     const payment = await createPayment({
       clientId,
@@ -176,7 +208,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       amount,
       dueDate,
       status,
-      paymentMethod,
+      paymentMethod: resolvedMethod,
       boletoUrl,
       digitableLine,
       pixCode,
