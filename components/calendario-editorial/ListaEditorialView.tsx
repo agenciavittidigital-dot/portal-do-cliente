@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getPlatformLabel } from "@/lib/editorial-platforms";
+import { parseEditorialRichText } from "@/lib/editorial-rich-text";
+import CommentField from "./CommentField";
 import { CategoryTag } from "./CategoryTag";
 import { StatusBadge } from "./StatusBadge";
 import { ArtPreviewModal } from "./ArtPreviewModal";
@@ -781,9 +783,9 @@ export function ListaEditorialView({
                                         key={c.id}
                                         className="px-2.5 py-2 rounded-lg bg-white border border-black/[0.06]"
                                       >
-                                        <p className="text-[11px] font-light text-vitti-fg leading-relaxed whitespace-pre-wrap">
-                                          {c.message}
-                                        </p>
+                                        <div className="text-[11px] font-light text-vitti-fg leading-relaxed">
+                                          {parseEditorialRichText(c.message)}
+                                        </div>
                                         <p className="text-[9px] font-light text-vitti-fg/40 mt-1">
                                           {c.authorName} · {formatCommentDate(c.createdAt)}
                                         </p>
@@ -797,23 +799,18 @@ export function ListaEditorialView({
                                   className="space-y-1.5"
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <textarea
+                                  <CommentField
                                     value={newCommentText[item.id] ?? ""}
-                                    onChange={(e) =>
+                                    onChange={(v) =>
                                       setNewCommentText((prev) => ({
                                         ...prev,
-                                        [item.id]: e.target.value,
+                                        [item.id]: v,
                                       }))
                                     }
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                                        e.preventDefault();
-                                        handleAddComment(item.id);
-                                      }
-                                    }}
+                                    onSubmit={() => handleAddComment(item.id)}
+                                    disabled={submittingComment.has(item.id)}
                                     placeholder="Nova consideração... (Ctrl+Enter para enviar)"
                                     rows={2}
-                                    className="w-full text-[11px] font-light text-vitti-fg border border-black/[0.1] rounded-lg px-2.5 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 placeholder:text-vitti-fg/25 resize-none"
                                   />
                                   <NotificationRecipientsSelect
                                     contentId={item.id}

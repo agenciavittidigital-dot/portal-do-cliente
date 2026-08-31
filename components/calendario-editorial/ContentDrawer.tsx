@@ -14,9 +14,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EDITORIAL_PLATFORMS } from "@/lib/editorial-platforms";
+import { parseEditorialRichText } from "@/lib/editorial-rich-text";
 import { NotificationRecipientsSelect } from "./NotificationRecipientsSelect";
 import { SuggestionReviewPanel } from "./SuggestionReviewPanel";
 import { useEditorialSuggestions } from "@/lib/hooks/useEditorialSuggestions";
+import CommentField from "./CommentField";
 
 interface CategoryOption { id: string; name: string; color: string }
 interface StatusOption   { id: string; name: string; color: string }
@@ -733,9 +735,9 @@ export function ContentDrawer({
                               </button>
                             </div>
                           </div>
-                          <p className="text-[11px] font-light text-vitti-fg/70 leading-relaxed whitespace-pre-wrap">
-                            {c.message}
-                          </p>
+                          <div className="text-[11px] font-light text-vitti-fg/70 leading-relaxed">
+                            {parseEditorialRichText(c.message)}
+                          </div>
                         </div>
                       ))}
                       <div ref={commentsEndRef} />
@@ -750,21 +752,13 @@ export function ContentDrawer({
 
                   {/* New comment input */}
                   <div className="space-y-2">
-                    <textarea
+                    <CommentField
                       value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                          e.preventDefault();
-                          handleSubmitComment();
-                        }
-                      }}
+                      onChange={setNewComment}
+                      onSubmit={handleSubmitComment}
+                      disabled={submittingComment}
                       placeholder="Escreva uma consideração... (Ctrl+Enter para enviar)"
                       rows={2}
-                      className={cn(
-                        "w-full text-xs font-light text-vitti-fg border border-black/[0.1] rounded-lg px-3 py-2 bg-white",
-                        "focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 placeholder:text-vitti-fg-muted/35 resize-none"
-                      )}
                     />
                     <NotificationRecipientsSelect
                       contentId={editItem.id}

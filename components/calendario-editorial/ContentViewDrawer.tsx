@@ -19,7 +19,9 @@ import { SuggestionModal } from "./SuggestionModal";
 import { useEditorialSuggestions } from "@/lib/hooks/useEditorialSuggestions";
 import type { ContentRow } from "./CalendarioEditorialShell";
 import { getPlatformLabel } from "@/lib/editorial-platforms";
+import { parseEditorialRichText } from "@/lib/editorial-rich-text";
 import { NotificationRecipientsSelect } from "./NotificationRecipientsSelect";
+import CommentField from "./CommentField";
 
 interface CommentItem {
   id: string;
@@ -511,9 +513,9 @@ export function ContentViewDrawer({
                           key={c.id}
                           className="px-3 py-2.5 rounded-lg bg-slate-50 border border-black/[0.06]"
                         >
-                          <p className="text-xs font-light text-vitti-fg leading-relaxed whitespace-pre-wrap">
-                            {c.message}
-                          </p>
+                          <div className="text-xs font-light text-vitti-fg leading-relaxed">
+                            {parseEditorialRichText(c.message)}
+                          </div>
                           <p className="text-[9px] font-light text-vitti-fg/40 mt-1">
                             {c.authorName} · {formatCommentDate(c.createdAt)}
                           </p>
@@ -524,18 +526,13 @@ export function ContentViewDrawer({
 
                   {/* Add comment */}
                   <div className="space-y-2">
-                    <textarea
+                    <CommentField
                       value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                          e.preventDefault();
-                          handleAddComment();
-                        }
-                      }}
+                      onChange={setNewComment}
+                      onSubmit={handleAddComment}
+                      disabled={submitting}
                       placeholder="Nova consideração... (Ctrl+Enter para enviar)"
                       rows={3}
-                      className="w-full text-xs font-light text-vitti-fg border border-black/[0.1] rounded-lg px-3 py-2.5 bg-white focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 placeholder:text-vitti-fg/25 resize-none"
                     />
                     <NotificationRecipientsSelect
                       contentId={item.id}
