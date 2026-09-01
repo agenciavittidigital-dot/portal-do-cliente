@@ -74,10 +74,10 @@ export default async function MetricasPage({
     return (
       <div className="space-y-6 max-w-6xl">
         <div>
-          <h2 className="text-xl font-light text-[#171f38] tracking-wide">
+          <h2 className="text-xl font-light text-[#171f38] dark:text-[var(--text-primary)] tracking-wide">
             Dados e Métricas
           </h2>
-          <p className="text-sm text-[#171f38]/60 mt-0.5 font-light">
+          <p className="text-sm text-[#171f38]/60 dark:text-[var(--text-secondary)] mt-0.5 font-light">
             Acompanhe a performance das suas campanhas por canal de aquisição.
           </p>
         </div>
@@ -132,10 +132,10 @@ export default async function MetricasPage({
   return (
     <div className="space-y-6 max-w-6xl">
       <div>
-        <h2 className="text-xl font-light text-vitti-blue tracking-wide">
+        <h2 className="text-xl font-light text-vitti-blue dark:text-vitti-light tracking-wide">
           Dados e Métricas
         </h2>
-        <p className="text-sm text-vitti-blue/50 mt-0.5 font-light">
+        <p className="text-sm text-vitti-blue/50 dark:text-vitti-light/60 mt-0.5 font-light">
           Acompanhe a performance das suas campanhas por plataforma
         </p>
       </div>
@@ -157,11 +157,11 @@ export default async function MetricasPage({
           {...filterProps}
         />
       ) : (
-        <div className="flex flex-col items-center justify-center py-20 gap-3 rounded-xl border border-dashed border-black/[0.07]">
-          <p className="text-sm font-light text-[#5F6368]/60">
+        <div className="flex flex-col items-center justify-center py-20 gap-3 rounded-xl border border-dashed border-black/[0.07] dark:border-[var(--border)]">
+          <p className="text-sm font-light text-[#5F6368]/60 dark:text-[var(--text-secondary)]">
             Nenhum cliente vinculado à sua conta.
           </p>
-          <p className="text-xs text-[#5F6368]/45 font-light">
+          <p className="text-xs text-[#5F6368]/45 dark:text-[var(--text-muted)] font-light">
             Contate a equipe Vitti para vinculação.
           </p>
         </div>

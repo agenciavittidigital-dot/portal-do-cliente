@@ -342,7 +342,11 @@ function PaymentModal({
   const [referenceMonth, setReferenceMonth] = useState(payment?.referenceMonth?.slice(0, 7) ?? "");
   const [dueDate, setDueDate]               = useState(payment?.dueDate?.slice(0, 10) ?? "");
   const [amount, setAmount]                 = useState(payment?.amount ? String(payment.amount) : "");
-  const [paymentMethod, setPaymentMethod]   = useState(payment?.paymentMethod ?? "");
+  const [paymentMethod, setPaymentMethod]   = useState(
+    payment?.paymentMethod && payment.paymentMethod !== "unknown"
+      ? payment.paymentMethod
+      : ""
+  );
   const [digitableLine, setDigitableLine]   = useState(payment?.digitableLine ?? "");
   const [pixCode, setPixCode]               = useState(payment?.pixCode ?? "");
   const [boletoUrl, setBoletoUrl]           = useState(payment?.boletoUrl ?? "");
@@ -475,7 +479,14 @@ function PaymentModal({
             </div>
             <div>
               <label className={D.label}>Método <span className={D.labelOpt}>(opcional)</span></label>
-              <input type="text" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} placeholder="boleto, pix…" className={D.input} />
+              <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className={D.input}>
+                <option value="">Automático</option>
+                <option value="boleto">Boleto</option>
+                <option value="pix">PIX</option>
+                <option value="credit_card">Cartão de crédito</option>
+                <option value="bank_transfer">Transferência bancária</option>
+                <option value="manual">Manual</option>
+              </select>
             </div>
           </div>
 

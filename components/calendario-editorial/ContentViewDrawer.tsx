@@ -391,6 +391,7 @@ export function ContentViewDrawer({
                   field="description"
                   canSuggest={!isAdmin}
                   onSuggest={handleSuggestDescription}
+                  richText={item.descriptionRich}
                 />
               </FV>
             </div>
@@ -405,6 +406,7 @@ export function ContentViewDrawer({
                   field="caption"
                   canSuggest={!isAdmin}
                   onSuggest={handleSuggestCaption}
+                  richText={item.captionRich}
                 />
               </FV>
             </div>

@@ -11,6 +11,7 @@ interface CommentFieldProps {
   placeholder?: string;
   rows?: number;
   className?: string;
+  variant?: "dark" | "light";
 }
 
 export default function CommentField({
@@ -21,8 +22,10 @@ export default function CommentField({
   placeholder = "Escreva um comentário...",
   rows = 3,
   className = "",
+  variant = "dark",
 }: CommentFieldProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const isLight = variant === "light";
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && onSubmit) {
@@ -31,13 +34,22 @@ export default function CommentField({
     }
   }
 
+  const containerClass = isLight
+    ? `rounded-lg border border-black/[0.1] overflow-hidden bg-white ${className}`
+    : `rounded-lg border border-white/10 overflow-hidden bg-[#0a0f1e]/40 ${className}`;
+
+  const textareaClass = isLight
+    ? "w-full bg-transparent text-vitti-fg text-xs font-light px-3 py-2 resize-none focus:outline-none placeholder:text-vitti-fg-muted/35 disabled:opacity-50"
+    : "w-full bg-transparent text-white/90 text-sm px-3 py-2 resize-none focus:outline-none placeholder:text-white/30 disabled:opacity-50";
+
   return (
-    <div className={`rounded-lg border border-white/10 overflow-hidden bg-[#0a0f1e]/40 ${className}`}>
+    <div className={containerClass}>
       <RichTextToolbar
         textareaRef={textareaRef}
         value={value}
         onChange={onChange}
         disabled={disabled}
+        variant={variant}
       />
       <textarea
         ref={textareaRef}
@@ -47,7 +59,7 @@ export default function CommentField({
         disabled={disabled}
         placeholder={placeholder}
         rows={rows}
-        className="w-full bg-transparent text-white/90 text-sm px-3 py-2 resize-none focus:outline-none placeholder:text-white/30 disabled:opacity-50"
+        className={textareaClass}
       />
     </div>
   );

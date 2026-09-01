@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isValidEditorialPlatform } from "@/lib/editorial-platforms";
+import { stripEditorialRichText } from "@/lib/editorial-rich-text";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -55,11 +56,31 @@ export async function PATCH(
   if (b.title !== undefined)         patch.title = String(b.title).trim();
   if (b.description !== undefined) {
     patch.description = b.description || null;
+    // If only plain was sent, rich becomes stale — clear it unless rich was also sent.
+    if (b.description_rich === undefined) patch.description_rich = null;
     changedTextFields.push("description");
+  }
+  if (b.description_rich !== undefined) {
+    const richVal = b.description_rich ? String(b.description_rich) : null;
+    patch.description_rich = richVal;
+    // Derive canonical from rich; don't push to changedTextFields again if description was also set
+    if (b.description === undefined) {
+      patch.description = richVal ? stripEditorialRichText(richVal) : null;
+      changedTextFields.push("description");
+    }
   }
   if (b.caption !== undefined) {
     patch.caption = b.caption || null;
+    if (b.caption_rich === undefined) patch.caption_rich = null;
     changedTextFields.push("caption");
+  }
+  if (b.caption_rich !== undefined) {
+    const richVal = b.caption_rich ? String(b.caption_rich) : null;
+    patch.caption_rich = richVal;
+    if (b.caption === undefined) {
+      patch.caption = richVal ? stripEditorialRichText(richVal) : null;
+      changedTextFields.push("caption");
+    }
   }
   if (b.scheduled_at !== undefined)  patch.scheduled_at = b.scheduled_at || null;
   if (b.delivery_at !== undefined)   patch.delivery_at = b.delivery_at || null;

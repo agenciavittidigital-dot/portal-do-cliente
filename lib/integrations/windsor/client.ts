@@ -1,14 +1,23 @@
 import "server-only";
-import type { WindsorApiResponse, WindsorStatus } from "./types";
+import type {
+  WindsorApiResponse,
+  WindsorConnectedAccount,
+  WindsorConnectedAccountsResponse,
+  WindsorStatus,
+} from "./types";
 
 // Conector unificado da Windsor AI
 const WINDSOR_ALL_ENDPOINT = "https://connectors.windsor.ai/all";
+
+// Endpoint de listagem de contas conectadas — não depende de atividade/data
+const WINDSOR_DS_ACCOUNTS_ENDPOINT = "https://onboard.windsor.ai/api/common/ds-accounts";
 
 // Campos mínimos para o painel de preview
 const WINDSOR_PREVIEW_FIELDS = [
   "date",
   "datasource",
   "account_name",
+  "account_id",
   "source",
   "campaign",
   "clicks",
@@ -20,6 +29,7 @@ export const WINDSOR_SYNC_FIELDS = [
   "date",
   "datasource",
   "account_name",
+  "account_id",
   "campaign_id",
   "source",
   "campaign",
@@ -167,4 +177,79 @@ export async function fetchWindsorSyncDataForRange(
   dateTo: string
 ): Promise<WindsorApiResponse> {
   return fetchWindsor(WINDSOR_SYNC_FIELDS.join(","), { dateFrom, dateTo });
+}
+
+// Lista contas conectadas ao workspace Windsor via endpoint dedicado.
+// Usa autenticação por header X-Api-Key (chave nunca exposta em URL ou log).
+// Não depende de atividade recente — retorna todas as contas configuradas,
+// mesmo pausadas ou sem dados nos últimos 7 dias.
+export async function fetchWindsorConnectedAccounts(
+  datasource: string,
+): Promise<WindsorConnectedAccountsResponse> {
+  const status = getWindsorStatus();
+  if (!status.configured) {
+    return { accounts: [], error: status.reason };
+  }
+
+  const url = new URL(WINDSOR_DS_ACCOUNTS_ENDPOINT);
+  url.searchParams.set("datasource", datasource);
+
+  try {
+    const res = await fetch(url.toString(), {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "X-Api-Key": process.env.WINDSOR_API_KEY!,
+      },
+      next: { revalidate: 0 },
+    });
+
+    if (!res.ok) {
+      const rawBody = await res.text().catch(() => "");
+      const safeBody = rawBody
+        .replace(/api_key=[^\s&"']*/gi, "api_key=***")
+        .slice(0, 300);
+      return {
+        accounts: [],
+        error: `Windsor ds-accounts respondeu com HTTP ${res.status}`,
+        errorDetail: safeBody || undefined,
+      };
+    }
+
+    const raw: unknown = await res.json();
+
+    // Resposta confirmada: array direto de { account_id, account_name, datasource }
+    if (!Array.isArray(raw)) {
+      return {
+        accounts: [],
+        error: "Windsor ds-accounts retornou formato inesperado (esperado array direto).",
+      };
+    }
+
+    const accounts: WindsorConnectedAccount[] = [];
+    for (const item of raw) {
+      if (!item || typeof item !== "object") continue;
+      const obj = item as Record<string, unknown>;
+
+      const rawId = obj.account_id;
+      const rawName = obj.account_name;
+      const rawDs = obj.datasource;
+
+      const accountId =
+        typeof rawId === "string" ? rawId.trim()
+        : typeof rawId === "number" ? String(rawId)
+        : null;
+      const accountName = typeof rawName === "string" ? rawName.trim() : null;
+      const ds = typeof rawDs === "string" ? rawDs.trim() : "";
+
+      // Registros sem account_id ou account_name são ignorados silenciosamente
+      if (!accountId || !accountName) continue;
+      accounts.push({ accountId, accountName, datasource: ds });
+    }
+
+    return { accounts };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Erro desconhecido";
+    return { accounts: [], error: `Falha na conexão com Windsor ds-accounts: ${msg}` };
+  }
 }

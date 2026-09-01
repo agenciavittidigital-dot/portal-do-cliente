@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
 import { listReportsByClient, createReport } from "@/lib/data/reports-admin";
 import type { AdminReportRow, ReportStatus } from "@/lib/data/reports-admin";
-import { uploadPortalFile, deletePortalFile } from "@/lib/storage/portal-files";
+import { deletePortalFile } from "@/lib/storage/portal-files";
 
 export interface ReportListResponse {
   success: boolean;
@@ -54,6 +54,7 @@ function mimeToFileType(mime: string): string {
 }
 
 const VALID_STATUSES: ReportStatus[] = ["draft", "published", "archived"];
+const ALLOWED_MIME = ["application/pdf", "image/png", "image/jpeg"];
 
 // GET /api/admin/reports?clientId=...
 export async function GET(req: NextRequest): Promise<Response> {
@@ -80,98 +81,117 @@ export async function GET(req: NextRequest): Promise<Response> {
   }
 }
 
-// POST /api/admin/reports — accepts multipart/form-data
+interface ReportCreateBody {
+  clientId: string;
+  filePath: string;
+  fileName?: string;
+  fileType: string;
+  fileSize?: number;
+  title: string;
+  period: string;
+  status?: string;
+  summary?: string | null;
+  description?: string | null;
+}
+
+// POST /api/admin/reports — accepts JSON metadata; file must already be in Storage
 export async function POST(req: NextRequest): Promise<Response> {
   const auth = await requireAdmin();
   if ("error" in auth) return auth.error;
 
-  let formData: FormData;
+  let body: ReportCreateBody;
   try {
-    formData = await req.formData();
+    body = await req.json();
   } catch {
     return NextResponse.json<ReportCreateResponse>(
-      { success: false, error: "Falha ao processar o formulário." },
+      { success: false, error: "Body inválido — JSON esperado." },
       { status: 400 }
     );
   }
 
-  const file = formData.get("file");
-  if (!(file instanceof File) || !file.size) {
-    return NextResponse.json<ReportCreateResponse>(
-      { success: false, error: "Arquivo do relatório é obrigatório." },
-      { status: 400 }
-    );
-  }
+  const {
+    clientId,
+    filePath,
+    fileName,
+    fileType,
+    fileSize,
+    title,
+    period,
+    status: rawStatus,
+    summary: rawSummary,
+    description: rawDescription,
+  } = body;
 
-  const clientId = formData.get("clientId");
   if (!clientId || typeof clientId !== "string" || !clientId.trim()) {
     return NextResponse.json<ReportCreateResponse>(
       { success: false, error: "clientId é obrigatório." },
       { status: 400 }
     );
   }
-
-  const title = formData.get("title");
+  if (!filePath || typeof filePath !== "string" || !filePath.trim()) {
+    return NextResponse.json<ReportCreateResponse>(
+      { success: false, error: "filePath é obrigatório." },
+      { status: 400 }
+    );
+  }
   if (!title || typeof title !== "string" || !title.trim()) {
     return NextResponse.json<ReportCreateResponse>(
       { success: false, error: "Título é obrigatório." },
       { status: 400 }
     );
   }
-
-  const period = formData.get("period");
   if (!period || typeof period !== "string" || !period.trim()) {
     return NextResponse.json<ReportCreateResponse>(
       { success: false, error: "Período é obrigatório." },
       { status: 400 }
     );
   }
+  if (!fileType || !ALLOWED_MIME.includes(fileType)) {
+    return NextResponse.json<ReportCreateResponse>(
+      { success: false, error: "Tipo de arquivo não permitido. Use PDF, PNG ou JPEG." },
+      { status: 400 }
+    );
+  }
 
-  const rawStatus = formData.get("status");
+  // Security: filePath must belong to this client's reports folder
+  const expectedPrefix = `clients/${clientId.trim()}/reports/`;
+  if (!filePath.trim().startsWith(expectedPrefix)) {
+    return NextResponse.json<ReportCreateResponse>(
+      { success: false, error: "filePath inválido." },
+      { status: 400 }
+    );
+  }
+
   const status: ReportStatus =
     typeof rawStatus === "string" && VALID_STATUSES.includes(rawStatus as ReportStatus)
       ? (rawStatus as ReportStatus)
       : "draft";
-
-  const rawSummary = formData.get("summary");
   const summary =
     typeof rawSummary === "string" && rawSummary.trim() ? rawSummary.trim() : null;
-
-  const rawDescription = formData.get("description");
   const description =
     typeof rawDescription === "string" && rawDescription.trim()
       ? rawDescription.trim()
       : null;
+  const parsedFileSize =
+    typeof fileSize === "number" && fileSize > 0 ? fileSize : null;
 
-  // Upload to Storage first
-  let uploaded: Awaited<ReturnType<typeof uploadPortalFile>>;
-  try {
-    uploaded = await uploadPortalFile(file, `clients/${clientId.trim()}/reports`);
-  } catch (err) {
-    const detail = err instanceof Error ? err.message : "Erro desconhecido.";
-    return NextResponse.json<ReportCreateResponse>(
-      { success: false, error: "Falha ao enviar arquivo.", detail },
-      { status: 500 }
-    );
-  }
-
-  // Insert into DB — cleanup orphan file if this fails
   try {
     const report = await createReport({
       clientId: clientId.trim(),
       title: title.trim(),
       period: period.trim(),
       status,
-      filePath: uploaded.filePath,
-      fileName: uploaded.fileName,
-      fileType: mimeToFileType(uploaded.fileType),
-      fileSize: uploaded.fileSize,
+      filePath: filePath.trim(),
+      fileName: typeof fileName === "string" && fileName.trim() ? fileName.trim() : null,
+      fileType: mimeToFileType(fileType),
+      fileSize: parsedFileSize,
       summary,
       description,
     });
     return NextResponse.json<ReportCreateResponse>({ success: true, report }, { status: 201 });
   } catch (err) {
-    await deletePortalFile(uploaded.filePath).catch(() => {});
+    // Orphan cleanup — remove the file that was already uploaded to Storage
+    await deletePortalFile(filePath.trim()).catch(() => {});
     const detail = err instanceof Error ? err.message : "Erro desconhecido.";
     console.error("[POST /api/admin/reports] DB insert falhou:", detail);
     const isStatusConstraint = detail.includes("status_check");
@@ -183,7 +203,7 @@ export async function POST(req: NextRequest): Promise<Response> {
           ? "Status inválido para o relatório."
           : isFileTypeConstraint
             ? "Tipo de arquivo não aceito pelo banco. Use PDF, PNG ou JPEG."
-            : "Erro ao salvar relatório no banco.",
+            : "Falha ao salvar o relatório. Tente novamente.",
         detail,
       },
       { status: 500 }

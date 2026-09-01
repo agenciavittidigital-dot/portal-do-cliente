@@ -7,6 +7,7 @@ import {
   updatePayment,
   markPaymentAsPaid,
   deletePayment,
+  resolvePaymentMethod,
 } from "@/lib/data/payments-admin";
 import type { AdminPaymentRow, PaymentStatus } from "@/lib/data/payments-admin";
 import { deletePortalFile } from "@/lib/storage/portal-files";
@@ -128,24 +129,13 @@ export async function PATCH(
     patch.status = b.status as PaymentStatus;
   }
   if ("paymentMethod" in b || "pixCode" in b || "boletoUrl" in b || "digitableLine" in b) {
-    const explicit =
-      typeof b.paymentMethod === "string" && b.paymentMethod.trim()
-        ? b.paymentMethod.trim()
-        : null;
-    const hasPixCode =
-      typeof b.pixCode === "string" && !!b.pixCode.trim();
-    const hasBoleto =
-      (typeof b.boletoUrl === "string" && !!b.boletoUrl.trim()) ||
-      (typeof b.digitableLine === "string" && !!b.digitableLine.trim());
-
-    if (explicit) {
-      patch.paymentMethod = explicit;
-    } else if (hasPixCode) {
-      patch.paymentMethod = "pix";
-    } else if (hasBoleto) {
-      patch.paymentMethod = "boleto";
-    }
-    // else: omitido — DB preserva o valor existente
+    patch.paymentMethod = resolvePaymentMethod(
+      typeof b.paymentMethod === "string" ? b.paymentMethod.trim() || null : null,
+      typeof b.pixCode         === "string" ? b.pixCode.trim()         || null : null,
+      null, // boletoFilePath não é atualizável via PATCH
+      typeof b.boletoUrl       === "string" ? b.boletoUrl.trim()       || null : null,
+      typeof b.digitableLine   === "string" ? b.digitableLine.trim()   || null : null,
+    );
   }
   if ("boletoUrl" in b) {
     patch.boletoUrl =

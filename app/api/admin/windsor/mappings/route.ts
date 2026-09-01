@@ -92,6 +92,9 @@ export async function POST(request: NextRequest) {
       ? accountId.trim()
       : slugify(accountName);
 
+  // Detecta se é um account_id real (numérico, vindo do ds-accounts) vs slug gerado como fallback
+  const isRealAccountId = /^\d+$/.test(resolvedAccountId);
+
   const payload = {
     client_id: clientId.trim(),
     provider: "windsor",
@@ -100,10 +103,10 @@ export async function POST(request: NextRequest) {
     account_name: accountName.trim(),
     status: "active",
     settings: {
-      source: "windsor_all",
-      matched_by: "account_name",
+      source: "windsor_ds_accounts",
+      matched_by: isRealAccountId ? "account_id" : "account_name",
       raw_account_name: accountName.trim(),
-      created_from: "admin_mapping_sprint_6c",
+      created_from: "admin_mapping",
     },
   };
 

@@ -54,6 +54,25 @@ export async function getSignedDownloadUrl(
   return data.signedUrl;
 }
 
+export interface SignedUploadResult {
+  signedUrl: string;
+  filePath: string;
+}
+
+// Generates a signed URL for direct browser upload to Supabase Storage.
+// The URL expires in ~2 minutes (Supabase default). No file bytes pass through the server.
+export async function getSignedUploadUrl(filePath: string): Promise<SignedUploadResult> {
+  const admin = mkAdmin();
+  const { data, error } = await admin.storage
+    .from(BUCKET)
+    .createSignedUploadUrl(filePath);
+
+  if (error || !data?.signedUrl) {
+    throw new Error(error?.message ?? "Falha ao gerar URL de upload assinada.");
+  }
+  return { signedUrl: data.signedUrl, filePath };
+}
+
 // Removes a previously uploaded file. Used for orphan cleanup when a DB insert
 // fails after the Storage upload already succeeded.
 export async function deletePortalFile(filePath: string): Promise<void> {

@@ -208,7 +208,7 @@ export function RegionHeatmap({ rows }: Props) {
   const isEmpty  = maxSpend === 0;
 
   return (
-    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col gap-3">
+    <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-4 flex flex-col gap-3">
       {/* Cabeçalho */}
       <div>
         <h4 className="text-[11px] font-light text-[#455cab] tracking-wide">Por estado</h4>
@@ -220,7 +220,7 @@ export function RegionHeatmap({ rows }: Props) {
       */}
       <div
         ref={containerRef}
-        className="relative w-full rounded-xl overflow-hidden bg-[#edf1f8]"
+        className="relative w-full rounded-xl overflow-hidden bg-[#edf1f8] dark:bg-[var(--surface-soft)]"
         style={{ height: "220px" }}
       >
         {/*

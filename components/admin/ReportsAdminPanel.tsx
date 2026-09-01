@@ -25,6 +25,7 @@ import type { AdminReportRow, ReportStatus } from "@/lib/data/reports-admin";
 import type { AdminClientRow } from "@/lib/data/clients-admin";
 import type { ReportListResponse, ReportCreateResponse } from "@/app/api/admin/reports/route";
 import type { ReportPatchResponse, ReportDeleteResponse } from "@/app/api/admin/reports/[id]/route";
+import type { UploadUrlResponse } from "@/app/api/admin/reports/upload-url/route";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -365,24 +366,89 @@ function ReportModal({
     if (!title.trim()) { setValidationError("Título é obrigatório."); return; }
     if (!period.trim()) { setValidationError("Período é obrigatório."); return; }
     if (isNew && !selectedFile) { setValidationError("Arquivo é obrigatório."); return; }
+
+    if (isNew && selectedFile) {
+      const allowedTypes = ["application/pdf", "image/png", "image/jpeg"];
+      if (!allowedTypes.includes(selectedFile.type)) {
+        setValidationError("Tipo de arquivo não permitido. Use PDF, PNG ou JPEG.");
+        return;
+      }
+      if (selectedFile.size > 10 * 1024 * 1024) {
+        setValidationError("Arquivo muito grande. O tamanho máximo permitido é 10 MB.");
+        return;
+      }
+    }
+
     setValidationError(null);
     setSaveState("saving");
 
-    try {
-      if (isNew) {
-        const fd = new FormData();
-        fd.append("clientId", clientId);
-        fd.append("title", title.trim());
-        fd.append("period", period.trim());
-        fd.append("status", status);
-        if (summary.trim()) fd.append("summary", summary.trim());
-        if (description.trim()) fd.append("description", description.trim());
-        fd.append("file", selectedFile!);
+    if (isNew) {
+      // Etapa 1 — solicitar Signed Upload URL
+      let uploadUrl: string;
+      let filePath: string;
+      try {
+        const urlRes = await fetch("/api/admin/reports/upload-url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientId,
+            fileName: selectedFile!.name,
+            fileType: selectedFile!.type,
+          }),
+        });
+        const urlJson: UploadUrlResponse = await urlRes.json();
+        if (!urlJson.success || !urlJson.uploadUrl || !urlJson.filePath) {
+          setValidationError(urlJson.error ?? "Falha ao preparar o upload.");
+          setSaveState("idle");
+          return;
+        }
+        uploadUrl = urlJson.uploadUrl;
+        filePath = urlJson.filePath;
+      } catch {
+        setValidationError("Falha ao preparar o upload. Verifique sua conexão e tente novamente.");
+        setSaveState("idle");
+        return;
+      }
 
-        const res = await fetch("/api/admin/reports", { method: "POST", body: fd });
+      // Etapa 2 — enviar arquivo diretamente ao Supabase Storage
+      try {
+        const putRes = await fetch(uploadUrl, {
+          method: "PUT",
+          body: selectedFile!,
+          headers: { "Content-Type": selectedFile!.type },
+        });
+        if (!putRes.ok) {
+          setValidationError("Falha durante o envio do arquivo. Tente novamente.");
+          setSaveState("idle");
+          return;
+        }
+      } catch {
+        setValidationError("Falha durante o envio do arquivo. Verifique sua conexão e tente novamente.");
+        setSaveState("idle");
+        return;
+      }
+
+      // Etapa 3 — salvar metadados
+      try {
+        const res = await fetch("/api/admin/reports", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientId,
+            filePath,
+            fileName: selectedFile!.name,
+            fileType: selectedFile!.type,
+            fileSize: selectedFile!.size,
+            title: title.trim(),
+            period: period.trim(),
+            status,
+            summary: summary.trim() || null,
+            description: description.trim() || null,
+          }),
+        });
         const json: ReportCreateResponse = await res.json();
         if (!json.success || !json.report) {
-          const base = json.error ?? "Erro ao criar relatório.";
+          const base = json.error ?? "Falha ao salvar o relatório.";
           setValidationError(json.detail ? `${base} — ${json.detail}` : base);
           setSaveState("idle");
           return;
@@ -390,30 +456,37 @@ function ReportModal({
         setSaveState("saved");
         const saved = json.report;
         setTimeout(() => onSaved(saved), 600);
-      } else {
-        const body: Record<string, unknown> = {
-          title: title.trim(),
-          period: period.trim(),
-          status,
-          summary: summary.trim() || null,
-          description: description.trim() || null,
-        };
-        const res = await fetch(`/api/admin/reports/${report!.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        const json: ReportPatchResponse = await res.json();
-        if (!json.success || !json.report) {
-          const base = json.error ?? "Erro ao atualizar relatório.";
-          setValidationError(json.detail ? `${base} — ${json.detail}` : base);
-          setSaveState("idle");
-          return;
-        }
-        setSaveState("saved");
-        const saved = json.report;
-        setTimeout(() => onSaved(saved), 600);
+      } catch {
+        setValidationError("Falha ao salvar o relatório. Tente novamente.");
+        setSaveState("idle");
       }
+      return;
+    }
+
+    // Fluxo de edição — somente metadados, sem arquivo
+    try {
+      const body: Record<string, unknown> = {
+        title: title.trim(),
+        period: period.trim(),
+        status,
+        summary: summary.trim() || null,
+        description: description.trim() || null,
+      };
+      const res = await fetch(`/api/admin/reports/${report!.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const json: ReportPatchResponse = await res.json();
+      if (!json.success || !json.report) {
+        const base = json.error ?? "Erro ao atualizar relatório.";
+        setValidationError(json.detail ? `${base} — ${json.detail}` : base);
+        setSaveState("idle");
+        return;
+      }
+      setSaveState("saved");
+      const saved = json.report;
+      setTimeout(() => onSaved(saved), 600);
     } catch {
       setValidationError("Não foi possível conectar ao servidor.");
       setSaveState("idle");

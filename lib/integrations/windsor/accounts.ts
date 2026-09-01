@@ -1,51 +1,43 @@
 import "server-only";
-import { fetchWindsorRawData } from "./client";
-import type { WindsorApiResponse } from "./types";
+import { fetchWindsorConnectedAccounts } from "./client";
 
 export interface WindsorDiscoveredAccount {
   accountName: string;
   accountId: string | null;
 }
 
-// Busca a Windsor e agrupa registros únicos por account_name.
-// Retorna lista deduplicada ordenada alfabeticamente.
+// Descobre contas Meta Ads conectadas ao workspace Windsor via endpoint dedicado (ds-accounts).
+// Não depende de atividade recente — retorna todas as contas configuradas no conector Facebook Ads,
+// mesmo que estejam pausadas ou sem gasto nos últimos 7 dias.
+// Deduplicação: account_id como chave primária; account_name como fallback.
 export async function discoverWindsorAccounts(): Promise<{
   accounts: WindsorDiscoveredAccount[];
   error?: string;
 }> {
-  const response: WindsorApiResponse = await fetchWindsorRawData();
+  const response = await fetchWindsorConnectedAccounts("facebook");
 
   if (response.error) {
     const detail = response.errorDetail ? ` — ${response.errorDetail}` : "";
     return { accounts: [], error: response.error + detail };
   }
 
-  if (!response.data?.length) {
+  if (!response.accounts.length) {
     return { accounts: [] };
   }
 
-  const seen = new Map<string, string | null>();
+  const seenById = new Set<string>();
+  const seenByName = new Set<string>();
+  const accounts: WindsorDiscoveredAccount[] = [];
 
-  for (const record of response.data) {
-    const name =
-      typeof record.account_name === "string" && record.account_name.trim()
-        ? record.account_name.trim()
-        : null;
+  for (const { accountId, accountName } of response.accounts) {
+    if (seenById.has(accountId)) continue;
+    if (seenByName.has(accountName)) continue;
 
-    if (!name) continue;
-
-    if (!seen.has(name)) {
-      const id =
-        typeof record.account_id === "string" && record.account_id.trim()
-          ? record.account_id.trim()
-          : null;
-      seen.set(name, id);
-    }
+    seenById.add(accountId);
+    seenByName.add(accountName);
+    accounts.push({ accountName, accountId });
   }
 
-  const accounts: WindsorDiscoveredAccount[] = Array.from(seen.entries())
-    .map(([accountName, accountId]) => ({ accountName, accountId }))
-    .sort((a, b) => a.accountName.localeCompare(b.accountName, "pt-BR"));
-
+  accounts.sort((a, b) => a.accountName.localeCompare(b.accountName, "pt-BR"));
   return { accounts };
 }

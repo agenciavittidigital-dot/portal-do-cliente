@@ -9,6 +9,7 @@ interface RichTextToolbarProps {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  variant?: "dark" | "light";
 }
 
 type WrapMode = "bold" | "italic" | "underline" | "highlight";
@@ -53,7 +54,8 @@ const COLOR_LABELS: Record<string, string> = {
   gray:  "Cinza",
 };
 
-export default function RichTextToolbar({ textareaRef, value, onChange, disabled }: RichTextToolbarProps) {
+export default function RichTextToolbar({ textareaRef, value, onChange, disabled, variant = "dark" }: RichTextToolbarProps) {
+  const isLight = variant === "light";
   const [showColors, setShowColors] = useState(false);
   const colorRef = useRef<HTMLDivElement>(null);
 
@@ -121,11 +123,24 @@ export default function RichTextToolbar({ textareaRef, value, onChange, disabled
     });
   }
 
-  const btnBase =
-    "p-1.5 rounded text-[#638ACC] hover:text-white hover:bg-[#455CAB]/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
+  const btnBase = isLight
+    ? "p-1.5 rounded text-gray-500 hover:text-vitti-blue hover:bg-vitti-blue/[0.08] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+    : "p-1.5 rounded text-[#638ACC] hover:text-white hover:bg-[#455CAB]/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
+
+  const dividerClass = isLight ? "w-px h-4 bg-black/[0.1] mx-1" : "w-px h-4 bg-white/10 mx-1";
+  const containerClass = isLight
+    ? "flex items-center gap-0.5 px-2 py-1 border-b border-black/[0.08] bg-gray-50/80"
+    : "flex items-center gap-0.5 px-2 py-1 border-b border-white/10 bg-[#0a0f1e]/60";
+  const dropdownClass = isLight
+    ? "absolute left-0 top-full mt-1 z-50 bg-white border border-black/[0.1] rounded-lg shadow-xl p-2 flex flex-col gap-1 min-w-[110px]"
+    : "absolute left-0 top-full mt-1 z-50 bg-[#171F38] border border-white/10 rounded-lg shadow-xl p-2 flex flex-col gap-1 min-w-[110px]";
+  const dropdownItemClass = isLight
+    ? "flex items-center gap-2 px-2 py-1 rounded hover:bg-black/[0.04] text-xs text-gray-700 transition-colors"
+    : "flex items-center gap-2 px-2 py-1 rounded hover:bg-white/5 text-xs text-white/80 transition-colors";
+  const dotBorderClass = isLight ? "border-black/10" : "border-white/20";
 
   return (
-    <div className="flex items-center gap-0.5 px-2 py-1 border-b border-white/10 bg-[#0a0f1e]/60">
+    <div className={containerClass}>
       <button type="button" className={btnBase} disabled={disabled} onClick={() => applyWrap("bold")} title="Negrito (**texto**)">
         <Bold size={14} />
       </button>
@@ -136,7 +151,7 @@ export default function RichTextToolbar({ textareaRef, value, onChange, disabled
         <Underline size={14} />
       </button>
 
-      <div className="w-px h-4 bg-white/10 mx-1" />
+      <div className={dividerClass} />
 
       <button type="button" className={btnBase} disabled={disabled} onClick={() => applyList("bullet")} title="Lista com marcadores (- item)">
         <List size={14} />
@@ -145,7 +160,7 @@ export default function RichTextToolbar({ textareaRef, value, onChange, disabled
         <ListOrdered size={14} />
       </button>
 
-      <div className="w-px h-4 bg-white/10 mx-1" />
+      <div className={dividerClass} />
 
       <button type="button" className={btnBase} disabled={disabled} onClick={() => applyWrap("highlight")} title="Destaque (==texto==)">
         <Highlighter size={14} />
@@ -162,15 +177,15 @@ export default function RichTextToolbar({ textareaRef, value, onChange, disabled
           <Palette size={14} />
         </button>
         {showColors && (
-          <div className="absolute left-0 top-full mt-1 z-50 bg-[#171F38] border border-white/10 rounded-lg shadow-xl p-2 flex flex-col gap-1 min-w-[110px]">
+          <div className={dropdownClass}>
             {Object.entries(COLOR_PALETTE).map(([key, hex]) => (
               <button
                 key={key}
                 type="button"
-                className="flex items-center gap-2 px-2 py-1 rounded hover:bg-white/5 text-xs text-white/80 transition-colors"
+                className={dropdownItemClass}
                 onClick={() => applyColor(key)}
               >
-                <span className="w-3 h-3 rounded-full inline-block border border-white/20" style={{ background: hex }} />
+                <span className={`w-3 h-3 rounded-full inline-block border ${dotBorderClass}`} style={{ background: hex }} />
                 {COLOR_LABELS[key]}
               </button>
             ))}

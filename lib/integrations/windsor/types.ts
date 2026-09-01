@@ -98,6 +98,19 @@ export type WindsorStatus =
   | { configured: true; maskedKey: string }
   | { configured: false; reason: string };
 
+// Conta conectada retornada pelo endpoint ds-accounts (independente de atividade recente)
+export interface WindsorConnectedAccount {
+  accountId: string;
+  accountName: string;
+  datasource: string;
+}
+
+export interface WindsorConnectedAccountsResponse {
+  accounts: WindsorConnectedAccount[];
+  error?: string;
+  errorDetail?: string;
+}
+
 // Resultado do preview — dados normalizados sem gravação em banco
 export interface WindsorPreviewResult {
   status: WindsorStatus;

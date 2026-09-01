@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Pencil } from "lucide-react";
 import type { SuggestionRow } from "@/lib/hooks/useEditorialSuggestions";
+import { parseRichIntoCanonSegments, renderRichRange } from "@/lib/editorial-rich-text";
 
 interface Props {
   text: string | null;
@@ -11,6 +12,7 @@ interface Props {
   field: "description" | "caption";
   canSuggest?: boolean;
   onSuggest?: (start: number, end: number, selectedText: string) => void;
+  richText?: string | null;
 }
 
 type Segment =
@@ -114,6 +116,7 @@ export function SuggestionInlineHighlight({
   field,
   canSuggest,
   onSuggest,
+  richText,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -145,6 +148,12 @@ export function SuggestionInlineHighlight({
 
   const pendingSuggestions = suggestions.filter(
     (s) => s.status === "pending" && s.field === field,
+  );
+
+  // Parse rich markup into segments once; used to render formatted text segments.
+  const richSegs = useMemo(
+    () => (richText ? parseRichIntoCanonSegments(richText) : null),
+    [richText],
   );
 
   function handleMouseUp() {
@@ -189,6 +198,11 @@ export function SuggestionInlineHighlight({
       <span className="whitespace-pre-wrap text-sm font-light text-vitti-fg leading-relaxed select-text">
         {segments.map((seg, i) => {
           if (seg.type === "text") {
+            if (richSegs) {
+              const end = seg.canonicalStart + seg.content.length;
+              const nodes = renderRichRange(richSegs, seg.canonicalStart, end, `rich-${i}`);
+              return <span key={i}>{nodes}</span>;
+            }
             return (
               <span key={i} data-canonical-start={String(seg.canonicalStart)}>
                 {seg.content}

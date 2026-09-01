@@ -60,25 +60,25 @@ export async function GET() {
     .eq("provider", "windsor")
     .eq("status", "active");
 
-  // accountName → { integrationId, clientId }
-  const mappingByAccount = new Map<
-    string,
-    { integrationId: string; clientId: string }
-  >();
+  // Dois índices para enriquecimento: account_id (preferencial) + account_name (fallback)
+  type MappingEntry = { integrationId: string; clientId: string };
+  const mappingByAccountId = new Map<string, MappingEntry>();
+  const mappingByName = new Map<string, MappingEntry>();
 
   for (const row of integrations ?? []) {
     const name = String(row.account_name ?? "").trim();
-    if (name) {
-      mappingByAccount.set(name, {
-        integrationId: String(row.id),
-        clientId: String(row.client_id ?? ""),
-      });
-    }
+    const id = String(row.account_id ?? "").trim();
+    const entry: MappingEntry = {
+      integrationId: String(row.id),
+      clientId: String(row.client_id ?? ""),
+    };
+    if (id) mappingByAccountId.set(id, entry);
+    if (name) mappingByName.set(name, entry);
   }
 
   // ── Nome dos clientes mapeados ────────────────────────────────
   const mappedClientIds = [
-    ...new Set([...mappingByAccount.values()].map((m) => m.clientId).filter(Boolean)),
+    ...new Set([...mappingByAccountId.values(), ...mappingByName.values()].map((m) => m.clientId).filter(Boolean)),
   ];
 
   const clientNameById = new Map<string, string>();
@@ -96,7 +96,11 @@ export async function GET() {
 
   // ── Monta resposta ────────────────────────────────────────────
   const result: WindsorAccountRow[] = accounts.map(({ accountName, accountId }) => {
-    const mapping = mappingByAccount.get(accountName) ?? null;
+    // Lookup account_id-first para reconhecer mapeamentos mesmo se account_name mudou
+    const mapping =
+      (accountId ? mappingByAccountId.get(accountId) : undefined)
+      ?? mappingByName.get(accountName)
+      ?? null;
     return {
       accountName,
       accountId,

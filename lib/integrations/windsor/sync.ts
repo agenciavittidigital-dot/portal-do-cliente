@@ -49,6 +49,7 @@ interface AggregatedRecord {
   campaignId: string;
   adId: string;
   adName: string | null;
+  matchedBy: "account_id" | "account_name";
   // Métricas somáveis
   spend: number;
   clicks: number;
@@ -150,17 +151,20 @@ export async function syncWindsorMappedAccounts(
     return { ...base, error: "Erro ao carregar mapeamentos.", errorDetail: integError.message };
   }
 
-  // accountName → Integration
+  // Dois índices: account_id (preferencial) + account_name (fallback retroativo)
+  const integByAccountId = new Map<string, Integration>();
   const integByName = new Map<string, Integration>();
   for (const row of integrationRows ?? []) {
     const name = String(row.account_name ?? "").trim();
-    if (!name) continue;
-    integByName.set(name, {
+    const storedId = String(row.account_id ?? "").trim();
+    const integ: Integration = {
       integrationId: String(row.id),
       clientId: String(row.client_id),
-      accountId: String(row.account_id ?? ""),
+      accountId: storedId,
       accountName: name,
-    });
+    };
+    if (storedId) integByAccountId.set(storedId, integ);
+    if (name) integByName.set(name, integ);
   }
 
   // ── 3. Agregar registros pela chave real da constraint ────────────────────
@@ -180,7 +184,11 @@ export async function syncWindsorMappedAccounts(
     const accountName = String(raw.account_name ?? "").trim();
     if (!accountName) continue;
 
-    const integ = integByName.get(accountName);
+    // account_id-first: remove prefixo act_ caso presente, lookup no índice por ID
+    const rawId = String(raw.account_id ?? "").trim().replace(/^act_/, "");
+    const matchById = rawId ? integByAccountId.get(rawId) : undefined;
+    const integ = matchById ?? integByName.get(accountName);
+    const matchedBy: "account_id" | "account_name" = matchById ? "account_id" : "account_name";
     if (!integ) {
       unmappedSet.add(accountName);
       base.skippedUnmapped++;
@@ -261,6 +269,7 @@ export async function syncWindsorMappedAccounts(
       const rawSpend = safeNum(raw.spend);
       aggregated.set(key, {
         integration: integ,
+        matchedBy,
         date,
         accountName,
         campaignName,
@@ -393,7 +402,7 @@ export async function syncWindsorMappedAccounts(
           synced_at: syncedAt,
           date_preset: dateRange,
           integration_id: rec.integration.integrationId,
-          matched_by: "account_name",
+          matched_by: rec.matchedBy,
           grouped_count: rec.groupedCount,
           fields_synced: WINDSOR_SYNC_FIELDS,
         },
@@ -519,16 +528,20 @@ export async function syncWindsorForPeriod(options: PeriodSyncOptions): Promise<
     return { ...base, error: "Erro ao carregar mapeamentos.", errorDetail: integError.message };
   }
 
+  // Dois índices: account_id (preferencial) + account_name (fallback retroativo)
+  const integByAccountId = new Map<string, Integration>();
   const integByName = new Map<string, Integration>();
   for (const row of integrationRows ?? []) {
     const name = String(row.account_name ?? "").trim();
-    if (!name) continue;
-    integByName.set(name, {
+    const storedId = String(row.account_id ?? "").trim();
+    const integ: Integration = {
       integrationId: String(row.id),
       clientId: String(row.client_id),
-      accountId: String(row.account_id ?? ""),
+      accountId: storedId,
       accountName: name,
-    });
+    };
+    if (storedId) integByAccountId.set(storedId, integ);
+    if (name) integByName.set(name, integ);
   }
 
   const aggregated = new Map<string, AggregatedRecord>();
@@ -538,7 +551,11 @@ export async function syncWindsorForPeriod(options: PeriodSyncOptions): Promise<
     const accountName = String(raw.account_name ?? "").trim();
     if (!accountName) continue;
 
-    const integ = integByName.get(accountName);
+    // account_id-first: remove prefixo act_ caso presente, lookup no índice por ID
+    const rawId = String(raw.account_id ?? "").trim().replace(/^act_/, "");
+    const matchById = rawId ? integByAccountId.get(rawId) : undefined;
+    const integ = matchById ?? integByName.get(accountName);
+    const matchedBy: "account_id" | "account_name" = matchById ? "account_id" : "account_name";
     if (!integ) {
       unmappedSet.add(accountName);
       base.skippedUnmapped++;
@@ -612,6 +629,7 @@ export async function syncWindsorForPeriod(options: PeriodSyncOptions): Promise<
       const rawSpend = safeNum(raw.spend);
       aggregated.set(key, {
         integration: integ,
+        matchedBy,
         date,
         accountName,
         campaignName,
@@ -735,7 +753,7 @@ export async function syncWindsorForPeriod(options: PeriodSyncOptions): Promise<
           synced_at: syncedAt,
           date_preset: dateRange,
           integration_id: rec.integration.integrationId,
-          matched_by: "account_name",
+          matched_by: rec.matchedBy,
           grouped_count: rec.groupedCount,
           fields_synced: WINDSOR_SYNC_FIELDS,
           extended_sync: true,

@@ -78,9 +78,9 @@ export function MetricasDashboard({
 
   if (dashboards.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-vitti-gray/[0.20]">
-        <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200/60 flex items-center justify-center">
-          <BarChart3 size={16} className="text-vitti-blue/30" />
+      <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-vitti-gray/[0.20] dark:border-[var(--border)]">
+        <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-[var(--surface-soft)] border border-slate-200/60 dark:border-[var(--border)] flex items-center justify-center">
+          <BarChart3 size={16} className="text-vitti-blue/30 dark:text-vitti-light/30" />
         </div>
         <div className="text-center space-y-1.5">
           <p className="text-sm font-light text-vitti-blue/60">
@@ -111,8 +111,8 @@ export function MetricasDashboard({
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold border transition-all duration-150",
                 isActive
-                  ? "bg-[#171f38] border-[#638acc] hover:bg-[#1e2a47]"
-                  : "bg-white/60 border-vitti-blue hover:bg-slate-50"
+                  ? "bg-[#171f38] dark:bg-[var(--surface-elevated)] border-[#638acc] hover:bg-[#1e2a47] dark:hover:bg-[var(--surface-soft)]"
+                  : "bg-white/60 dark:bg-[var(--glass)] border-vitti-blue dark:border-[var(--border)] hover:bg-slate-50 dark:hover:bg-[var(--hover)]"
               )}
             >
               <Image
@@ -122,7 +122,7 @@ export function MetricasDashboard({
                 height={18}
                 className="shrink-0 object-contain"
               />
-              <span className="text-[#455cab]">{label}</span>
+              <span className="text-[#455cab] dark:text-vitti-light">{label}</span>
             </button>
           );
         })}

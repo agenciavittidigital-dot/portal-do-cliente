@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { Calendar, ChevronDown, BarChart3, Film, FileDown, Loader2, ShoppingCart } from "lucide-react";
 import { exportDashboardToPdf } from "@/lib/pdf/exportDashboard";
@@ -154,7 +155,7 @@ function PeriodFilter({
       </button>
 
       {open && (
-        <div className="absolute top-full mt-2 right-0 z-50 min-w-[210px] rounded-xl border border-slate-200 bg-white shadow-xl shadow-black/[0.08] overflow-hidden">
+        <div className="absolute top-full mt-2 right-0 z-50 min-w-[210px] rounded-xl border border-slate-200 dark:border-[var(--border)] bg-white dark:bg-[var(--surface-elevated)] shadow-xl shadow-black/[0.08] dark:shadow-[0_8px_32px_rgba(0,0,0,0.40)] overflow-hidden">
           {PERIOD_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -169,8 +170,8 @@ function PeriodFilter({
               className={cn(
                 "w-full text-left px-4 py-2.5 text-[11px] font-light transition-colors",
                 period === opt.value
-                  ? "text-vitti-blue bg-vitti-blue/[0.10]"
-                  : "text-vitti-blue/60 hover:text-vitti-blue hover:bg-vitti-blue/[0.06]"
+                  ? "text-vitti-blue dark:text-vitti-light bg-vitti-blue/[0.10] dark:bg-vitti-light/[0.15]"
+                  : "text-vitti-blue/60 dark:text-[var(--text-muted)] hover:text-vitti-blue dark:hover:text-vitti-light hover:bg-vitti-blue/[0.06] dark:hover:bg-[var(--hover)]"
               )}
             >
               {opt.label}
@@ -178,8 +179,8 @@ function PeriodFilter({
           ))}
 
           {period === "custom" && (
-            <div className="border-t border-slate-200/60 px-4 py-3 space-y-2 bg-slate-50/60">
-              <p className="text-[9px] text-vitti-blue/40 tracking-[0.1em] uppercase font-light">
+            <div className="border-t border-slate-200/60 dark:border-[var(--border)] px-4 py-3 space-y-2 bg-slate-50/60 dark:bg-[var(--surface-soft)]">
+              <p className="text-[9px] text-vitti-blue/40 dark:text-vitti-light/50 tracking-[0.1em] uppercase font-light">
                 Período personalizado
               </p>
               <input
@@ -187,14 +188,14 @@ function PeriodFilter({
                 value={customStart}
                 max={customEnd || undefined}
                 onChange={(e) => onChange("custom", e.target.value, customEnd)}
-                className="w-full bg-slate-100/60 border border-slate-200 rounded-lg px-3 py-2 text-[11px] text-vitti-blue/60 font-light focus:outline-none focus:border-vitti-blue/40 transition-colors [color-scheme:light]"
+                className="w-full bg-slate-100/60 dark:bg-[var(--glass)] border border-slate-200 dark:border-[var(--border)] rounded-lg px-3 py-2 text-[11px] text-vitti-blue/60 dark:text-vitti-light/60 font-light focus:outline-none focus:border-vitti-blue/40 transition-colors [color-scheme:light] dark:[color-scheme:dark]"
               />
               <input
                 type="date"
                 value={customEnd}
                 min={customStart || undefined}
                 onChange={(e) => onChange("custom", customStart, e.target.value)}
-                className="w-full bg-slate-100/60 border border-slate-200 rounded-lg px-3 py-2 text-[11px] text-vitti-blue/60 font-light focus:outline-none focus:border-vitti-blue/40 transition-colors [color-scheme:light]"
+                className="w-full bg-slate-100/60 dark:bg-[var(--glass)] border border-slate-200 dark:border-[var(--border)] rounded-lg px-3 py-2 text-[11px] text-vitti-blue/60 dark:text-vitti-light/60 font-light focus:outline-none focus:border-vitti-blue/40 transition-colors [color-scheme:light] dark:[color-scheme:dark]"
               />
               {customStart && customEnd && (
                 <button
@@ -273,8 +274,8 @@ function FixedKpiCard({
   const hasData = value !== null;
 
   return (
-    <div className="group/mc rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] pt-4 px-4 pb-0 flex flex-col gap-1 min-w-0 overflow-hidden transition-colors duration-200 hover:[background-image:url('/assets/metric-card-hover-bg.jpg')] hover:bg-cover hover:bg-center">
-      <p className="text-[11px] text-[#171f38] font-light tracking-wide truncate transition-colors duration-200 group-hover/mc:text-white/70">
+    <div className="group/mc rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] pt-4 px-4 pb-0 flex flex-col gap-1 min-w-0 overflow-hidden transition-colors duration-200 hover:[background-image:url('/assets/metric-card-hover-bg.jpg')] hover:bg-cover hover:bg-center">
+      <p className="text-[11px] text-[#171f38] dark:text-[var(--text-secondary)] font-light tracking-wide truncate transition-colors duration-200 group-hover/mc:text-white/70">
         {kpi.label}
       </p>
       <p
@@ -305,8 +306,8 @@ function SaleKpiCard({
 }) {
   const hasData = value !== "—";
   return (
-    <div className="group/mc rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] pt-4 px-4 pb-0 flex flex-col gap-1 min-w-0 overflow-hidden transition-colors duration-200 hover:[background-image:url('/assets/metric-card-hover-bg.jpg')] hover:bg-cover hover:bg-center">
-      <p className="text-[11px] text-[#171f38] font-light tracking-wide truncate transition-colors duration-200 group-hover/mc:text-white/70">
+    <div className="group/mc rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] pt-4 px-4 pb-0 flex flex-col gap-1 min-w-0 overflow-hidden transition-colors duration-200 hover:[background-image:url('/assets/metric-card-hover-bg.jpg')] hover:bg-cover hover:bg-center">
+      <p className="text-[11px] text-[#171f38] dark:text-[var(--text-secondary)] font-light tracking-wide truncate transition-colors duration-200 group-hover/mc:text-white/70">
         {label}
       </p>
       <p
@@ -353,6 +354,8 @@ function FunnelChart({
   summary: PerformanceSummary | null;
   convType: "lead" | "message" | "purchase";
 }) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const conv = getPrimaryConversionConfig(convType);
 
   function fmt(key: string): string {
@@ -436,7 +439,7 @@ function FunnelChart({
             <text
               x={cx} y={midY - 9}
               textAnchor="middle" dominantBaseline="middle"
-              fill="rgba(23,31,56,0.45)"
+              fill={isDark ? "rgba(244,247,251,0.45)" : "rgba(23,31,56,0.45)"}
               fontSize="6" fontWeight="300" letterSpacing="2"
             >
               {stage.label.toUpperCase()}
@@ -462,8 +465,8 @@ function FunnelChart({
 
 function SmallKpiCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="group/mc rounded-xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] px-3 py-2.5 flex flex-col gap-0.5 transition-colors duration-200 hover:[background-image:url('/assets/metric-card-hover-bg.jpg')] hover:bg-cover hover:bg-center">
-      <p className="text-[9px] text-[#171f38] font-light tracking-wide truncate transition-colors duration-200 group-hover/mc:text-white/70">{label}</p>
+    <div className="group/mc rounded-xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] px-3 py-2.5 flex flex-col gap-0.5 transition-colors duration-200 hover:[background-image:url('/assets/metric-card-hover-bg.jpg')] hover:bg-cover hover:bg-center">
+      <p className="text-[9px] text-[#171f38] dark:text-[var(--text-secondary)] font-light tracking-wide truncate transition-colors duration-200 group-hover/mc:text-white/70">{label}</p>
       <p className="text-sm font-bold text-[#455cab] tabular-nums leading-tight transition-colors duration-200 group-hover/mc:text-white">{value}</p>
     </div>
   );
@@ -485,13 +488,13 @@ function EvolutionTooltip({
   const dl =
     parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : String(label ?? "");
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-lg px-3 py-2.5 space-y-1.5 min-w-[148px]">
-      <p className="text-[9px] text-[#171f38]/50 font-light">{dl}</p>
+    <div className="rounded-xl border border-slate-200 dark:border-[var(--border)] bg-white dark:bg-[var(--surface-elevated)] shadow-lg dark:shadow-[0_4px_24px_rgba(0,0,0,0.35)] px-3 py-2.5 space-y-1.5 min-w-[148px]">
+      <p className="text-[9px] text-[#171f38]/50 dark:text-[var(--text-muted)] font-light">{dl}</p>
       {payload.map((p) => {
         const def = EVOLUTION_METRIC_DEFS[p.name];
         return (
           <div key={p.name} className="flex items-center justify-between gap-3">
-            <span className="text-[9px] text-[#171f38]/60 font-light">
+            <span className="text-[9px] text-[#171f38]/60 dark:text-[var(--text-secondary)] font-light">
               {def?.label ?? p.name}
             </span>
             <span className="text-[10px] font-bold tabular-nums" style={{ color: p.color }}>
@@ -511,6 +514,9 @@ function EvolutionChart({
   rows: PerformanceRow[];
   metricKeys: string[];
 }) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   // Cores fixas por posição: 1 série → roxo, 2 → +vermelho, 3 → +verde
   const PALETTE = ["#7b27fa", "#fb251d", "#28b52e"];
 
@@ -525,8 +531,8 @@ function EvolutionChart({
   if (rows.length === 0 || activeMetrics.length === 0) {
     return (
       <div className="flex-1 min-h-[160px] flex flex-col items-center justify-center gap-2">
-        <BarChart3 size={16} className="text-[#171f38]/20" />
-        <p className="text-[10px] text-[#171f38]/30 font-light">
+        <BarChart3 size={16} className="text-[#171f38]/20 dark:text-[var(--text-muted)]/40" />
+        <p className="text-[10px] text-[#171f38]/30 dark:text-[var(--text-muted)] font-light">
           Aguardando sincronização
         </p>
       </div>
@@ -577,7 +583,7 @@ function EvolutionChart({
         {activeMetrics.map(({ key, def, color }) => (
           <div key={key} className="flex items-center gap-1.5">
             <div className="w-3 h-[2px] rounded" style={{ backgroundColor: color }} />
-            <span className="text-[9px] text-[#171f38]/55 font-light">{def.label}</span>
+            <span className="text-[9px] text-[#171f38]/55 dark:text-[var(--text-muted)] font-light">{def.label}</span>
           </div>
         ))}
       </div>
@@ -595,11 +601,11 @@ function EvolutionChart({
               </linearGradient>
             ))}
           </defs>
-          <CartesianGrid vertical={false} stroke="rgba(0,0,0,0.05)" />
+          <CartesianGrid vertical={false} stroke={isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)"} />
           <XAxis
             dataKey="date"
             tickFormatter={fmtDate}
-            tick={{ fill: "#171f38", fontSize: 8, fontWeight: 300 }}
+            tick={{ fill: isDark ? "rgba(244,247,251,0.45)" : "#171f38", fontSize: 8, fontWeight: 300 }}
             axisLine={false}
             tickLine={false}
             dy={4}
@@ -607,7 +613,7 @@ function EvolutionChart({
           <YAxis
             yAxisId="left"
             tickFormatter={useDualAxis ? fmtLeftTick : fmtSingleTick}
-            tick={{ fill: "rgba(0,0,0,0.22)", fontSize: 7, fontWeight: 300 }}
+            tick={{ fill: isDark ? "rgba(244,247,251,0.35)" : "rgba(0,0,0,0.22)", fontSize: 7, fontWeight: 300 }}
             axisLine={false}
             tickLine={false}
             width={38}
@@ -617,7 +623,7 @@ function EvolutionChart({
               yAxisId="right"
               orientation="right"
               tickFormatter={fmtRightTick}
-              tick={{ fill: "rgba(0,0,0,0.22)", fontSize: 7, fontWeight: 300 }}
+              tick={{ fill: isDark ? "rgba(244,247,251,0.35)" : "rgba(0,0,0,0.22)", fontSize: 7, fontWeight: 300 }}
               axisLine={false}
               tickLine={false}
               width={26}
@@ -625,7 +631,7 @@ function EvolutionChart({
           )}
           <Tooltip
             content={<EvolutionTooltip />}
-            cursor={{ stroke: "rgba(0,0,0,0.06)", strokeWidth: 1 }}
+            cursor={{ stroke: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)", strokeWidth: 1 }}
           />
           {activeMetrics.map(({ key, color }) => (
             <Area
@@ -724,6 +730,8 @@ function buildDemographicSlices(
 // ── Label externo do gráfico de pizza ────────────────────────────────────────
 
 function PieExternalLabel(props: PieLabelRenderProps) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const cx          = props.cx          as number;
   const cy          = props.cy          as number;
   const midAngle    = props.midAngle    as number;
@@ -742,7 +750,7 @@ function PieExternalLabel(props: PieLabelRenderProps) {
 
   return (
     <g>
-      <text x={x} y={y - 4} textAnchor={anchor} fill="#171f38" fillOpacity={0.6} fontSize={7} fontWeight={400}>
+      <text x={x} y={y - 4} textAnchor={anchor} fill={isDark ? "rgba(244,247,251,0.60)" : "rgba(23,31,56,0.60)"} fontSize={7} fontWeight={400}>
         {payload.label}
       </text>
       <text x={x} y={y + 5} textAnchor={anchor} fill="#455cab" fillOpacity={0.9} fontSize={7.5} fontWeight={600}>
@@ -768,10 +776,10 @@ function DonutCard({
   const hasData = slices && slices.length > 0;
 
   return (
-    <div className={cn("rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col", className)}>
+    <div className={cn("rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-4 flex flex-col", className)}>
       {/* Cabeçalho */}
       <div className="flex items-center justify-between mb-3">
-        <h5 className="text-[11px] font-medium text-[#171f38]/75 tracking-wide">{title}</h5>
+        <h5 className="text-[11px] font-medium text-[#171f38]/75 dark:text-[var(--text-secondary)] tracking-wide">{title}</h5>
         {hasData && metricLabel && (
           <span className="text-[8px] text-[#455cab]/40 font-light uppercase tracking-wider">
             {metricLabel}
@@ -822,7 +830,7 @@ function DonutCard({
             </PieChart>
           </ResponsiveContainer>
         ) : (
-          <p className="text-[9px] text-[#171f38]/35 font-light text-center leading-relaxed">
+          <p className="text-[9px] text-[#171f38]/35 dark:text-[var(--text-muted)] font-light text-center leading-relaxed">
             Sem dados
             <br />
             no período
@@ -847,7 +855,7 @@ function HoverMetric({ label, value }: { label: string; value: string }) {
 function CreativeThumb({ url, name }: { url: string | null; name: string | null }) {
   if (!url) {
     return (
-      <div className="w-full h-44 bg-[#e4e8f2] flex items-center justify-center px-3">
+      <div className="w-full h-44 bg-[#e4e8f2] dark:bg-[var(--surface-soft)] flex items-center justify-center px-3">
         <p className="text-[9px] text-[#455cab]/50 font-light text-center leading-relaxed line-clamp-3">
           {name ?? "Criativo"}
         </p>
@@ -901,13 +909,13 @@ function BestAdsSection({
 
   if (sorted.length === 0) {
     return (
-      <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col min-h-[268px]">
+      <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-4 flex flex-col min-h-[268px]">
         <h4 className="text-[11px] font-light text-[#455cab] tracking-wide mb-auto">
           Melhores anúncios
         </h4>
         <div className="flex-1 flex flex-col items-center justify-center gap-2">
           <Film size={16} className="text-[#455cab]/20" />
-          <p className="text-[10px] text-[#171f38]/30 font-light text-center leading-relaxed">
+          <p className="text-[10px] text-[#171f38]/30 dark:text-[var(--text-muted)] font-light text-center leading-relaxed">
             Aguardando sincronização
           </p>
         </div>
@@ -916,7 +924,7 @@ function BestAdsSection({
   }
 
   return (
-    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col gap-3">
+    <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-4 flex flex-col gap-3">
       <h4 className="text-[11px] font-light text-[#455cab] tracking-wide">
         Melhores anúncios
       </h4>
@@ -928,11 +936,11 @@ function BestAdsSection({
             return (
               <div
                 key={c.adId}
-                className="relative group shrink-0 w-[calc(25%-9px)] snap-start rounded-xl border border-slate-200 bg-white overflow-hidden"
+                className="relative group shrink-0 w-[calc(25%-9px)] snap-start rounded-xl border border-slate-200 dark:border-[var(--border)] bg-white dark:bg-[var(--surface)] overflow-hidden"
               >
                 <CreativeThumb url={c.thumbnail_url} name={c.adName ?? c.campaignName} />
-                <div className="px-2.5 py-2 bg-white">
-                  <p className="text-[8px] text-[#171f38] font-light truncate leading-tight">
+                <div className="px-2.5 py-2 bg-white dark:bg-[var(--surface)]">
+                  <p className="text-[8px] text-[#171f38] dark:text-[var(--text-secondary)] font-light truncate leading-tight">
                     {c.adName ?? c.campaignName ?? "—"}
                   </p>
                 </div>
@@ -952,7 +960,7 @@ function BestAdsSection({
         {sorted.length > 4 && (
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#f1f1f1] via-[#f1f1f1]/70 to-transparent"
+            className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#f1f1f1] dark:from-[#131A2A] via-[#f1f1f1]/70 dark:via-[#131A2A]/70 to-transparent"
           />
         )}
       </div>
@@ -1037,7 +1045,7 @@ function MetaCampaignsTable({ campaigns }: { campaigns: MetaAdsCampaignRow[] }) 
   });
 
   return (
-    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4">
+    <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-4">
       {/* Cabeçalho + filtros */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
         <h4 className="text-[11px] font-light text-[#455cab] tracking-wide shrink-0 mr-1">
@@ -1048,14 +1056,14 @@ function MetaCampaignsTable({ campaigns }: { campaigns: MetaAdsCampaignRow[] }) 
           value={nameFilter}
           onChange={(e) => setNameFilter(e.target.value)}
           placeholder="Filtrar por campanha..."
-          className="flex-1 min-w-[140px] max-w-[220px] px-2.5 py-1 text-[10px] font-light text-[#171f38]/80 bg-white/70 border border-slate-200/70 rounded-lg outline-none focus:border-[#455cab]/40 focus:ring-1 focus:ring-[#455cab]/20 placeholder:text-[#171f38]/30 transition-all"
+          className="flex-1 min-w-[140px] max-w-[220px] px-2.5 py-1 text-[10px] font-light text-[#171f38]/80 dark:text-[var(--text-primary)] bg-white/70 dark:bg-[var(--glass)] border border-slate-200/70 dark:border-[var(--border)] rounded-lg outline-none focus:border-[#455cab]/40 dark:focus:border-vitti-light/40 focus:ring-1 focus:ring-[#455cab]/20 placeholder:text-[#171f38]/30 dark:placeholder:text-[var(--text-muted)] transition-all"
         />
         {objectives.length > 0 && (
           <div className="relative min-w-[148px] max-w-[200px]">
             <select
               value={objectiveFilter}
               onChange={(e) => setObjectiveFilter(e.target.value)}
-              className="w-full appearance-none pl-2.5 pr-7 py-1 text-[10px] font-light text-[#171f38]/80 bg-white/70 border border-slate-200/70 rounded-lg outline-none focus:border-[#455cab]/40 focus:ring-1 focus:ring-[#455cab]/20 transition-all cursor-pointer"
+              className="w-full appearance-none pl-2.5 pr-7 py-1 text-[10px] font-light text-[#171f38]/80 dark:text-[var(--text-primary)] bg-white/70 dark:bg-[var(--glass)] border border-slate-200/70 dark:border-[var(--border)] rounded-lg outline-none focus:border-[#455cab]/40 dark:focus:border-vitti-light/40 focus:ring-1 focus:ring-[#455cab]/20 transition-all cursor-pointer"
             >
               <option value="">Objetivo</option>
               {objectives.map((obj) => (
@@ -1064,7 +1072,7 @@ function MetaCampaignsTable({ campaigns }: { campaigns: MetaAdsCampaignRow[] }) 
             </select>
             <ChevronDown
               size={10}
-              className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#171f38]/35"
+              className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#171f38]/35 dark:text-[var(--text-muted)]"
             />
           </div>
         )}
@@ -1073,13 +1081,13 @@ function MetaCampaignsTable({ campaigns }: { campaigns: MetaAdsCampaignRow[] }) 
       {/* Scroll vertical limitado a ~4 linhas; thead sticky */}
       <div className="overflow-auto max-h-[200px]">
         <table className="w-full text-left border-collapse">
-          <thead className="sticky top-0 bg-white/95 backdrop-blur-sm z-10">
-            <tr className="border-b border-slate-200/70">
-              <th className="pb-2 pr-4 text-[9px] font-light text-[#171f38]/45 tracking-wider uppercase whitespace-nowrap">Campanha</th>
-              <th className="pb-2 pr-4 text-[9px] font-light text-[#171f38]/45 tracking-wider uppercase whitespace-nowrap text-right">Investimento</th>
-              <th className="pb-2 pr-4 text-[9px] font-light text-[#171f38]/45 tracking-wider uppercase whitespace-nowrap text-right">{resultLabel}</th>
-              <th className="pb-2 pr-4 text-[9px] font-light text-[#171f38]/45 tracking-wider uppercase whitespace-nowrap text-right">Custo / {resultLabel}</th>
-              <th className="pb-2 text-[9px] font-light text-[#171f38]/45 tracking-wider uppercase whitespace-nowrap text-right">CTR</th>
+          <thead className="sticky top-0 bg-white/95 dark:bg-[var(--glass-strong)] backdrop-blur-sm z-10">
+            <tr className="border-b border-slate-200/70 dark:border-[var(--border)]">
+              <th className="pb-2 pr-4 text-[9px] font-light text-[#171f38]/45 dark:text-[var(--text-muted)] tracking-wider uppercase whitespace-nowrap">Campanha</th>
+              <th className="pb-2 pr-4 text-[9px] font-light text-[#171f38]/45 dark:text-[var(--text-muted)] tracking-wider uppercase whitespace-nowrap text-right">Investimento</th>
+              <th className="pb-2 pr-4 text-[9px] font-light text-[#171f38]/45 dark:text-[var(--text-muted)] tracking-wider uppercase whitespace-nowrap text-right">{resultLabel}</th>
+              <th className="pb-2 pr-4 text-[9px] font-light text-[#171f38]/45 dark:text-[var(--text-muted)] tracking-wider uppercase whitespace-nowrap text-right">Custo / {resultLabel}</th>
+              <th className="pb-2 text-[9px] font-light text-[#171f38]/45 dark:text-[var(--text-muted)] tracking-wider uppercase whitespace-nowrap text-right">CTR</th>
             </tr>
           </thead>
           <tbody>
@@ -1090,21 +1098,21 @@ function MetaCampaignsTable({ campaigns }: { campaigns: MetaAdsCampaignRow[] }) 
                 return (
                   <tr
                     key={c.campaignId}
-                    className="border-b border-slate-100/70 hover:bg-slate-50/80 transition-colors"
+                    className="border-b border-slate-100/70 dark:border-[var(--border)] hover:bg-slate-50/80 dark:hover:bg-[var(--hover)] transition-colors"
                   >
-                    <td className="py-2.5 pr-4 text-[11px] font-light text-[#171f38]/75 max-w-[220px] truncate">
+                    <td className="py-2.5 pr-4 text-[11px] font-light text-[#171f38]/75 dark:text-[var(--text-secondary)] max-w-[220px] truncate">
                       {c.campaignName ?? "—"}
                     </td>
                     <td className="py-2.5 pr-4 text-[11px] font-bold text-[#455cab] tabular-nums text-right whitespace-nowrap">
                       {fmtBRL(c.spend)}
                     </td>
-                    <td className="py-2.5 pr-4 text-[11px] font-light text-[#171f38]/75 tabular-nums text-right">
+                    <td className="py-2.5 pr-4 text-[11px] font-light text-[#171f38]/75 dark:text-[var(--text-secondary)] tabular-nums text-right">
                       {result > 0 ? fmtInt(result) : "—"}
                     </td>
                     <td className="py-2.5 pr-4 text-[11px] font-bold text-[#455cab] tabular-nums text-right whitespace-nowrap">
                       {costPerResult != null ? fmtBRL(costPerResult) : "—"}
                     </td>
-                    <td className="py-2.5 text-[11px] font-light text-[#171f38]/75 tabular-nums text-right">
+                    <td className="py-2.5 text-[11px] font-light text-[#171f38]/75 dark:text-[var(--text-secondary)] tabular-nums text-right">
                       {fmtPct(c.ctr)}
                     </td>
                   </tr>
@@ -1112,7 +1120,7 @@ function MetaCampaignsTable({ campaigns }: { campaigns: MetaAdsCampaignRow[] }) 
               })
             ) : (
               <tr>
-                <td colSpan={5} className="py-6 text-center text-[10px] font-light text-[#171f38]/35">
+                <td colSpan={5} className="py-6 text-center text-[10px] font-light text-[#171f38]/35 dark:text-[var(--text-muted)]">
                   Nenhuma campanha encontrada.
                 </td>
               </tr>
@@ -1390,7 +1398,7 @@ export function MetaAdsView({
       </div>
 
       {/* ── Divisor ─────────────────────────────────────────────── */}
-      <div className="border-t border-slate-200/60" />
+      <div className="border-t border-slate-200/60 dark:border-[var(--border)]" />
 
       {/* ── Área inferior: 4 colunas ─────────────────────────────
           Desktop (xl): funil | cards | gráfico | donuts
@@ -1400,7 +1408,7 @@ export function MetaAdsView({
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(270px,1.25fr)_minmax(128px,0.6fr)_minmax(400px,2.5fr)_minmax(200px,1fr)] gap-3 items-stretch" data-pdf-section="performance">
 
         {/* Coluna 1 — Funil de resultados */}
-        <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col">
+        <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-4 flex flex-col">
           <h4 className="text-[13px] font-semibold text-[#455cab] tracking-wide mb-5 text-center">
             Funil de resultados
           </h4>
@@ -1448,7 +1456,7 @@ export function MetaAdsView({
         </div>
 
         {/* Coluna 3 — Gráfico de evolução */}
-        <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col">
+        <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-4 flex flex-col">
           <h4 className="text-[11px] font-light text-[#455cab] tracking-wide mb-1">
             Evolução no período
           </h4>

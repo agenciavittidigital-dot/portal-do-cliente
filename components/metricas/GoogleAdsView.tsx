@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { BarChart3, Calendar, ChevronDown, FileDown, Loader2, Search, ShoppingCart } from "lucide-react";
 import { exportDashboardToPdf } from "@/lib/pdf/exportDashboard";
@@ -85,7 +86,7 @@ function PeriodFilter({
       </button>
 
       {open && (
-        <div className="absolute top-full mt-2 right-0 z-50 min-w-[210px] rounded-xl border border-slate-200 bg-white shadow-xl shadow-black/[0.08] overflow-hidden">
+        <div className="absolute top-full mt-2 right-0 z-50 min-w-[210px] rounded-xl border border-slate-200 dark:border-[var(--border)] bg-white dark:bg-[var(--surface-elevated)] shadow-xl shadow-black/[0.08] dark:shadow-[0_8px_32px_rgba(0,0,0,0.40)] overflow-hidden">
           {PERIOD_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -100,8 +101,8 @@ function PeriodFilter({
               className={cn(
                 "w-full text-left px-4 py-2.5 text-[11px] font-light transition-colors",
                 period === opt.value
-                  ? "text-[#455cab] bg-[#455cab]/[0.10]"
-                  : "text-[#455cab]/60 hover:text-[#455cab] hover:bg-[#455cab]/[0.06]"
+                  ? "text-[#455cab] dark:text-vitti-light bg-[#455cab]/[0.10] dark:bg-vitti-light/[0.15]"
+                  : "text-[#455cab]/60 dark:text-[var(--text-muted)] hover:text-[#455cab] dark:hover:text-vitti-light hover:bg-[#455cab]/[0.06] dark:hover:bg-[var(--hover)]"
               )}
             >
               {opt.label}
@@ -109,8 +110,8 @@ function PeriodFilter({
           ))}
 
           {period === "custom" && (
-            <div className="border-t border-slate-200/60 px-4 py-3 space-y-2 bg-slate-50/80">
-              <p className="text-[9px] text-[#455cab]/40 tracking-[0.1em] uppercase font-light">
+            <div className="border-t border-slate-200/60 dark:border-[var(--border)] px-4 py-3 space-y-2 bg-slate-50/80 dark:bg-[var(--surface-soft)]">
+              <p className="text-[9px] text-[#455cab]/40 dark:text-vitti-light/50 tracking-[0.1em] uppercase font-light">
                 Período personalizado
               </p>
               <input
@@ -118,14 +119,14 @@ function PeriodFilter({
                 value={customStart}
                 max={customEnd || undefined}
                 onChange={(e) => onChange("custom", e.target.value, customEnd)}
-                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[11px] text-[#455cab]/60 font-light focus:outline-none focus:border-[#455cab]/40 transition-colors [color-scheme:light]"
+                className="w-full bg-white dark:bg-[var(--glass)] border border-slate-200 dark:border-[var(--border)] rounded-lg px-3 py-2 text-[11px] text-[#455cab]/60 dark:text-vitti-light/60 font-light focus:outline-none focus:border-[#455cab]/40 transition-colors [color-scheme:light] dark:[color-scheme:dark]"
               />
               <input
                 type="date"
                 value={customEnd}
                 min={customStart || undefined}
                 onChange={(e) => onChange("custom", customStart, e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[11px] text-[#455cab]/60 font-light focus:outline-none focus:border-[#455cab]/40 transition-colors [color-scheme:light]"
+                className="w-full bg-white dark:bg-[var(--glass)] border border-slate-200 dark:border-[var(--border)] rounded-lg px-3 py-2 text-[11px] text-[#455cab]/60 dark:text-vitti-light/60 font-light focus:outline-none focus:border-[#455cab]/40 transition-colors [color-scheme:light] dark:[color-scheme:dark]"
               />
               {customStart && customEnd && (
                 <button
@@ -238,11 +239,11 @@ function KpiCard({
   return (
     <div
       className={cn(
-        "group/mc rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] flex flex-col gap-1 min-w-0 overflow-hidden transition-colors duration-200 hover:[background-image:url('/assets/metric-card-hover-bg.jpg')] hover:bg-cover hover:bg-center",
+        "group/mc rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] flex flex-col gap-1 min-w-0 overflow-hidden transition-colors duration-200 hover:[background-image:url('/assets/metric-card-hover-bg.jpg')] hover:bg-cover hover:bg-center",
         hasSparkline ? "pt-4 px-4 pb-0" : "p-4"
       )}
     >
-      <p className="text-[11px] text-[#171f38] font-light tracking-wide truncate transition-colors duration-200 group-hover/mc:text-white/70">{label}</p>
+      <p className="text-[11px] text-[#171f38] dark:text-[var(--text-secondary)] font-light tracking-wide truncate transition-colors duration-200 group-hover/mc:text-white/70">{label}</p>
       <p
         className={cn(
           "text-xl font-bold tabular-nums leading-none mt-0.5 transition-colors duration-200 group-hover/mc:text-white",
@@ -264,8 +265,8 @@ function KpiCard({
 
 function SmallKpiCard({ label, value }: { label: string; value: string | null }) {
   return (
-    <div className="group/mc rounded-xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_4px_16px_rgb(0,0,0,0.05)] p-4 flex flex-col gap-1 transition-colors duration-200 hover:[background-image:url('/assets/metric-card-hover-bg.jpg')] hover:bg-cover hover:bg-center">
-      <p className="text-[11px] text-[#171f38]/70 font-light tracking-wide transition-colors duration-200 group-hover/mc:text-white/70">{label}</p>
+    <div className="group/mc rounded-xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_4px_16px_rgb(0,0,0,0.05)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.25)] p-4 flex flex-col gap-1 transition-colors duration-200 hover:[background-image:url('/assets/metric-card-hover-bg.jpg')] hover:bg-cover hover:bg-center">
+      <p className="text-[11px] text-[#171f38]/70 dark:text-[var(--text-secondary)] font-light tracking-wide transition-colors duration-200 group-hover/mc:text-white/70">{label}</p>
       <p
         className={cn(
           "text-lg font-bold tabular-nums leading-tight transition-colors duration-200 group-hover/mc:text-white",
@@ -301,11 +302,11 @@ function ChartTooltip({
     parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : label;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-lg px-3 py-2.5 space-y-1.5 min-w-[148px]">
-      <p className="text-[9px] text-[#171f38]/50 font-light">{dateLabel}</p>
+    <div className="rounded-xl border border-slate-200 dark:border-[var(--border)] bg-white dark:bg-[var(--surface-elevated)] shadow-lg dark:shadow-[0_4px_24px_rgba(0,0,0,0.35)] px-3 py-2.5 space-y-1.5 min-w-[148px]">
+      <p className="text-[9px] text-[#171f38]/50 dark:text-[var(--text-muted)] font-light">{dateLabel}</p>
       {payload.map((entry) => (
         <div key={entry.name} className="flex items-center justify-between gap-3">
-          <span className="text-[9px] text-[#171f38]/60 font-light">
+          <span className="text-[9px] text-[#171f38]/60 dark:text-[var(--text-secondary)] font-light">
             {CHART_LABEL_MAP[entry.name] ?? entry.name}
           </span>
           <span
@@ -336,6 +337,9 @@ function EvolutionChart({
   rows: PerformanceRow[];
   hasConversions: boolean;
 }) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   const series: EvoSeries[] = [
     { key: "spend",  label: "Investimento", color: "#455cab", axis: "left"  },
     { key: "clicks", label: "Cliques",      color: "#638acc", axis: "right" },
@@ -346,13 +350,13 @@ function EvolutionChart({
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col">
-        <h4 className="text-[12px] font-medium text-[#171f38]/75 tracking-wide mb-1">
+      <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-4 flex flex-col">
+        <h4 className="text-[12px] font-medium text-[#171f38]/75 dark:text-[var(--text-secondary)] tracking-wide mb-1">
           Evolução no período
         </h4>
         <div className="min-h-[200px] flex flex-col items-center justify-center gap-2">
-          <BarChart3 size={16} className="text-[#455cab]/30" />
-          <p className="text-[11px] text-[#171f38]/50 font-light">
+          <BarChart3 size={16} className="text-[#455cab]/30 dark:text-vitti-light/30" />
+          <p className="text-[11px] text-[#171f38]/50 dark:text-[var(--text-muted)] font-light">
             Aguardando sincronização
           </p>
         </div>
@@ -361,8 +365,8 @@ function EvolutionChart({
   }
 
   return (
-    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex flex-col h-full">
-      <h4 className="text-[12px] font-medium text-[#171f38]/75 tracking-wide mb-3">
+    <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-4 flex flex-col h-full">
+      <h4 className="text-[12px] font-medium text-[#171f38]/75 dark:text-[var(--text-secondary)] tracking-wide mb-3">
         Evolução no período
       </h4>
       {/* Legenda */}
@@ -370,7 +374,7 @@ function EvolutionChart({
         {series.map(({ key, label, color }) => (
           <div key={key} className="flex items-center gap-1.5">
             <div className="w-3 h-[2px] rounded" style={{ backgroundColor: color }} />
-            <span className="text-[10px] text-[#171f38]/65 font-light">{label}</span>
+            <span className="text-[10px] text-[#171f38]/65 dark:text-[var(--text-muted)] font-light">{label}</span>
           </div>
         ))}
       </div>
@@ -386,11 +390,11 @@ function EvolutionChart({
                 </linearGradient>
               ))}
             </defs>
-            <CartesianGrid vertical={false} stroke="rgba(0,0,0,0.05)" />
+            <CartesianGrid vertical={false} stroke={isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)"} />
             <XAxis
               dataKey="date"
               tickFormatter={fmtAxisDate}
-              tick={{ fill: "rgba(23,31,56,0.60)", fontSize: 9, fontWeight: 300 }}
+              tick={{ fill: isDark ? "rgba(244,247,251,0.45)" : "rgba(23,31,56,0.60)", fontSize: 9, fontWeight: 300 }}
               axisLine={false}
               tickLine={false}
               dy={4}
@@ -398,7 +402,7 @@ function EvolutionChart({
             <YAxis
               yAxisId="left"
               tickFormatter={fmtAxisSpend}
-              tick={{ fill: "rgba(23,31,56,0.45)", fontSize: 8, fontWeight: 300 }}
+              tick={{ fill: isDark ? "rgba(244,247,251,0.35)" : "rgba(23,31,56,0.45)", fontSize: 8, fontWeight: 300 }}
               axisLine={false}
               tickLine={false}
               width={38}
@@ -407,14 +411,14 @@ function EvolutionChart({
               yAxisId="right"
               orientation="right"
               tickFormatter={fmtAxisCount}
-              tick={{ fill: "rgba(23,31,56,0.45)", fontSize: 8, fontWeight: 300 }}
+              tick={{ fill: isDark ? "rgba(244,247,251,0.35)" : "rgba(23,31,56,0.45)", fontSize: 8, fontWeight: 300 }}
               axisLine={false}
               tickLine={false}
               width={26}
             />
             <Tooltip
               content={<ChartTooltip />}
-              cursor={{ stroke: "rgba(0,0,0,0.06)", strokeWidth: 1 }}
+              cursor={{ stroke: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)", strokeWidth: 1 }}
             />
             {series.map(({ key, color, axis }) => (
               <Area
@@ -443,27 +447,27 @@ function CampaignsTable({ campaigns }: { campaigns: GoogleAdsCampaignRow[] }) {
   if (!campaigns.length) return null;
 
   return (
-    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-hidden">
-      <div className="px-5 py-3.5 border-b border-slate-200/60">
-        <h4 className="text-[12px] font-medium text-[#171f38]/80 tracking-wide">Campanhas</h4>
+    <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] overflow-hidden">
+      <div className="px-5 py-3.5 border-b border-slate-200/60 dark:border-[var(--border)]">
+        <h4 className="text-[12px] font-medium text-[#171f38]/80 dark:text-[var(--text-secondary)] tracking-wide">Campanhas</h4>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs font-light">
           <thead>
-            <tr className="border-b border-slate-200/70 bg-slate-50/70">
-              <th className="text-left px-5 py-3 text-[11px] text-[#171f38]/50 font-medium">
+            <tr className="border-b border-slate-200/70 dark:border-[var(--border)] bg-slate-50/70 dark:bg-[var(--surface-soft)]">
+              <th className="text-left px-5 py-3 text-[11px] text-[#171f38]/50 dark:text-[var(--text-muted)] font-medium">
                 Campanha
               </th>
-              <th className="text-right px-4 py-3 text-[11px] text-[#171f38]/50 font-medium whitespace-nowrap">
+              <th className="text-right px-4 py-3 text-[11px] text-[#171f38]/50 dark:text-[var(--text-muted)] font-medium whitespace-nowrap">
                 Investimento
               </th>
-              <th className="text-right px-4 py-3 text-[11px] text-[#171f38]/50 font-medium">
+              <th className="text-right px-4 py-3 text-[11px] text-[#171f38]/50 dark:text-[var(--text-muted)] font-medium">
                 Conversões
               </th>
-              <th className="text-right px-4 py-3 text-[11px] text-[#171f38]/50 font-medium whitespace-nowrap">
+              <th className="text-right px-4 py-3 text-[11px] text-[#171f38]/50 dark:text-[var(--text-muted)] font-medium whitespace-nowrap">
                 Custo / Conv.
               </th>
-              <th className="text-right px-4 py-3 text-[11px] text-[#171f38]/50 font-medium whitespace-nowrap">
+              <th className="text-right px-4 py-3 text-[11px] text-[#171f38]/50 dark:text-[var(--text-muted)] font-medium whitespace-nowrap">
                 Taxa Conv.
               </th>
             </tr>
@@ -477,23 +481,23 @@ function CampaignsTable({ campaigns }: { campaigns: GoogleAdsCampaignRow[] }) {
                 <tr
                   key={camp.campaignId}
                   className={cn(
-                    "hover:bg-slate-50/80 transition-colors",
-                    !isLast && "border-b border-slate-200/60"
+                    "hover:bg-slate-50/80 dark:hover:bg-[var(--hover)] transition-colors",
+                    !isLast && "border-b border-slate-200/60 dark:border-[var(--border)]"
                   )}
                 >
-                  <td className="px-5 py-3.5 text-[#171f38]/90 max-w-[260px]">
+                  <td className="px-5 py-3.5 text-[#171f38]/90 dark:text-[var(--text-secondary)] max-w-[260px]">
                     <div className="truncate">{camp.campaignName ?? "—"}</div>
                   </td>
                   <td className="px-4 py-3.5 text-right text-[#455cab] tabular-nums font-semibold">
                     {fmtCurrency(camp.spend)}
                   </td>
-                  <td className="px-4 py-3.5 text-right text-[#171f38]/75 tabular-nums">
+                  <td className="px-4 py-3.5 text-right text-[#171f38]/75 dark:text-[var(--text-secondary)] tabular-nums">
                     {camp.leads > 0 ? fmtNum(camp.leads) : "—"}
                   </td>
-                  <td className="px-4 py-3.5 text-right text-[#171f38]/75 tabular-nums">
+                  <td className="px-4 py-3.5 text-right text-[#171f38]/75 dark:text-[var(--text-secondary)] tabular-nums">
                     {camp.costPerLead !== null ? fmtCurrency(camp.costPerLead) : "—"}
                   </td>
-                  <td className="px-4 py-3.5 text-right text-[#171f38]/75 tabular-nums">
+                  <td className="px-4 py-3.5 text-right text-[#171f38]/75 dark:text-[var(--text-secondary)] tabular-nums">
                     {convRate !== null ? fmtPct(convRate) : "—"}
                   </td>
                 </tr>
@@ -513,10 +517,10 @@ function KeywordsCard({ keywords }: { keywords: GoogleAdsKeywordRow[] }) {
   const hasData = rows.length > 0;
 
   return (
-    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] flex flex-col overflow-hidden h-[272px]">
+    <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] flex flex-col overflow-hidden h-[272px]">
       {/* Cabeçalho fixo */}
-      <div className="px-4 pt-4 pb-3 border-b border-slate-200/60 shrink-0">
-        <h4 className="text-[12px] font-medium text-[#171f38]/75 tracking-wide">
+      <div className="px-4 pt-4 pb-3 border-b border-slate-200/60 dark:border-[var(--border)] shrink-0">
+        <h4 className="text-[12px] font-medium text-[#171f38]/75 dark:text-[var(--text-secondary)] tracking-wide">
           Palavras-chave
         </h4>
       </div>
@@ -526,14 +530,14 @@ function KeywordsCard({ keywords }: { keywords: GoogleAdsKeywordRow[] }) {
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
           <table className="w-full text-xs font-light">
             <thead className="sticky top-0 z-10">
-              <tr className="border-b border-slate-200/70 bg-white/95 backdrop-blur-sm">
-                <th className="text-left px-4 py-2.5 text-[11px] text-[#171f38]/50 font-medium">
+              <tr className="border-b border-slate-200/70 dark:border-[var(--border)] bg-white/95 dark:bg-[var(--glass-strong)] backdrop-blur-sm">
+                <th className="text-left px-4 py-2.5 text-[11px] text-[#171f38]/50 dark:text-[var(--text-muted)] font-medium">
                   Palavra-chave
                 </th>
-                <th className="text-right px-3 py-2.5 text-[11px] text-[#171f38]/50 font-medium whitespace-nowrap">
+                <th className="text-right px-3 py-2.5 text-[11px] text-[#171f38]/50 dark:text-[var(--text-muted)] font-medium whitespace-nowrap">
                   Impressões
                 </th>
-                <th className="text-right px-4 py-2.5 text-[11px] text-[#171f38]/50 font-medium">
+                <th className="text-right px-4 py-2.5 text-[11px] text-[#171f38]/50 dark:text-[var(--text-muted)] font-medium">
                   Cliques
                 </th>
               </tr>
@@ -545,16 +549,16 @@ function KeywordsCard({ keywords }: { keywords: GoogleAdsKeywordRow[] }) {
                   <tr
                     key={kw.keywordText}
                     className={cn(
-                      "hover:bg-slate-50/80 transition-colors",
-                      !isLast && "border-b border-slate-200/60"
+                      "hover:bg-slate-50/80 dark:hover:bg-[var(--hover)] transition-colors",
+                      !isLast && "border-b border-slate-200/60 dark:border-[var(--border)]"
                     )}
                   >
-                    <td className="px-4 py-2 text-[#171f38]/85 max-w-[140px]">
+                    <td className="px-4 py-2 text-[#171f38]/85 dark:text-[var(--text-secondary)] max-w-[140px]">
                       <div className="truncate" title={kw.keywordText}>
                         {kw.keywordText}
                       </div>
                     </td>
-                    <td className="px-3 py-2 text-right text-[#171f38]/70 tabular-nums">
+                    <td className="px-3 py-2 text-right text-[#171f38]/70 dark:text-[var(--text-muted)] tabular-nums">
                       {kw.impressions.toLocaleString("pt-BR")}
                     </td>
                     <td className="px-4 py-2 text-right text-[#455cab] tabular-nums font-semibold">
@@ -567,9 +571,9 @@ function KeywordsCard({ keywords }: { keywords: GoogleAdsKeywordRow[] }) {
           </table>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center gap-2.5 text-center m-4 border border-dashed border-slate-200/80 rounded-xl bg-slate-50/40">
-          <Search size={18} className="text-[#455cab]/35" />
-          <p className="text-[11px] text-[#171f38]/55 font-light leading-relaxed max-w-[180px]">
+        <div className="flex-1 flex flex-col items-center justify-center gap-2.5 text-center m-4 border border-dashed border-slate-200/80 dark:border-[var(--border)] rounded-xl bg-slate-50/40 dark:bg-transparent">
+          <Search size={18} className="text-[#455cab]/35 dark:text-vitti-light/35" />
+          <p className="text-[11px] text-[#171f38]/55 dark:text-[var(--text-muted)] font-light leading-relaxed max-w-[180px]">
             Nenhuma palavra-chave no período selecionado
           </p>
         </div>
@@ -653,15 +657,15 @@ export function GoogleAdsView({
   // ── Estado vazio ────────────────────────────────────────────────────────────
   if (!performance) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-slate-200">
-        <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
-          <BarChart3 size={16} className="text-[#455cab]/30" />
+      <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-slate-200 dark:border-[var(--border)]">
+        <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-[var(--surface-soft)] border border-slate-200 dark:border-[var(--border)] flex items-center justify-center">
+          <BarChart3 size={16} className="text-[#455cab]/30 dark:text-vitti-light/30" />
         </div>
         <div className="text-center space-y-1.5">
-          <p className="text-sm font-light text-[#455cab]/60">
+          <p className="text-sm font-light text-[#455cab]/60 dark:text-vitti-light/60">
             Nenhum dado Google Ads disponível
           </p>
-          <p className="text-xs text-[#171f38]/45 font-light max-w-xs leading-relaxed">
+          <p className="text-xs text-[#171f38]/45 dark:text-[var(--text-muted)] font-light max-w-xs leading-relaxed">
             Mapeie uma conta Google Ads em Admin → Integrações e sincronize os dados.
           </p>
         </div>
@@ -771,7 +775,7 @@ export function GoogleAdsView({
       </div>
 
       {/* ── Divisor ────────────────────────────────────────────────────────── */}
-      <div className="border-t border-slate-200/60" />
+      <div className="border-t border-slate-200/60 dark:border-[var(--border)]" />
 
       {/* ── Layout: Palavras-chave + métricas secundárias | Gráfico ─────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-[5fr_7fr] gap-5 items-stretch" data-pdf-section="performance">

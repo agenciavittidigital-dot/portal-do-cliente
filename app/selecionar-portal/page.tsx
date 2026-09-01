@@ -20,7 +20,7 @@ export default async function SelecionarPortalPage() {
   const hasClients = clients.length > 0;
 
   return (
-    <div className="w-full max-w-2xl space-y-10 py-16">
+    <div className="w-full max-w-4xl space-y-10 py-16">
       {/* Header */}
       <div className="text-center space-y-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}

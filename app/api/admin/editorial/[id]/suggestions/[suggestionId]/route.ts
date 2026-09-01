@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { loadUserContext } from "@/lib/data/user-context";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { applyCanonChangeToRich } from "@/lib/editorial-rich-text";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -101,10 +102,10 @@ export async function PATCH(
 
   // ── ACEITAR ───────────────────────────────────────────────────────────────
 
-  // Buscar texto atual do conteúdo
+  // Buscar texto atual do conteúdo (canonical + rich)
   const { data: content, error: contentErr } = await admin
     .from("editorial_contents")
-    .select("description, caption")
+    .select("description, description_rich, caption, caption_rich")
     .eq("id", id)
     .maybeSingle();
 
@@ -138,16 +139,21 @@ export async function PATCH(
     );
   }
 
-  // Montar novo texto
-  const newText =
-    currentText.slice(0, Number(suggestion.original_start)) +
-    (suggestion.proposed_text ?? "") +
-    currentText.slice(Number(suggestion.original_end));
+  // Montar novo texto canônico
+  const S = Number(suggestion.original_start);
+  const E = Number(suggestion.original_end);
+  const proposed = suggestion.proposed_text ?? "";
+  const newText = currentText.slice(0, S) + proposed + currentText.slice(E);
+
+  // Atualizar rich text se existir
+  const richField = field === "description" ? "description_rich" : "caption_rich";
+  const currentRich = ((content as Record<string, unknown>)[richField] as string | null) ?? null;
+  const newRich = currentRich ? applyCanonChangeToRich(currentRich, S, E, proposed) : null;
 
   // Atualizar editorial_contents
   const { error: updateErr } = await admin
     .from("editorial_contents")
-    .update({ [field]: newText || null })
+    .update({ [field]: newText || null, [richField]: newRich })
     .eq("id", id);
 
   if (updateErr)

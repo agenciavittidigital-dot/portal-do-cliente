@@ -5,6 +5,30 @@ import { createAdminClient as mkAdmin } from "@/lib/supabase/admin";
 
 export type PaymentStatus = "pending" | "paid" | "overdue" | "cancelled" | "failed";
 
+export type PaymentMethod =
+  | "boleto" | "pix" | "credit_card" | "bank_transfer" | "manual" | "unknown";
+
+export const VALID_PAYMENT_METHODS: readonly PaymentMethod[] = [
+  "boleto", "pix", "credit_card", "bank_transfer", "manual", "unknown",
+];
+
+export function resolvePaymentMethod(
+  explicit: string | null,
+  pixCode: string | null,
+  boletoFilePath: string | null,
+  boletoUrl: string | null,
+  digitableLine: string | null,
+): PaymentMethod {
+  if (explicit && (VALID_PAYMENT_METHODS as readonly string[]).includes(explicit)) {
+    return explicit as PaymentMethod;
+  }
+  const hasPix    = !!pixCode;
+  const hasBoleto = !!(boletoFilePath || boletoUrl || digitableLine);
+  if (hasPix && !hasBoleto) return "pix";
+  if (hasBoleto && !hasPix)  return "boleto";
+  return "unknown";
+}
+
 export interface AdminPaymentRow {
   id: string;
   clientId: string;

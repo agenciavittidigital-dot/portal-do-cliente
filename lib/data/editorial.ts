@@ -30,7 +30,9 @@ export interface EditorialContent {
   statusColor: string | null;
   title: string;
   description: string | null;
+  descriptionRich: string | null;
   caption: string | null;
+  captionRich: string | null;
   scheduledAt: string | null;
   deliveryAt: string | null;
   responsibleId: string | null;
@@ -102,7 +104,7 @@ export async function listEditorialContents(opts?: {
   let contentsQuery = admin
     .from("editorial_contents")
     .select(
-      "id, client_id, category_id, status_id, title, description, caption, scheduled_at, delivery_at, responsible_id, video_url, platforms, created_at, updated_at"
+      "id, client_id, category_id, status_id, title, description, description_rich, caption, caption_rich, scheduled_at, delivery_at, responsible_id, video_url, platforms, created_at, updated_at"
     )
     .order("scheduled_at", { ascending: true })
     .order("created_at", { ascending: true });
@@ -169,7 +171,9 @@ export async function listEditorialContents(opts?: {
       statusColor: st ? String(st.color) : null,
       title: String(r.title),
       description: r.description ? String(r.description) : null,
+      descriptionRich: r.description_rich ? String(r.description_rich) : null,
       caption: r.caption ? String(r.caption) : null,
+      captionRich: r.caption_rich ? String(r.caption_rich) : null,
       scheduledAt: r.scheduled_at ? String(r.scheduled_at) : null,
       deliveryAt: r.delivery_at ? String(r.delivery_at) : null,
       responsibleId: r.responsible_id ? String(r.responsible_id) : null,

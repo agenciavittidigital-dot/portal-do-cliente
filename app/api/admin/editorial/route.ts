@@ -5,6 +5,7 @@ import { loadUserContext } from "@/lib/data/user-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listEditorialContents } from "@/lib/data/editorial";
 import { isValidEditorialPlatform } from "@/lib/editorial-platforms";
+import { stripEditorialRichText } from "@/lib/editorial-rich-text";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -91,6 +92,15 @@ export async function POST(req: NextRequest) {
     .eq("auth_user_id", auth.user!.id)
     .maybeSingle();
 
+  // Rich fields are optional; derive canonical if only rich is provided.
+  const rawDescription     = b.description     ? String(b.description).trim()     : null;
+  const rawDescriptionRich = b.description_rich ? String(b.description_rich).trim() : null;
+  const rawCaption         = b.caption         ? String(b.caption).trim()         : null;
+  const rawCaptionRich     = b.caption_rich     ? String(b.caption_rich).trim()     : null;
+
+  const descriptionCanon = rawDescription ?? (rawDescriptionRich ? stripEditorialRichText(rawDescriptionRich) : null);
+  const captionCanon     = rawCaption     ?? (rawCaptionRich     ? stripEditorialRichText(rawCaptionRich)     : null);
+
   const { data, error } = await admin
     .from("editorial_contents")
     .insert({
@@ -99,8 +109,10 @@ export async function POST(req: NextRequest) {
       status_id: b.status_id ?? null,
       responsible_id: b.responsible_id ?? null,
       title: String(b.title).trim(),
-      description: b.description ? String(b.description).trim() : null,
-      caption: b.caption ? String(b.caption).trim() : null,
+      description:      descriptionCanon,
+      description_rich: rawDescriptionRich,
+      caption:          captionCanon,
+      caption_rich:     rawCaptionRich,
       scheduled_at: b.scheduled_at ?? null,
       delivery_at: b.delivery_at ?? null,
       video_url: b.video_url ? String(b.video_url).trim() : null,

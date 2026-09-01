@@ -31,7 +31,9 @@ export interface ListaContentItem {
   id: string;
   title: string;
   description: string | null;
+  descriptionRich: string | null;
   caption: string | null;
+  captionRich: string | null;
   responsibleName: string | null;
   category: { name: string; color: string };
   status: { name: string; color: string };
@@ -644,9 +646,9 @@ export function ListaEditorialView({
                             <FL>Descrição</FL>
                             <FV>
                               {isAdmin ? (
-                                item.description ? (
+                                (item.descriptionRich ?? item.description) ? (
                                   <span className="whitespace-pre-wrap">
-                                    {item.description}
+                                    {parseEditorialRichText(item.descriptionRich ?? item.description ?? "")}
                                   </span>
                                 ) : (
                                   <span className="text-vitti-fg-muted/40 italic">
@@ -660,6 +662,7 @@ export function ListaEditorialView({
                                   field="description"
                                   canSuggest
                                   onSuggest={handleSuggestDesc}
+                                  richText={item.descriptionRich}
                                 />
                               )}
                             </FV>
@@ -670,9 +673,9 @@ export function ListaEditorialView({
                             <FL>Legenda</FL>
                             <FV>
                               {isAdmin ? (
-                                item.caption ? (
+                                (item.captionRich ?? item.caption) ? (
                                   <span className="whitespace-pre-wrap">
-                                    {item.caption}
+                                    {parseEditorialRichText(item.captionRich ?? item.caption ?? "")}
                                   </span>
                                 ) : (
                                   <span className="text-vitti-fg-muted/40 italic">
@@ -686,6 +689,7 @@ export function ListaEditorialView({
                                   field="caption"
                                   canSuggest
                                   onSuggest={handleSuggestCap}
+                                  richText={item.captionRich}
                                 />
                               )}
                             </FV>

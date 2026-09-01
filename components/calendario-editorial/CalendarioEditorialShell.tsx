@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
+import { Select, type SelectOption } from "@/components/ui/Select";
 import { CalendarioView } from "./CalendarioView";
 import { ListaEditorialView } from "./ListaEditorialView";
 import { ContentDrawer } from "./ContentDrawer";
@@ -36,7 +37,9 @@ export interface ContentRow {
   statusColor: string | null;
   title: string;
   description: string | null;
+  descriptionRich: string | null;
   caption: string | null;
+  captionRich: string | null;
   scheduledAt: string | null;
   deliveryAt: string | null;
   responsibleId: string | null;
@@ -317,7 +320,9 @@ export function CalendarioEditorialShell({
     id: c.id,
     title: c.title,
     description: c.description,
+    descriptionRich: c.descriptionRich,
     caption: c.caption,
+    captionRich: c.captionRich,
     responsibleName: c.responsibleId ? (responsiblesMap.get(c.responsibleId) ?? null) : null,
     scheduledAt: c.scheduledAt,
     deliveryAt: c.deliveryAt,
@@ -362,7 +367,9 @@ export function CalendarioEditorialShell({
       responsibleId: full.responsibleId,
       title: full.title,
       description: full.description,
+      descriptionRich: full.descriptionRich,
       caption: full.caption,
+      captionRich: full.captionRich,
       scheduledAt: full.scheduledAt,
       deliveryAt: full.deliveryAt,
       videoUrl: full.videoUrl,
@@ -383,7 +390,9 @@ export function CalendarioEditorialShell({
       responsibleId: full.responsibleId,
       title: full.title,
       description: full.description,
+      descriptionRich: full.descriptionRich,
       caption: full.caption,
+      captionRich: full.captionRich,
       scheduledAt: full.scheduledAt,
       deliveryAt: full.deliveryAt,
       videoUrl: full.videoUrl,
@@ -458,62 +467,71 @@ export function CalendarioEditorialShell({
 
         {/* Cliente — admin only */}
         {isAdmin && clients.length > 0 && (
-          <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-black/[0.06] bg-white/50 backdrop-blur-sm">
-            <Users size={13} className="text-vitti-fg-muted/50 shrink-0" />
-            <span className="text-[11px] text-vitti-fg-muted/60 font-light shrink-0">Cliente:</span>
-            <select
-              value={selectedClientId}
-              onChange={(e) => {
-                setSelectedClientId(e.target.value);
-                setSelectedCategoryId("");
-                setSelectedStatusId("");
-              }}
-              className="text-xs font-light text-vitti-fg bg-transparent border-none focus:outline-none focus:ring-0 min-w-[180px] cursor-pointer"
-            >
-              <option value="">Todos os clientes</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
+          <Select
+            value={selectedClientId}
+            onChange={(val) => {
+              setSelectedClientId(val);
+              setSelectedCategoryId("");
+              setSelectedStatusId("");
+            }}
+            options={[
+              { value: "", label: "Todos os clientes" } as SelectOption,
+              ...clients.map((c): SelectOption => ({ value: c.id, label: c.name })),
+            ]}
+            size="md"
+            prefix={
+              <>
+                <Users size={13} className="text-vitti-fg-muted/50 dark:text-[var(--text-muted)] shrink-0" />
+                <span className="text-[11px] text-vitti-fg-muted/60 dark:text-[var(--text-muted)] font-light shrink-0">Cliente:</span>
+              </>
+            }
+            triggerClassName="px-4 py-3 gap-2.5 rounded-xl bg-white/50 border-black/[0.06] backdrop-blur-sm hover:bg-white/80 hover:border-black/[0.08]"
+            className="w-auto min-w-[220px]"
+          />
         )}
 
         {/* Categoria */}
-        <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-black/[0.06] bg-white/50 backdrop-blur-sm">
-          <Tag size={13} className="text-vitti-fg-muted/50 shrink-0" />
-          <span className="text-[11px] text-vitti-fg-muted/60 font-light shrink-0">Categoria:</span>
-          <select
-            value={selectedCategoryId}
-            onChange={(e) => setSelectedCategoryId(e.target.value)}
-            className="text-xs font-light text-vitti-fg bg-transparent border-none focus:outline-none focus:ring-0 min-w-[140px] cursor-pointer"
-          >
-            <option value="">Todas</option>
-            {availableCategories.map((cat) => (
-              <option key={cat.id} value={cat.id}>{cat.name}</option>
-            ))}
-          </select>
-        </div>
+        <Select
+          value={selectedCategoryId}
+          onChange={setSelectedCategoryId}
+          options={[
+            { value: "", label: "Todas" } as SelectOption,
+            ...availableCategories.map((cat): SelectOption => ({ value: cat.id, label: cat.name })),
+          ]}
+          size="md"
+          prefix={
+            <>
+              <Tag size={13} className="text-vitti-fg-muted/50 dark:text-[var(--text-muted)] shrink-0" />
+              <span className="text-[11px] text-vitti-fg-muted/60 dark:text-[var(--text-muted)] font-light shrink-0">Categoria:</span>
+            </>
+          }
+          triggerClassName="px-4 py-3 gap-2.5 rounded-xl bg-white/50 border-black/[0.06] backdrop-blur-sm hover:bg-white/80 hover:border-black/[0.08]"
+          className="w-auto min-w-[180px]"
+        />
 
         {/* Status */}
-        <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-black/[0.06] bg-white/50 backdrop-blur-sm">
-          <CircleDot size={13} className="text-vitti-fg-muted/50 shrink-0" />
-          <span className="text-[11px] text-vitti-fg-muted/60 font-light shrink-0">Status:</span>
-          <select
-            value={selectedStatusId}
-            onChange={(e) => setSelectedStatusId(e.target.value)}
-            className="text-xs font-light text-vitti-fg bg-transparent border-none focus:outline-none focus:ring-0 min-w-[140px] cursor-pointer"
-          >
-            <option value="">Todos</option>
-            {availableStatuses.map((st) => (
-              <option key={st.id} value={st.id}>{st.name}</option>
-            ))}
-          </select>
-        </div>
+        <Select
+          value={selectedStatusId}
+          onChange={setSelectedStatusId}
+          options={[
+            { value: "", label: "Todos" } as SelectOption,
+            ...availableStatuses.map((st): SelectOption => ({ value: st.id, label: st.name })),
+          ]}
+          size="md"
+          prefix={
+            <>
+              <CircleDot size={13} className="text-vitti-fg-muted/50 dark:text-[var(--text-muted)] shrink-0" />
+              <span className="text-[11px] text-vitti-fg-muted/60 dark:text-[var(--text-muted)] font-light shrink-0">Status:</span>
+            </>
+          }
+          triggerClassName="px-4 py-3 gap-2.5 rounded-xl bg-white/50 border-black/[0.06] backdrop-blur-sm hover:bg-white/80 hover:border-black/[0.08]"
+          className="w-auto min-w-[160px]"
+        />
 
         {/* Data — lista only, custom dropdown */}
         {view === "lista" && (
           <div className="relative" ref={dateDropdownRef}>
-            {/* Trigger button */}
+            {/* Trigger — mesma linguagem visual do Select */}
             <button
               type="button"
               onClick={() => {
@@ -523,27 +541,39 @@ export function CalendarioEditorialShell({
                 if (opening && datePreset === "month-picker") setMonthsExpanded(true);
               }}
               className={cn(
-                "flex items-center gap-2.5 px-4 py-3 rounded-xl border border-black/[0.06] bg-white/50 backdrop-blur-sm transition-colors",
-                dateDropdownOpen ? "border-vitti-blue/20 bg-white/80" : "hover:bg-white/80"
+                "flex items-center gap-2.5 px-4 py-3 rounded-xl border transition-colors",
+                "focus:outline-none focus:ring-1 focus:ring-vitti-blue/20 focus:border-vitti-blue/40",
+                "bg-white/50 border-black/[0.06] backdrop-blur-sm",
+                "dark:bg-[var(--surface-soft)] dark:border-[var(--border)]",
+                "dark:focus:ring-vitti-light/15 dark:focus:border-vitti-light/30",
+                dateDropdownOpen
+                  ? "border-vitti-blue/20 bg-white/80 dark:border-vitti-light/20 dark:bg-[var(--surface-elevated)]"
+                  : "hover:bg-white/80 hover:border-black/[0.08] dark:hover:bg-[var(--surface-elevated)] dark:hover:border-[var(--border-strong)]"
               )}
             >
-              <CalendarRange size={13} className="text-vitti-fg-muted/50 shrink-0" />
-              <span className="text-[11px] text-vitti-fg-muted/60 font-light shrink-0">Data:</span>
-              <span className="text-xs font-light text-vitti-fg min-w-[110px] text-left">
+              <CalendarRange size={13} className="text-vitti-fg-muted/50 dark:text-[var(--text-muted)] shrink-0" />
+              <span className="text-[11px] text-vitti-fg-muted/60 dark:text-[var(--text-muted)] font-light shrink-0">Data:</span>
+              <span className="text-xs font-light text-vitti-fg dark:text-[var(--text-primary)] min-w-[110px] text-left">
                 {getDateLabel(datePreset, selectedMonth, customStart, customEnd)}
               </span>
               <ChevronDown
                 size={11}
                 className={cn(
-                  "text-vitti-fg-muted/40 transition-transform shrink-0",
+                  "text-vitti-fg-muted/40 dark:text-[var(--text-muted)] transition-transform shrink-0",
                   dateDropdownOpen && "rotate-180"
                 )}
               />
             </button>
 
-            {/* Dropdown panel */}
+            {/* Dropdown panel — mesma linguagem visual do Select */}
             {dateDropdownOpen && (
-              <div className="absolute top-full left-0 mt-1.5 z-30 bg-white border border-black/[0.08] rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.1)] w-[230px] py-1.5 overflow-hidden">
+              <div className={cn(
+                "absolute top-full left-0 mt-1.5 z-30 w-[230px] py-1.5 overflow-hidden",
+                "rounded-xl border shadow-[0_8px_30px_rgba(0,0,0,0.10)]",
+                "bg-white border-black/[0.08]",
+                "dark:bg-[var(--surface-elevated)] dark:border-[var(--border)]",
+                "dark:shadow-[0_8px_30px_rgba(0,0,0,0.40)]",
+              )}>
 
                 {/* Preset options */}
                 {(
@@ -572,15 +602,15 @@ export function CalendarioEditorialShell({
                     className={cn(
                       "w-full text-left px-4 py-2 text-xs font-light transition-colors",
                       datePreset === opt.value
-                        ? "text-vitti-blue bg-vitti-blue/[0.06]"
-                        : "text-vitti-fg hover:bg-black/[0.03]"
+                        ? "text-vitti-blue bg-vitti-blue/[0.06] dark:bg-[var(--selected)] dark:text-vitti-light"
+                        : "text-vitti-fg hover:bg-black/[0.03] dark:text-[var(--text-secondary)] dark:hover:bg-[var(--hover)]"
                     )}
                   >
                     {opt.label}
                   </button>
                 ))}
 
-                <div className="my-1 border-t border-black/[0.05]" />
+                <div className="my-1 border-t border-black/[0.05] dark:border-[var(--border)]" />
 
                 {/* Meses — expandable sub-list */}
                 <div>
@@ -590,22 +620,22 @@ export function CalendarioEditorialShell({
                     className={cn(
                       "w-full text-left px-4 py-2 text-xs font-light transition-colors flex items-center justify-between",
                       datePreset === "month-picker"
-                        ? "text-vitti-blue bg-vitti-blue/[0.06]"
-                        : "text-vitti-fg hover:bg-black/[0.03]"
+                        ? "text-vitti-blue bg-vitti-blue/[0.06] dark:bg-[var(--selected)] dark:text-vitti-light"
+                        : "text-vitti-fg hover:bg-black/[0.03] dark:text-[var(--text-secondary)] dark:hover:bg-[var(--hover)]"
                     )}
                   >
                     <span>Meses</span>
                     <ChevronDown
                       size={11}
                       className={cn(
-                        "text-vitti-fg-muted/40 transition-transform",
+                        "text-vitti-fg-muted/40 dark:text-[var(--text-muted)] transition-transform",
                         monthsExpanded && "rotate-180"
                       )}
                     />
                   </button>
 
                   {monthsExpanded && (
-                    <div className="max-h-[196px] overflow-y-auto border-t border-black/[0.04] bg-black/[0.01]">
+                    <div className="max-h-[196px] overflow-y-auto border-t border-black/[0.04] dark:border-[var(--border)] bg-black/[0.01] dark:bg-[var(--surface)]">
                       {MONTHS.map((m) => (
                         <button
                           key={m.value}
@@ -620,8 +650,8 @@ export function CalendarioEditorialShell({
                           className={cn(
                             "w-full text-left px-6 py-1.5 text-xs font-light transition-colors",
                             datePreset === "month-picker" && selectedMonth === m.value
-                              ? "text-vitti-blue bg-vitti-blue/[0.06]"
-                              : "text-vitti-fg/80 hover:bg-black/[0.03]"
+                              ? "text-vitti-blue bg-vitti-blue/[0.06] dark:bg-[var(--selected)] dark:text-vitti-light"
+                              : "text-vitti-fg/80 hover:bg-black/[0.03] dark:text-[var(--text-secondary)] dark:hover:bg-[var(--hover)]"
                           )}
                         >
                           {m.label}
@@ -631,7 +661,7 @@ export function CalendarioEditorialShell({
                   )}
                 </div>
 
-                <div className="my-1 border-t border-black/[0.05]" />
+                <div className="my-1 border-t border-black/[0.05] dark:border-[var(--border)]" />
 
                 {/* Personalizado */}
                 <div>
@@ -645,38 +675,38 @@ export function CalendarioEditorialShell({
                     className={cn(
                       "w-full text-left px-4 py-2 text-xs font-light transition-colors",
                       datePreset === "custom"
-                        ? "text-vitti-blue bg-vitti-blue/[0.06]"
-                        : "text-vitti-fg hover:bg-black/[0.03]"
+                        ? "text-vitti-blue bg-vitti-blue/[0.06] dark:bg-[var(--selected)] dark:text-vitti-light"
+                        : "text-vitti-fg hover:bg-black/[0.03] dark:text-[var(--text-secondary)] dark:hover:bg-[var(--hover)]"
                     )}
                   >
                     Personalizado
                   </button>
 
                   {datePreset === "custom" && (
-                    <div className="px-4 pb-3 pt-1.5 space-y-2 border-t border-black/[0.04]">
+                    <div className="px-4 pb-3 pt-1.5 space-y-2 border-t border-black/[0.04] dark:border-[var(--border)]">
                       <div>
-                        <p className="text-[10px] font-light text-vitti-fg-muted/50 mb-1">De</p>
+                        <p className="text-[10px] font-light text-vitti-fg-muted/50 dark:text-[var(--text-muted)] mb-1">De</p>
                         <input
                           type="date"
                           value={customStart}
                           onChange={(e) => setCustomStart(e.target.value)}
-                          className="w-full text-xs font-light text-vitti-fg bg-white border border-black/[0.1] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 cursor-pointer"
+                          className="w-full text-xs font-light text-vitti-fg dark:text-[var(--text-primary)] bg-white dark:bg-[var(--surface-soft)] border border-black/[0.1] dark:border-[var(--border)] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 dark:focus:ring-vitti-light/20 cursor-pointer"
                         />
                       </div>
                       <div>
-                        <p className="text-[10px] font-light text-vitti-fg-muted/50 mb-1">Até</p>
+                        <p className="text-[10px] font-light text-vitti-fg-muted/50 dark:text-[var(--text-muted)] mb-1">Até</p>
                         <input
                           type="date"
                           value={customEnd}
                           onChange={(e) => setCustomEnd(e.target.value)}
-                          className="w-full text-xs font-light text-vitti-fg bg-white border border-black/[0.1] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 cursor-pointer"
+                          className="w-full text-xs font-light text-vitti-fg dark:text-[var(--text-primary)] bg-white dark:bg-[var(--surface-soft)] border border-black/[0.1] dark:border-[var(--border)] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 dark:focus:ring-vitti-light/20 cursor-pointer"
                         />
                       </div>
                       {(customStart || customEnd) && (
                         <button
                           type="button"
                           onClick={() => setDateDropdownOpen(false)}
-                          className="w-full text-center text-[10px] font-light text-vitti-blue py-1 border border-vitti-blue/20 rounded-lg hover:text-vitti-blue/70 transition-colors"
+                          className="w-full text-center text-[10px] font-light text-vitti-blue dark:text-vitti-light/60 py-1 border border-vitti-blue/20 dark:border-vitti-light/20 rounded-lg hover:text-vitti-blue/70 dark:hover:text-vitti-light/80 transition-colors"
                         >
                           Aplicar
                         </button>

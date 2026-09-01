@@ -45,7 +45,7 @@ export default async function PortalLayout({
 
   if (hasError) {
     return (
-      <div className="flex h-screen bg-vitti-surface overflow-hidden">
+      <div className="flex h-screen bg-[var(--portal-background)] overflow-hidden transition-colors duration-150">
         <Sidebar permissions={[]} isAdmin={false} />
         <div className="relative flex flex-col flex-1 min-w-0 overflow-hidden">
           <div className="pointer-events-none absolute left-[-10%] top-[-10%] h-[500px] w-[500px] rounded-full bg-vitti-light/[0.08] blur-3xl" />
@@ -64,7 +64,7 @@ export default async function PortalLayout({
   }
 
   return (
-    <div className="flex h-screen bg-vitti-surface overflow-hidden">
+    <div className="flex h-screen bg-[var(--portal-background)] overflow-hidden transition-colors duration-150">
       <Sidebar
         permissions={ctx.permissions}
         isAdmin={ctx.isAdmin}

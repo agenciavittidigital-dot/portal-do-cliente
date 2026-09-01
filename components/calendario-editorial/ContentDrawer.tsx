@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EDITORIAL_PLATFORMS } from "@/lib/editorial-platforms";
-import { parseEditorialRichText } from "@/lib/editorial-rich-text";
+import { parseEditorialRichText, stripEditorialRichText } from "@/lib/editorial-rich-text";
 import { NotificationRecipientsSelect } from "./NotificationRecipientsSelect";
 import { SuggestionReviewPanel } from "./SuggestionReviewPanel";
 import { useEditorialSuggestions } from "@/lib/hooks/useEditorialSuggestions";
@@ -48,7 +48,9 @@ export interface DrawerEditItem {
   responsibleId: string | null;
   title: string;
   description: string | null;
+  descriptionRich: string | null;
   caption: string | null;
+  captionRich: string | null;
   scheduledAt: string | null;
   deliveryAt: string | null;
   videoUrl: string | null;
@@ -72,8 +74,8 @@ interface FormState {
   clientId: string;
   responsibleId: string;
   title: string;
-  description: string;
-  caption: string;
+  descriptionRich: string;
+  captionRich: string;
   scheduledAt: string;
   deliveryAt: string;
   statusId: string;
@@ -85,8 +87,8 @@ const EMPTY: FormState = {
   clientId: "",
   responsibleId: "",
   title: "",
-  description: "",
-  caption: "",
+  descriptionRich: "",
+  captionRich: "",
   scheduledAt: "",
   deliveryAt: "",
   statusId: "",
@@ -192,13 +194,14 @@ export function ContentDrawer({
 
     if (editItem) {
       setForm({
-        categoryId:    editItem.categoryId    ?? "",
-        clientId:      editItem.clientId      ?? "",
-        responsibleId: editItem.responsibleId ?? "",
-        title:         editItem.title         ?? "",
-        description:   editItem.description   ?? "",
-        caption:       editItem.caption       ?? "",
-        scheduledAt:   editItem.scheduledAt
+        categoryId:      editItem.categoryId      ?? "",
+        clientId:        editItem.clientId        ?? "",
+        responsibleId:   editItem.responsibleId   ?? "",
+        title:           editItem.title           ?? "",
+        // Prefer rich version; fall back to plain text (valid markup)
+        descriptionRich: editItem.descriptionRich ?? editItem.description ?? "",
+        captionRich:     editItem.captionRich     ?? editItem.caption     ?? "",
+        scheduledAt:     editItem.scheduledAt
           ? isoToDatetimeLocal(editItem.scheduledAt)
           : "",
         deliveryAt: editItem.deliveryAt ?? "",
@@ -331,15 +334,20 @@ export function ContentDrawer({
     setLoading(true);
     setError(null);
 
+    const richDesc = form.descriptionRich.trim() || null;
+    const richCap  = form.captionRich.trim()     || null;
+
     const payload = {
-      client_id:      form.clientId,
-      category_id:    form.categoryId    || null,
-      status_id:      form.statusId      || null,
-      responsible_id: form.responsibleId || null,
-      title:          form.title.trim(),
-      description:    form.description.trim() || null,
-      caption:        form.caption.trim()     || null,
-      scheduled_at:   form.scheduledAt
+      client_id:        form.clientId,
+      category_id:      form.categoryId    || null,
+      status_id:        form.statusId      || null,
+      responsible_id:   form.responsibleId || null,
+      title:            form.title.trim(),
+      description:      richDesc ? stripEditorialRichText(richDesc) || null : null,
+      description_rich: richDesc,
+      caption:          richCap  ? stripEditorialRichText(richCap)  || null : null,
+      caption_rich:     richCap,
+      scheduled_at:     form.scheduledAt
         ? new Date(form.scheduledAt).toISOString()
         : null,
       delivery_at: form.deliveryAt || null,
@@ -532,24 +540,24 @@ export function ContentDrawer({
             {/* 5. Descrição */}
             <div>
               <label className={labelClass}>Descrição</label>
-              <textarea
-                value={form.description}
-                onChange={(e) => set("description", e.target.value)}
+              <CommentField
+                value={form.descriptionRich}
+                onChange={(v) => set("descriptionRich", v)}
                 placeholder="Briefing ou contexto do conteúdo..."
                 rows={3}
-                className={cn(inputClass, "resize-none")}
+                variant="light"
               />
             </div>
 
             {/* 6. Legenda */}
             <div>
               <label className={labelClass}>Legenda</label>
-              <textarea
-                value={form.caption}
-                onChange={(e) => set("caption", e.target.value)}
+              <CommentField
+                value={form.captionRich}
+                onChange={(v) => set("captionRich", v)}
                 placeholder="Texto para publicação na rede social..."
                 rows={3}
-                className={cn(inputClass, "resize-none")}
+                variant="light"
               />
             </div>
 
