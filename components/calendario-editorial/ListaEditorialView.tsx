@@ -815,6 +815,7 @@ export function ListaEditorialView({
                                     disabled={submittingComment.has(item.id)}
                                     placeholder="Nova consideração... (Ctrl+Enter para enviar)"
                                     rows={2}
+                                    variant="light"
                                   />
                                   <NotificationRecipientsSelect
                                     contentId={item.id}

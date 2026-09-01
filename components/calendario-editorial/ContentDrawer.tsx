@@ -767,6 +767,7 @@ export function ContentDrawer({
                       disabled={submittingComment}
                       placeholder="Escreva uma consideração... (Ctrl+Enter para enviar)"
                       rows={2}
+                      variant="light"
                     />
                     <NotificationRecipientsSelect
                       contentId={editItem.id}

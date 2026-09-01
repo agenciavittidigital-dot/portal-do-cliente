@@ -535,6 +535,7 @@ export function ContentViewDrawer({
                       disabled={submitting}
                       placeholder="Nova consideração... (Ctrl+Enter para enviar)"
                       rows={3}
+                      variant="light"
                     />
                     <NotificationRecipientsSelect
                       contentId={item.id}
