@@ -82,24 +82,24 @@ function PlatformCard({
   ];
 
   return (
-    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-5">
+    <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-5">
       <div className="flex items-center gap-2 mb-5">
-        <div className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
+        <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-[var(--surface-soft)] border border-slate-200/60 dark:border-[var(--border)] flex items-center justify-center shrink-0">
           {icon}
         </div>
-        <span className="text-xs font-medium text-vitti-fg-muted">{label}</span>
+        <span className="text-xs font-medium text-vitti-fg-muted dark:text-[var(--text-muted)]">{label}</span>
       </div>
       {summary === null ? (
-        <p className="text-xs text-vitti-fg-muted/60 italic">Sem dados no período</p>
+        <p className="text-xs text-vitti-fg-muted/60 dark:text-[var(--text-muted)]/60 italic">Sem dados no período</p>
       ) : (
         <div className="space-y-3">
           {rows.map((row) => (
             <div key={row.label} className="flex items-baseline justify-between gap-2">
-              <span className="text-[10px] text-vitti-fg-muted shrink-0">{row.label}</span>
+              <span className="text-[10px] text-vitti-fg-muted dark:text-[var(--text-muted)] shrink-0">{row.label}</span>
               {row.value !== null ? (
-                <span className="text-sm font-medium text-vitti-blue tabular-nums">{row.value}</span>
+                <span className="text-sm font-medium text-vitti-blue dark:text-vitti-light tabular-nums">{row.value}</span>
               ) : (
-                <span className="text-xs text-vitti-fg-muted/50 italic">—</span>
+                <span className="text-xs text-vitti-fg-muted/50 dark:text-[var(--text-muted)]/50 italic">—</span>
               )}
             </div>
           ))}
@@ -128,35 +128,35 @@ function RecentCard({
 }) {
   return (
     <Link href={href} className="group block h-full">
-      <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-5 group-hover:-translate-y-1 group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 h-full">
+      <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-5 group-hover:-translate-y-1 group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 h-full">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
+            <div className="w-6 h-6 rounded-md bg-slate-100 dark:bg-[var(--surface-soft)] border border-slate-200/60 dark:border-[var(--border)] flex items-center justify-center shrink-0">
               {icon}
             </div>
-            <span className="text-[10px] font-medium text-vitti-fg-muted uppercase tracking-widest">
+            <span className="text-[10px] font-medium text-vitti-fg-muted dark:text-[var(--text-muted)] uppercase tracking-widest">
               {label}
             </span>
           </div>
           <ArrowRight
             size={11}
-            className="text-vitti-blue/25 group-hover:text-vitti-blue/60 transition-colors shrink-0"
+            className="text-vitti-blue/25 dark:text-vitti-light/25 group-hover:text-vitti-blue/60 dark:group-hover:text-vitti-light/60 transition-colors shrink-0"
           />
         </div>
         {title ? (
           <div className="space-y-1.5">
-            <p className="text-sm text-vitti-fg line-clamp-2 leading-snug">
+            <p className="text-sm text-vitti-fg dark:text-[var(--text-primary)] line-clamp-2 leading-snug">
               {title}
             </p>
             {subtitle && (
-              <p className="text-[10px] text-vitti-fg-muted">{subtitle}</p>
+              <p className="text-[10px] text-vitti-fg-muted dark:text-[var(--text-muted)]">{subtitle}</p>
             )}
             {extra && (
-              <p className="text-xs font-light text-vitti-blue/70 tabular-nums">{extra}</p>
+              <p className="text-xs font-light text-vitti-blue/70 dark:text-vitti-light/70 tabular-nums">{extra}</p>
             )}
           </div>
         ) : (
-          <p className="text-xs font-light text-vitti-blue/40 italic">Nenhum registrado</p>
+          <p className="text-xs font-light text-vitti-blue/40 dark:text-vitti-light/40 italic">Nenhum registrado</p>
         )}
       </div>
     </Link>
@@ -178,18 +178,18 @@ function AccessCard({
 }) {
   return (
     <Link href={href} className="group block h-full">
-      <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-5 group-hover:-translate-y-1 group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 h-full">
+      <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-5 group-hover:-translate-y-1 group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 h-full">
         <div className="flex items-start justify-between mb-4">
-          <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-[var(--surface-soft)] border border-slate-200/60 dark:border-[var(--border)] flex items-center justify-center shrink-0">
             {icon}
           </div>
           <ArrowRight
             size={11}
-            className="text-vitti-blue/25 group-hover:text-vitti-blue/60 transition-colors mt-0.5 shrink-0"
+            className="text-vitti-blue/25 dark:text-vitti-light/25 group-hover:text-vitti-blue/60 dark:group-hover:text-vitti-light/60 transition-colors mt-0.5 shrink-0"
           />
         </div>
-        <p className="text-sm font-semibold text-vitti-fg mb-1.5">{title}</p>
-        <p className="text-xs text-vitti-fg-muted font-light leading-relaxed">{description}</p>
+        <p className="text-sm font-semibold text-vitti-fg dark:text-[var(--text-primary)] mb-1.5">{title}</p>
+        <p className="text-xs text-vitti-fg-muted dark:text-[var(--text-muted)] font-light leading-relaxed">{description}</p>
       </div>
     </Link>
   );
@@ -238,30 +238,30 @@ export default async function DashboardPage({
     return (
       <div className="space-y-6 max-w-6xl">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-vitti-fg">Admin Vitti</h2>
-          <p className="text-sm text-vitti-fg-muted mt-0.5">Painel administrativo</p>
+          <h2 className="text-xl font-semibold tracking-tight text-vitti-fg dark:text-[var(--text-primary)]">Admin Vitti</h2>
+          <p className="text-sm text-vitti-fg-muted dark:text-[var(--text-muted)] mt-0.5">Painel administrativo</p>
         </div>
-        <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-vitti-gray/[0.20]">
-          <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200/60 flex items-center justify-center">
-            <Users size={18} className="text-vitti-blue/25" />
+        <div className="flex flex-col items-center justify-center py-20 gap-4 rounded-xl border border-dashed border-vitti-gray/[0.20] dark:border-[var(--border)]">
+          <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-[var(--surface-soft)] border border-slate-200/60 dark:border-[var(--border)] flex items-center justify-center">
+            <Users size={18} className="text-vitti-blue/25 dark:text-vitti-light/25" />
           </div>
           <div className="text-center space-y-1.5">
-            <p className="text-sm font-light text-vitti-blue/60">Nenhum cliente selecionado</p>
-            <p className="text-xs text-vitti-blue/40 font-light max-w-xs leading-relaxed">
+            <p className="text-sm font-light text-vitti-blue/60 dark:text-vitti-light/60">Nenhum cliente selecionado</p>
+            <p className="text-xs text-vitti-blue/40 dark:text-vitti-light/40 font-light max-w-xs leading-relaxed">
               Acesse Métricas e selecione um cliente para visualizar a visão geral.
             </p>
           </div>
           <div className="flex gap-3 mt-2">
             <Link
               href="/metricas"
-              className="flex items-center gap-2 text-xs font-light px-4 py-2 rounded-full border border-vitti-gray/[0.20] text-vitti-blue/60 hover:text-vitti-blue hover:border-vitti-blue/30 transition-all"
+              className="flex items-center gap-2 text-xs font-light px-4 py-2 rounded-full border border-vitti-gray/[0.20] dark:border-[var(--border)] text-vitti-blue/60 dark:text-[var(--text-secondary)] hover:text-vitti-blue dark:hover:text-vitti-light hover:border-vitti-blue/30 dark:hover:border-vitti-light/30 transition-all"
             >
               <BarChart3 size={12} />
               Ir para Métricas
             </Link>
             <Link
               href="/admin"
-              className="flex items-center gap-2 text-xs font-light px-4 py-2 rounded-full border border-vitti-gray/[0.20] text-vitti-blue/60 hover:text-vitti-blue hover:border-vitti-blue/30 transition-all"
+              className="flex items-center gap-2 text-xs font-light px-4 py-2 rounded-full border border-vitti-gray/[0.20] dark:border-[var(--border)] text-vitti-blue/60 dark:text-[var(--text-secondary)] hover:text-vitti-blue dark:hover:text-vitti-light hover:border-vitti-blue/30 dark:hover:border-vitti-light/30 transition-all"
             >
               <ArrowRight size={12} />
               Ir para Admin
@@ -327,16 +327,16 @@ export default async function DashboardPage({
     return (
       <div className="space-y-6 max-w-6xl">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-vitti-fg">
+          <h2 className="text-xl font-semibold tracking-tight text-vitti-fg dark:text-[var(--text-primary)]">
             Bem-vindo ao Portal
           </h2>
-          <p className="text-sm text-vitti-fg-muted mt-0.5">Visão geral</p>
+          <p className="text-sm text-vitti-fg-muted dark:text-[var(--text-muted)] mt-0.5">Visão geral</p>
         </div>
-        <div className="flex flex-col items-center justify-center py-20 gap-3 rounded-xl border border-dashed border-vitti-gray/[0.20]">
-          <p className="text-sm font-light text-vitti-blue/50">
+        <div className="flex flex-col items-center justify-center py-20 gap-3 rounded-xl border border-dashed border-vitti-gray/[0.20] dark:border-[var(--border)]">
+          <p className="text-sm font-light text-vitti-blue/50 dark:text-vitti-light/50">
             Nenhum cliente vinculado à sua conta.
           </p>
-          <p className="text-xs text-vitti-blue/35 font-light">
+          <p className="text-xs text-vitti-blue/35 dark:text-vitti-light/35 font-light">
             Contate a equipe Vitti para vinculação.
           </p>
         </div>
@@ -365,7 +365,7 @@ export default async function DashboardPage({
 
       {/* Acesso Rápido */}
       <section>
-        <p className="text-sm font-semibold text-vitti-fg mb-3">
+        <p className="text-sm font-semibold text-vitti-fg dark:text-[var(--text-primary)] mb-3">
           Acesso Rápido
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -398,7 +398,7 @@ export default async function DashboardPage({
 
       {/* Recentes */}
       <section>
-        <p className="text-sm font-semibold text-vitti-fg mb-3">
+        <p className="text-sm font-semibold text-vitti-fg dark:text-[var(--text-primary)] mb-3">
           Recentes
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -433,7 +433,7 @@ export default async function DashboardPage({
 
       {/* Performance */}
       <section>
-        <p className="text-sm font-semibold text-vitti-fg mb-3">
+        <p className="text-sm font-semibold text-vitti-fg dark:text-[var(--text-primary)] mb-3">
           Performance · últimos 30 dias
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

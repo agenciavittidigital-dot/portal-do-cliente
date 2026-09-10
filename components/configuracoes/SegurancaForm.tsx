@@ -27,7 +27,7 @@ function PasswordField({
     <div className="space-y-1.5">
       <label
         htmlFor={id}
-        className="text-[11px] font-medium text-vitti-fg-muted uppercase tracking-wide"
+        className="text-[11px] font-medium text-vitti-fg-muted dark:text-[var(--text-muted)] uppercase tracking-wide"
       >
         {label}
       </label>
@@ -39,13 +39,13 @@ function PasswordField({
           placeholder={placeholder}
           autoComplete={autoComplete}
           required
-          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 pr-10 text-sm text-vitti-fg placeholder:text-vitti-fg-muted/40 focus:outline-none focus:ring-2 focus:ring-vitti-blue/20 focus:border-vitti-blue/50 transition-all"
+          className="w-full rounded-lg border border-slate-200 dark:border-[var(--border)] bg-white dark:bg-[var(--surface-soft)] px-3 py-2.5 pr-10 text-sm text-vitti-fg dark:text-[var(--text-primary)] placeholder:text-vitti-fg-muted/40 dark:placeholder:text-[var(--text-muted)]/40 focus:outline-none focus:ring-2 focus:ring-vitti-blue/20 dark:focus:ring-vitti-light/20 focus:border-vitti-blue/50 dark:focus:border-vitti-light/40 transition-all dark:[color-scheme:dark]"
         />
         <button
           type="button"
           tabIndex={-1}
           onClick={() => setVisible((v) => !v)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-vitti-fg-muted/50 hover:text-vitti-fg-muted transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-vitti-fg-muted/50 dark:text-[var(--text-muted)] hover:text-vitti-fg-muted dark:hover:text-[var(--text-secondary)] transition-colors"
         >
           {visible ? <EyeOff size={14} /> : <Eye size={14} />}
         </button>
@@ -61,21 +61,21 @@ export function SegurancaForm() {
     <div className="space-y-6 max-w-xl">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-semibold tracking-tight text-vitti-fg">Segurança</h2>
-        <p className="text-sm text-vitti-fg-muted mt-0.5">
+        <h2 className="text-xl font-semibold tracking-tight text-vitti-fg dark:text-white">Segurança</h2>
+        <p className="text-sm text-vitti-fg-muted dark:text-[var(--text-muted)] mt-0.5">
           Altere sua senha de acesso ao portal
         </p>
       </div>
 
       {/* Card */}
       <form action={action}>
-        <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-6 space-y-5">
+        <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-6 space-y-5">
           {/* Ícone decorativo */}
           <div className="flex items-center gap-2.5 mb-1">
-            <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-[var(--surface-soft)] border border-slate-200/60 dark:border-[var(--border)] flex items-center justify-center shrink-0">
               <ShieldCheck size={14} className="text-vitti-light/60" />
             </div>
-            <p className="text-sm font-medium text-vitti-fg">Alterar senha</p>
+            <p className="text-sm font-medium text-vitti-fg dark:text-white">Alterar senha</p>
           </div>
 
           <PasswordField
@@ -86,7 +86,7 @@ export function SegurancaForm() {
             autoComplete="current-password"
           />
 
-          <div className="border-t border-slate-100 pt-4 space-y-4">
+          <div className="border-t border-slate-100 dark:border-[var(--border)] pt-4 space-y-4">
             <PasswordField
               id="newPassword"
               name="newPassword"
@@ -105,7 +105,7 @@ export function SegurancaForm() {
           </div>
 
           {/* Requisitos */}
-          <p className="text-[10px] text-vitti-fg-muted/60 font-light">
+          <p className="text-[10px] text-vitti-fg-muted/60 dark:text-[var(--text-muted)]/70 font-light">
             A nova senha deve ter no mínimo 6 caracteres e ser diferente da senha atual.
           </p>
 

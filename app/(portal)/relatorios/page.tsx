@@ -154,27 +154,27 @@ export default async function RelatoriosPage({
 
       {/* Cabeçalho */}
       <div>
-        <h2 className="text-xl font-semibold tracking-tight text-vitti-fg">Relatórios</h2>
-        <p className="text-sm text-vitti-fg-muted mt-0.5">
+        <h2 className="text-xl font-semibold tracking-tight text-vitti-fg dark:text-[var(--text-primary)]">Relatórios</h2>
+        <p className="text-sm text-vitti-fg-muted dark:text-[var(--text-muted)] mt-0.5">
           Relatórios mensais e personalizados da sua conta
         </p>
       </div>
 
       {/* Admin: sem clientId selecionado */}
       {isAdmin && !adminPreview && (
-        <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex items-center gap-3">
-          <FileText size={14} className="text-[#455cab]/50 shrink-0" />
+        <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-4 flex items-center gap-3">
+          <FileText size={14} className="text-[#455cab]/50 dark:text-vitti-light/50 shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-light text-[#171f38]">
+            <p className="text-sm font-light text-[#171f38] dark:text-[var(--text-primary)]">
               Você está autenticado como administrador Vitti.
             </p>
-            <p className="text-xs text-[#171f38]/50 font-light mt-0.5">
+            <p className="text-xs text-[#171f38]/50 dark:text-[var(--text-muted)] font-light mt-0.5">
               Selecione um cliente em Admin → Relatórios e clique em &ldquo;Ver como cliente&rdquo;.
             </p>
           </div>
           <Link
             href="/admin/relatorios"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#455cab]/30 text-[11px] font-light text-[#455cab]/70 hover:border-[#455cab]/60 hover:text-[#455cab] transition-all shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#455cab]/30 dark:border-[var(--border)] text-[11px] font-light text-[#455cab]/70 dark:text-[var(--text-secondary)] hover:border-[#455cab]/60 dark:hover:border-vitti-light/30 hover:text-[#455cab] dark:hover:text-vitti-light transition-all shrink-0"
           >
             <ExternalLink size={11} />
             Admin Relatórios
@@ -184,13 +184,13 @@ export default async function RelatoriosPage({
 
       {/* Admin: modo preview */}
       {isAdmin && adminPreview && (
-        <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-[#455cab]/20 bg-[#455cab]/[0.04]">
-          <span className="text-[10px] font-light text-[#455cab]/60">
+        <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-[#455cab]/20 dark:border-vitti-light/15 bg-[#455cab]/[0.04] dark:bg-[var(--accent-soft)]">
+          <span className="text-[10px] font-light text-[#455cab]/60 dark:text-vitti-light/60">
             Visualização do cliente — modo admin
           </span>
           <Link
             href="/admin/relatorios"
-            className="ml-auto inline-flex items-center gap-1 text-[10px] font-light text-[#455cab]/60 hover:text-[#455cab] transition-colors"
+            className="ml-auto inline-flex items-center gap-1 text-[10px] font-light text-[#455cab]/60 dark:text-[var(--text-muted)] hover:text-[#455cab] dark:hover:text-vitti-light transition-colors"
           >
             <ArrowLeft size={9} />
             Voltar ao Admin
@@ -200,12 +200,12 @@ export default async function RelatoriosPage({
 
       {/* Cliente sem vínculo */}
       {!isAdmin && !clientFound && (
-        <div className="rounded-xl border border-dashed border-slate-200 py-16 flex flex-col items-center justify-center gap-3">
-          <FileText size={20} className="text-[#455cab]/20" />
-          <p className="text-sm font-light text-[#171f38]/50">
+        <div className="rounded-xl border border-dashed border-slate-200 dark:border-[var(--border)] py-16 flex flex-col items-center justify-center gap-3">
+          <FileText size={20} className="text-[#455cab]/20 dark:text-vitti-light/20" />
+          <p className="text-sm font-light text-[#171f38]/50 dark:text-[var(--text-muted)]">
             Nenhum cliente vinculado à sua conta.
           </p>
-          <p className="text-xs text-[#171f38]/35 font-light">
+          <p className="text-xs text-[#171f38]/35 dark:text-[var(--text-muted)]/60 font-light">
             Entre em contato com a Vitti Digital.
           </p>
         </div>
@@ -216,36 +216,36 @@ export default async function RelatoriosPage({
         <>
           {/* Último relatório gerado */}
           <div>
-            <p className="text-[9px] text-[#455cab]/50 font-light tracking-[0.15em] uppercase mb-3">
+            <p className="text-[9px] text-[#455cab]/50 dark:text-vitti-light/50 font-light tracking-[0.15em] uppercase mb-3">
               Último relatório
             </p>
 
             {latestReport ? (
-              <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-5 flex items-start gap-4">
+              <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-5 flex items-start gap-4">
                 {/* Ícone */}
-                <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
-                  <FileText size={18} className="text-[#455cab]/70" />
+                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-[var(--surface-soft)] border border-slate-200/60 dark:border-[var(--border)] flex items-center justify-center shrink-0">
+                  <FileText size={18} className="text-[#455cab]/70 dark:text-vitti-light/70" />
                 </div>
 
                 {/* Informações */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-base font-light text-[#171f38] leading-snug">
+                  <p className="text-base font-light text-[#171f38] dark:text-[var(--text-primary)] leading-snug">
                     {latestReport.title}
                   </p>
-                  <p className="text-[11px] text-[#171f38]/55 font-light mt-0.5">
+                  <p className="text-[11px] text-[#171f38]/55 dark:text-[var(--text-muted)] font-light mt-0.5">
                     {latestReport.period}
                   </p>
                   {latestReport.summary && (
-                    <p className="text-[11px] text-[#171f38]/45 font-light mt-1.5 leading-relaxed line-clamp-2">
+                    <p className="text-[11px] text-[#171f38]/45 dark:text-[var(--text-muted)] font-light mt-1.5 leading-relaxed line-clamp-2">
                       {latestReport.summary}
                     </p>
                   )}
                   <div className="flex items-center gap-3 mt-2 flex-wrap">
-                    <span className="text-[10px] text-[#171f38]/35 font-light">
+                    <span className="text-[10px] text-[#171f38]/35 dark:text-[var(--text-muted)] font-light">
                       Publicado em {formatDate(latestReport.createdAt)}
                     </span>
                     {latestReport.fileName && (
-                      <span className="text-[10px] text-[#171f38]/30 font-light truncate max-w-[200px]">
+                      <span className="text-[10px] text-[#171f38]/30 dark:text-[var(--text-muted)]/60 font-light truncate max-w-[200px]">
                         {latestReport.fileName}
                         {latestReport.fileSize
                           ? ` · ${formatFileSize(latestReport.fileSize)}`
@@ -269,12 +269,12 @@ export default async function RelatoriosPage({
                 )}
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed border-slate-200 py-12 flex flex-col items-center justify-center gap-2">
-                <FileText size={18} className="text-[#455cab]/20" />
-                <p className="text-sm font-light text-[#171f38]/40">
+              <div className="rounded-xl border border-dashed border-slate-200 dark:border-[var(--border)] py-12 flex flex-col items-center justify-center gap-2">
+                <FileText size={18} className="text-[#455cab]/20 dark:text-vitti-light/20" />
+                <p className="text-sm font-light text-[#171f38]/40 dark:text-[var(--text-muted)]">
                   Nenhum relatório disponível no momento
                 </p>
-                <p className="text-[11px] text-[#171f38]/25 font-light">
+                <p className="text-[11px] text-[#171f38]/25 dark:text-[var(--text-muted)]/60 font-light">
                   Novos relatórios serão publicados em breve
                 </p>
               </div>
@@ -284,15 +284,15 @@ export default async function RelatoriosPage({
           {/* Histórico de Relatórios */}
           {allReports.length > 0 && (
             <div>
-              <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-hidden">
+              <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] overflow-hidden">
 
                 {/* Cabeçalho do histórico */}
-                <div className="px-4 py-3.5 border-b border-slate-200/60 flex items-center justify-between gap-3 flex-wrap">
+                <div className="px-4 py-3.5 border-b border-slate-200/60 dark:border-[var(--border)] flex items-center justify-between gap-3 flex-wrap">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-[11px] font-light text-[#455cab] tracking-wide">
+                    <h4 className="text-[11px] font-light text-[#455cab] dark:text-vitti-light tracking-wide">
                       Histórico de Relatórios
                     </h4>
-                    <span className="text-[9px] text-[#171f38]/35 font-light">
+                    <span className="text-[9px] text-[#171f38]/35 dark:text-[var(--text-muted)] font-light">
                       {filteredReports.length}{" "}
                       {filteredReports.length === 1 ? "relatório" : "relatórios"}
                     </span>
@@ -306,8 +306,8 @@ export default async function RelatoriosPage({
                 {/* Linhas */}
                 {pageReports.length === 0 ? (
                   <div className="py-10 flex flex-col items-center justify-center gap-2">
-                    <FileText size={16} className="text-[#455cab]/20" />
-                    <p className="text-[11px] font-light text-[#171f38]/40">
+                    <FileText size={16} className="text-[#455cab]/20 dark:text-vitti-light/20" />
+                    <p className="text-[11px] font-light text-[#171f38]/40 dark:text-[var(--text-muted)]">
                       Nenhum relatório neste período
                     </p>
                   </div>
@@ -316,27 +316,27 @@ export default async function RelatoriosPage({
                     <div
                       key={rep.id}
                       className={cn(
-                        "flex items-center gap-4 px-4 py-3.5 hover:bg-slate-50/80 transition-colors",
-                        i < pageReports.length - 1 && "border-b border-slate-200/60"
+                        "flex items-center gap-4 px-4 py-3.5 hover:bg-slate-50/80 dark:hover:bg-[var(--hover)] transition-colors",
+                        i < pageReports.length - 1 && "border-b border-slate-200/60 dark:border-[var(--border)]"
                       )}
                     >
-                      <FileText size={13} className="text-[#455cab]/40 shrink-0" />
+                      <FileText size={13} className="text-[#455cab]/40 dark:text-vitti-light/40 shrink-0" />
 
                       <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-light text-[#171f38] truncate">
+                        <p className="text-[13px] font-light text-[#171f38] dark:text-[var(--text-primary)] truncate">
                           {rep.title}
                         </p>
-                        <p className="text-[10px] text-[#171f38]/50 font-light mt-0.5">
+                        <p className="text-[10px] text-[#171f38]/50 dark:text-[var(--text-muted)] font-light mt-0.5">
                           {rep.period}
                         </p>
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-[10px] text-[#171f38]/35 font-light hidden sm:block">
+                        <span className="text-[10px] text-[#171f38]/35 dark:text-[var(--text-muted)] font-light hidden sm:block">
                           {formatDate(rep.createdAt)}
                         </span>
                         {rep.fileName && rep.fileSize && (
-                          <span className="text-[9px] text-[#171f38]/25 font-light hidden md:block">
+                          <span className="text-[9px] text-[#171f38]/25 dark:text-[var(--text-muted)]/60 font-light hidden md:block">
                             {formatFileSize(rep.fileSize)}
                           </span>
                         )}
@@ -345,7 +345,7 @@ export default async function RelatoriosPage({
                             href={downloadUrls[rep.id]!}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-[10px] font-light text-[#455cab]/60 hover:border-[#455cab]/40 hover:text-[#455cab] transition-all"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-[var(--border)] text-[10px] font-light text-[#455cab]/60 dark:text-[var(--text-secondary)] hover:border-[#455cab]/40 dark:hover:border-vitti-light/40 hover:text-[#455cab] dark:hover:text-vitti-light transition-all"
                           >
                             <Download size={10} />
                             Baixar
@@ -360,7 +360,7 @@ export default async function RelatoriosPage({
               {/* Paginação */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-3 px-1">
-                  <span className="text-[10px] text-[#171f38]/40 font-light">
+                  <span className="text-[10px] text-[#171f38]/40 dark:text-[var(--text-muted)] font-light">
                     Página {safePage} de {totalPages}
                   </span>
                   <div className="flex items-center gap-2">
@@ -370,13 +370,13 @@ export default async function RelatoriosPage({
                           { clientId: clientIdForUrl, year: filterYear, month: filterMonth },
                           safePage - 1
                         )}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-light text-[#455cab]/60 hover:text-[#455cab] hover:border-[#455cab]/40 transition-all"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[var(--border)] text-[10px] font-light text-[#455cab]/60 dark:text-[var(--text-secondary)] hover:text-[#455cab] dark:hover:text-vitti-light hover:border-[#455cab]/40 dark:hover:border-vitti-light/40 transition-all"
                       >
                         <ChevronLeft size={11} />
                         Anterior
                       </Link>
                     ) : (
-                      <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/40 text-[10px] font-light text-[#171f38]/20 select-none">
+                      <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/40 dark:border-[var(--border)]/50 text-[10px] font-light text-[#171f38]/20 dark:text-[var(--text-muted)]/40 select-none">
                         <ChevronLeft size={11} />
                         Anterior
                       </span>
@@ -387,13 +387,13 @@ export default async function RelatoriosPage({
                           { clientId: clientIdForUrl, year: filterYear, month: filterMonth },
                           safePage + 1
                         )}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-light text-[#455cab]/60 hover:text-[#455cab] hover:border-[#455cab]/40 transition-all"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[var(--border)] text-[10px] font-light text-[#455cab]/60 dark:text-[var(--text-secondary)] hover:text-[#455cab] dark:hover:text-vitti-light hover:border-[#455cab]/40 dark:hover:border-vitti-light/40 transition-all"
                       >
                         Próxima
                         <ChevronRight size={11} />
                       </Link>
                     ) : (
-                      <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/40 text-[10px] font-light text-[#171f38]/20 select-none">
+                      <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/40 dark:border-[var(--border)]/50 text-[10px] font-light text-[#171f38]/20 dark:text-[var(--text-muted)]/40 select-none">
                         Próxima
                         <ChevronRight size={11} />
                       </span>

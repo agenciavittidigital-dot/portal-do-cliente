@@ -429,9 +429,9 @@ export function ContentDrawer({
   }
 
   const inputClass =
-    "w-full text-xs font-light text-vitti-fg border border-black/[0.1] rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 placeholder:text-vitti-fg-muted/35";
+    "w-full text-xs font-light text-vitti-fg dark:text-[var(--text-primary)] border border-black/[0.1] dark:border-[var(--border)] rounded-lg px-3 py-2 bg-white dark:bg-[var(--surface-soft)] focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 dark:focus:ring-vitti-light/20 placeholder:text-vitti-fg-muted/35 dark:placeholder:text-[var(--text-muted)]/40 dark:[color-scheme:dark]";
   const labelClass =
-    "block text-[10px] font-medium text-vitti-fg-muted/65 uppercase tracking-wide mb-1.5";
+    "block text-[10px] font-medium text-vitti-fg-muted/65 dark:text-[var(--text-muted)] uppercase tracking-wide mb-1.5";
 
   return (
     <>
@@ -444,20 +444,20 @@ export function ContentDrawer({
 
       <div
         className={cn(
-          "fixed top-0 right-0 z-50 h-full w-[440px] bg-white flex flex-col",
-          "shadow-[-8px_0_40px_rgba(0,0,0,0.12)]",
+          "fixed top-0 right-0 z-50 h-full w-[440px] bg-white dark:bg-[var(--surface-elevated)] flex flex-col",
+          "shadow-[-8px_0_40px_rgba(0,0,0,0.12)] dark:shadow-[-8px_0_40px_rgba(0,0,0,0.45)]",
           "transition-transform duration-300 ease-out",
           open ? "translate-x-0" : "translate-x-full"
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06] shrink-0">
-          <h3 className="text-sm font-light text-vitti-blue tracking-wide">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06] dark:border-[var(--border)] shrink-0">
+          <h3 className="text-sm font-light text-vitti-blue dark:text-vitti-light tracking-wide">
             {isEditing ? "Editar conteúdo" : "Novo conteúdo"}
           </h3>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-vitti-fg-muted/40 hover:bg-black/[0.04] hover:text-vitti-fg transition-all"
+            className="p-1.5 rounded-lg text-vitti-fg-muted/40 dark:text-[var(--text-muted)]/50 hover:bg-black/[0.04] dark:hover:bg-[var(--hover)] hover:text-vitti-fg dark:hover:text-[var(--text-primary)] transition-all"
           >
             <X size={16} />
           </button>
@@ -494,8 +494,8 @@ export function ContentDrawer({
                       className={cn(
                         "px-2.5 py-1 rounded-full text-[10px] font-light border transition-all",
                         isActive
-                          ? "bg-vitti-blue/[0.08] border-vitti-blue/30 text-vitti-blue"
-                          : "bg-transparent border-black/[0.1] text-vitti-fg-muted/55 hover:border-black/[0.18] hover:text-vitti-fg"
+                          ? "bg-vitti-blue/[0.08] dark:bg-vitti-light/[0.10] border-vitti-blue/30 dark:border-vitti-light/30 text-vitti-blue dark:text-vitti-light"
+                          : "bg-transparent border-black/[0.1] dark:border-[var(--border)] text-vitti-fg-muted/55 dark:text-[var(--text-muted)] hover:border-black/[0.18] dark:hover:border-[var(--border)] hover:text-vitti-fg dark:hover:text-[var(--text-primary)]"
                       )}
                     >
                       {p.label}
@@ -587,7 +587,7 @@ export function ContentDrawer({
             <div>
               <label className={labelClass}>Link do vídeo</label>
               <div className="relative">
-                <Link2 size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-vitti-fg-muted/40 pointer-events-none" />
+                <Link2 size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-vitti-fg-muted/40 dark:text-[var(--text-muted)]/50 pointer-events-none" />
                 <input
                   type="url"
                   value={form.videoUrl}
@@ -596,7 +596,7 @@ export function ContentDrawer({
                   className={cn(inputClass, "pl-8")}
                 />
               </div>
-              <p className="text-[10px] text-vitti-fg-muted/45 mt-1 font-light">
+              <p className="text-[10px] text-vitti-fg-muted/45 dark:text-[var(--text-muted)]/60 mt-1 font-light">
                 Google Drive, YouTube, Vimeo, CapCut, Frame.io ou qualquer link http/https
               </p>
             </div>
@@ -608,10 +608,10 @@ export function ContentDrawer({
               {existingAttachments.length > 0 && (
                 <div className="mb-2 space-y-1.5">
                   {existingAttachments.map((att) => (
-                    <div key={att.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-vitti-blue/[0.04] border border-vitti-blue/[0.08]">
+                    <div key={att.id} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-vitti-blue/[0.04] dark:bg-vitti-light/[0.04] border border-vitti-blue/[0.08] dark:border-vitti-light/[0.08]">
                       <Paperclip size={11} className="text-vitti-blue/50 shrink-0" />
-                      <span className="text-xs font-light text-vitti-fg flex-1 truncate">{att.fileName}</span>
-                      <span className="text-[10px] text-vitti-fg-muted/50 shrink-0">{formatBytes(att.fileSize)}</span>
+                      <span className="text-xs font-light text-vitti-fg dark:text-[var(--text-primary)] flex-1 truncate">{att.fileName}</span>
+                      <span className="text-[10px] text-vitti-fg-muted/50 dark:text-[var(--text-muted)]/60 shrink-0">{formatBytes(att.fileSize)}</span>
                       {att.url && (
                         <a href={att.url} target="_blank" rel="noopener noreferrer"
                           className="p-1 rounded hover:bg-vitti-blue/10 text-vitti-blue/60 hover:text-vitti-blue transition-colors shrink-0" title="Baixar">
@@ -622,7 +622,7 @@ export function ContentDrawer({
                         type="button"
                         onClick={() => handleDeleteAttachment(att.id)}
                         disabled={deletingAttachmentId === att.id}
-                        className="p-1 rounded hover:bg-red-50 text-vitti-fg-muted/30 hover:text-red-400 transition-colors shrink-0 disabled:opacity-40"
+                        className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-500/[0.10] text-vitti-fg-muted/30 hover:text-red-400 transition-colors shrink-0 disabled:opacity-40"
                         title="Remover"
                       >
                         {deletingAttachmentId === att.id
@@ -637,14 +637,14 @@ export function ContentDrawer({
               {pendingFiles.length > 0 && (
                 <div className="mb-2 space-y-1.5">
                   {pendingFiles.map((file, idx) => (
-                    <div key={idx} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-vitti-blue/20 bg-vitti-blue/[0.03]">
+                    <div key={idx} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-vitti-blue/20 dark:border-vitti-light/20 bg-vitti-blue/[0.03] dark:bg-vitti-light/[0.03]">
                       <Paperclip size={11} className="text-vitti-blue/50 shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-light text-vitti-fg truncate">{file.name}</div>
-                        <div className="text-[10px] text-vitti-fg-muted/50">{formatBytes(file.size)} · Será enviado ao salvar</div>
+                        <div className="text-xs font-light text-vitti-fg dark:text-[var(--text-primary)] truncate">{file.name}</div>
+                        <div className="text-[10px] text-vitti-fg-muted/50 dark:text-[var(--text-muted)]/60">{formatBytes(file.size)} · Será enviado ao salvar</div>
                       </div>
                       <button type="button" onClick={() => removePendingFile(idx)}
-                        className="p-1 rounded hover:bg-black/[0.04] text-vitti-fg-muted/40 hover:text-red-400 transition-all shrink-0">
+                        className="p-1 rounded hover:bg-black/[0.04] dark:hover:bg-[var(--hover)] text-vitti-fg-muted/40 hover:text-red-400 transition-all shrink-0">
                         <X size={10} />
                       </button>
                     </div>
@@ -655,10 +655,10 @@ export function ContentDrawer({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full flex items-center gap-2 border border-dashed border-black/[0.15] rounded-lg px-3 py-2.5 hover:border-vitti-blue/30 hover:bg-vitti-blue/[0.02] transition-all group"
+                className="w-full flex items-center gap-2 border border-dashed border-black/[0.15] dark:border-[var(--border)] rounded-lg px-3 py-2.5 hover:border-vitti-blue/30 dark:hover:border-vitti-light/30 hover:bg-vitti-blue/[0.02] dark:hover:bg-vitti-light/[0.02] transition-all group"
               >
-                <Paperclip size={13} className="text-vitti-fg-muted/40 group-hover:text-vitti-blue/50 transition-colors shrink-0" />
-                <span className="text-xs font-light text-vitti-fg-muted/50 group-hover:text-vitti-blue/60 transition-colors">
+                <Paperclip size={13} className="text-vitti-fg-muted/40 dark:text-[var(--text-muted)]/50 group-hover:text-vitti-blue/50 dark:group-hover:text-vitti-light/50 transition-colors shrink-0" />
+                <span className="text-xs font-light text-vitti-fg-muted/50 dark:text-[var(--text-muted)] group-hover:text-vitti-blue/60 dark:group-hover:text-vitti-light/60 transition-colors">
                   {pendingFiles.length > 0 || existingAttachments.length > 0
                     ? "Adicionar mais cards / imagens"
                     : "Clique para anexar cards / imagens"}
@@ -667,7 +667,7 @@ export function ContentDrawer({
               <input ref={fileInputRef} type="file" multiple
                 accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
                 className="hidden" onChange={handleFilesSelected} />
-              <p className="text-[10px] text-vitti-fg-muted/45 mt-1 font-light">
+              <p className="text-[10px] text-vitti-fg-muted/45 dark:text-[var(--text-muted)]/60 mt-1 font-light">
                 JPG, PNG, WebP ou PDF · Múltiplos arquivos permitidos
               </p>
             </div>
@@ -683,19 +683,19 @@ export function ContentDrawer({
 
             {/* Form error */}
             {error && (
-              <p className="text-[11px] text-red-500 font-light bg-red-50 px-3 py-2 rounded-lg border border-red-100">
+              <p className="text-[11px] text-red-500 font-light bg-red-50 dark:bg-red-500/[0.08] px-3 py-2 rounded-lg border border-red-100 dark:border-red-500/20">
                 {error}
               </p>
             )}
 
             {/* ── Considerações ─────────────────────────────────────── */}
-            <div className="pt-2 border-t border-black/[0.06]">
+            <div className="pt-2 border-t border-black/[0.06] dark:border-[var(--border)]">
               <div className="flex items-center gap-2 mb-3">
-                <MessageSquare size={13} className="text-vitti-fg-muted/40" />
-                <span className="text-[10px] font-medium text-vitti-fg-muted/65 uppercase tracking-wide">
+                <MessageSquare size={13} className="text-vitti-fg-muted/40 dark:text-[var(--text-muted)]/50" />
+                <span className="text-[10px] font-medium text-vitti-fg-muted/65 dark:text-[var(--text-muted)] uppercase tracking-wide">
                   Considerações
                   {comments.length > 0 && (
-                    <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-vitti-blue/10 text-vitti-blue/60 text-[9px] font-medium normal-case tracking-normal">
+                    <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-vitti-blue/10 dark:bg-vitti-light/10 text-vitti-blue/60 dark:text-vitti-light/60 text-[9px] font-medium normal-case tracking-normal">
                       {comments.length}
                     </span>
                   )}
@@ -704,16 +704,16 @@ export function ContentDrawer({
 
               {!isEditing ? (
                 /* New content — not saved yet */
-                <div className="flex items-start gap-2 px-3 py-3 rounded-lg bg-black/[0.02] border border-dashed border-black/[0.08]">
-                  <MessageSquare size={12} className="text-vitti-fg-muted/30 mt-0.5 shrink-0" />
-                  <p className="text-[11px] font-light text-vitti-fg-muted/50 italic leading-relaxed">
+                <div className="flex items-start gap-2 px-3 py-3 rounded-lg bg-black/[0.02] dark:bg-white/[0.02] border border-dashed border-black/[0.08] dark:border-[var(--border)]">
+                  <MessageSquare size={12} className="text-vitti-fg-muted/30 dark:text-[var(--text-muted)]/40 mt-0.5 shrink-0" />
+                  <p className="text-[11px] font-light text-vitti-fg-muted/50 dark:text-[var(--text-muted)] italic leading-relaxed">
                     As considerações poderão ser adicionadas após salvar o conteúdo.
                   </p>
                 </div>
               ) : loadingComments ? (
                 <div className="flex items-center gap-2 py-4 justify-center">
-                  <Loader2 size={14} className="animate-spin text-vitti-fg-muted/30" />
-                  <span className="text-[11px] text-vitti-fg-muted/40 font-light">Carregando...</span>
+                  <Loader2 size={14} className="animate-spin text-vitti-fg-muted/30 dark:text-[var(--text-muted)]" />
+                  <span className="text-[11px] text-vitti-fg-muted/40 dark:text-[var(--text-muted)] font-light">Carregando...</span>
                 </div>
               ) : (
                 <>
@@ -723,14 +723,14 @@ export function ContentDrawer({
                       {comments.map((c) => (
                         <div
                           key={c.id}
-                          className="group px-3 py-2.5 rounded-xl bg-black/[0.02] border border-black/[0.05]"
+                          className="group px-3 py-2.5 rounded-xl bg-black/[0.02] dark:bg-[var(--surface-soft)] border border-black/[0.05] dark:border-[var(--border)]"
                         >
                           <div className="flex items-center justify-between gap-2 mb-1">
-                            <span className="text-[10px] font-medium text-vitti-fg/80 truncate">
+                            <span className="text-[10px] font-medium text-vitti-fg/80 dark:text-[var(--text-primary)]/80 truncate">
                               {c.authorName}
                             </span>
                             <div className="flex items-center gap-1.5 shrink-0">
-                              <span className="text-[9px] text-vitti-fg-muted/40">
+                              <span className="text-[9px] text-vitti-fg-muted/40 dark:text-[var(--text-muted)]/50">
                                 {formatCommentTime(c.createdAt)}
                               </span>
                               <button
@@ -743,7 +743,7 @@ export function ContentDrawer({
                               </button>
                             </div>
                           </div>
-                          <div className="text-[11px] font-light text-vitti-fg/70 leading-relaxed">
+                          <div className="text-[11px] font-light text-vitti-fg/70 dark:text-[var(--text-secondary)] leading-relaxed">
                             {parseEditorialRichText(c.message)}
                           </div>
                         </div>
@@ -753,7 +753,7 @@ export function ContentDrawer({
                   )}
 
                   {comments.length === 0 && (
-                    <p className="text-[11px] text-vitti-fg-muted/40 italic mb-3 px-1">
+                    <p className="text-[11px] text-vitti-fg-muted/40 dark:text-[var(--text-muted)] italic mb-3 px-1">
                       Nenhuma consideração ainda.
                     </p>
                   )}
@@ -782,7 +782,7 @@ export function ContentDrawer({
                         type="button"
                         onClick={handleSubmitComment}
                         disabled={submittingComment || !newComment.trim() || selectedProfileIds.length === 0}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-vitti-blue/[0.08] border border-vitti-blue/[0.15] text-[11px] font-light text-vitti-blue hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-vitti-blue/[0.08] dark:bg-vitti-light/[0.08] border border-vitti-blue/[0.15] dark:border-vitti-light/[0.20] text-[11px] font-light text-vitti-blue dark:text-white hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {submittingComment
                           ? <Loader2 size={11} className="animate-spin" />
@@ -808,10 +808,10 @@ export function ContentDrawer({
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-black/[0.06] shrink-0 bg-white">
+          <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-black/[0.06] dark:border-[var(--border)] shrink-0 bg-white dark:bg-[var(--surface-elevated)]">
             {isEditing ? (
               <button type="button" onClick={handleDelete} disabled={loading}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-200 text-[11px] font-light text-red-400 hover:bg-red-50 hover:text-red-500 transition-all disabled:opacity-40">
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-200 dark:border-red-500/30 text-[11px] font-light text-red-400 hover:bg-red-50 dark:hover:bg-red-500/[0.08] hover:text-red-500 transition-all disabled:opacity-40">
                 <Trash2 size={11} />
                 Excluir
               </button>
@@ -819,7 +819,7 @@ export function ContentDrawer({
 
             <div className="flex items-center gap-2">
               <button type="button" onClick={onClose} disabled={loading}
-                className="px-3.5 py-2 rounded-lg border border-black/[0.1] text-[11px] font-light text-vitti-fg-muted hover:bg-black/[0.02] transition-all disabled:opacity-40">
+                className="px-3.5 py-2 rounded-lg border border-black/[0.1] dark:border-[var(--border)] text-[11px] font-light text-vitti-fg-muted dark:text-[var(--text-muted)] hover:bg-black/[0.02] dark:hover:bg-[var(--hover)] transition-all disabled:opacity-40">
                 Cancelar
               </button>
               <button type="submit" disabled={loading}

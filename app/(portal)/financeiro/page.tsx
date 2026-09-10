@@ -135,27 +135,27 @@ export default async function FinanceiroPage({
 
       {/* Cabeçalho */}
       <div>
-        <h2 className="text-xl font-semibold tracking-tight text-vitti-fg">Financeiro</h2>
-        <p className="text-sm text-vitti-fg-muted mt-0.5">
+        <h2 className="text-xl font-semibold tracking-tight text-vitti-fg dark:text-[var(--text-primary)]">Financeiro</h2>
+        <p className="text-sm text-vitti-fg-muted dark:text-[var(--text-muted)] mt-0.5">
           Central financeira do seu contrato
         </p>
       </div>
 
       {/* Admin: sem clientId */}
       {isAdmin && !adminPreview && (
-        <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-4 flex items-center gap-3">
-          <CreditCard size={14} className="text-[#455cab]/50 shrink-0" />
+        <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-4 flex items-center gap-3">
+          <CreditCard size={14} className="text-[#455cab]/50 dark:text-vitti-light/50 shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-light text-[#171f38]">
+            <p className="text-sm font-light text-[#171f38] dark:text-[var(--text-primary)]">
               Você está autenticado como administrador Vitti.
             </p>
-            <p className="text-xs text-[#171f38]/50 font-light mt-0.5">
+            <p className="text-xs text-[#171f38]/50 dark:text-[var(--text-muted)] font-light mt-0.5">
               Selecione um cliente em Admin → Financeiro e clique em &ldquo;Ver como cliente&rdquo;.
             </p>
           </div>
           <Link
             href="/admin/financeiro"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#455cab]/30 text-[11px] font-light text-[#455cab]/70 hover:border-[#455cab]/60 hover:text-[#455cab] transition-all shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#455cab]/30 dark:border-[var(--border)] text-[11px] font-light text-[#455cab]/70 dark:text-[var(--text-secondary)] hover:border-[#455cab]/60 dark:hover:border-vitti-light/30 hover:text-[#455cab] dark:hover:text-vitti-light transition-all shrink-0"
           >
             <ExternalLink size={11} />
             Admin Financeiro
@@ -165,13 +165,13 @@ export default async function FinanceiroPage({
 
       {/* Admin: modo preview */}
       {isAdmin && adminPreview && (
-        <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-[#455cab]/20 bg-[#455cab]/[0.04]">
-          <span className="text-[10px] font-light text-[#455cab]/60">
+        <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-[#455cab]/20 dark:border-vitti-light/15 bg-[#455cab]/[0.04] dark:bg-[var(--accent-soft)]">
+          <span className="text-[10px] font-light text-[#455cab]/60 dark:text-vitti-light/60">
             Visualização do cliente — modo admin
           </span>
           <Link
             href="/admin/financeiro"
-            className="ml-auto inline-flex items-center gap-1 text-[10px] font-light text-[#455cab]/60 hover:text-[#455cab] transition-colors"
+            className="ml-auto inline-flex items-center gap-1 text-[10px] font-light text-[#455cab]/60 dark:text-[var(--text-muted)] hover:text-[#455cab] dark:hover:text-vitti-light transition-colors"
           >
             <ArrowLeft size={9} />
             Voltar ao Admin
@@ -181,12 +181,12 @@ export default async function FinanceiroPage({
 
       {/* Cliente sem vínculo */}
       {!isAdmin && !clientFound && (
-        <div className="rounded-xl border border-dashed border-slate-200 py-16 flex flex-col items-center justify-center gap-3">
-          <CreditCard size={20} className="text-[#455cab]/20" />
-          <p className="text-sm font-light text-[#171f38]/50">
+        <div className="rounded-xl border border-dashed border-slate-200 dark:border-[var(--border)] py-16 flex flex-col items-center justify-center gap-3">
+          <CreditCard size={20} className="text-[#455cab]/20 dark:text-vitti-light/20" />
+          <p className="text-sm font-light text-[#171f38]/50 dark:text-[var(--text-muted)]">
             Nenhum cliente vinculado à sua conta.
           </p>
-          <p className="text-xs text-[#171f38]/35 font-light">
+          <p className="text-xs text-[#171f38]/35 dark:text-[var(--text-muted)]/60 font-light">
             Entre em contato com a Vitti Digital.
           </p>
         </div>
@@ -197,49 +197,49 @@ export default async function FinanceiroPage({
         <>
           {/* ── Notas Fiscais ───────────────────────────────────────── */}
           <div>
-            <p className="text-[9px] text-[#455cab]/50 font-light tracking-[0.15em] uppercase mb-3">
+            <p className="text-[9px] text-[#455cab]/50 dark:text-vitti-light/50 font-light tracking-[0.15em] uppercase mb-3">
               Notas Fiscais
             </p>
 
             {latestNf ? (
-              <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-5 flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
-                  <FileText size={18} className="text-[#455cab]/70" />
+              <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-5 flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-[var(--surface-soft)] border border-slate-200/60 dark:border-[var(--border)] flex items-center justify-center shrink-0">
+                  <FileText size={18} className="text-[#455cab]/70 dark:text-vitti-light/70" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-base font-light text-[#171f38] leading-snug">
+                  <p className="text-base font-light text-[#171f38] dark:text-[var(--text-primary)] leading-snug">
                     {latestNf.title}
                   </p>
                   <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                     {latestNf.referenceMonth && (
-                      <span className="text-[11px] text-[#171f38]/55 font-light">
+                      <span className="text-[11px] text-[#171f38]/55 dark:text-[var(--text-muted)] font-light">
                         {fmtRefMonth(latestNf.referenceMonth)}
                       </span>
                     )}
                     {latestNf.invoiceNumber && (
-                      <span className="text-[11px] text-[#171f38]/40 font-light">
+                      <span className="text-[11px] text-[#171f38]/40 dark:text-[var(--text-muted)] font-light">
                         · NF {latestNf.invoiceNumber}
                       </span>
                     )}
                   </div>
                   {latestNf.description && (
-                    <p className="text-[11px] text-[#171f38]/45 font-light mt-1.5 leading-relaxed line-clamp-2">
+                    <p className="text-[11px] text-[#171f38]/45 dark:text-[var(--text-muted)] font-light mt-1.5 leading-relaxed line-clamp-2">
                       {latestNf.description}
                     </p>
                   )}
                   <div className="flex items-center gap-3 mt-2 flex-wrap">
                     {latestNf.amount != null && (
-                      <span className="text-sm font-light text-[#455cab] tabular-nums">
+                      <span className="text-sm font-light text-[#455cab] dark:text-vitti-light tabular-nums">
                         {fmtCurrency(latestNf.amount)}
                       </span>
                     )}
                     {(latestNf.issuedAt ?? latestNf.createdAt) && (
-                      <span className="text-[10px] text-[#171f38]/35 font-light">
+                      <span className="text-[10px] text-[#171f38]/35 dark:text-[var(--text-muted)] font-light">
                         Emitida em {fmtDate(latestNf.issuedAt ?? latestNf.createdAt)}
                       </span>
                     )}
                     {latestNf.fileName && latestNf.fileSize && (
-                      <span className="text-[10px] text-[#171f38]/30 font-light truncate max-w-[200px]">
+                      <span className="text-[10px] text-[#171f38]/30 dark:text-[var(--text-muted)]/60 font-light truncate max-w-[200px]">
                         {latestNf.fileName} · {fmtFileSize(latestNf.fileSize)}
                       </span>
                     )}
@@ -258,9 +258,9 @@ export default async function FinanceiroPage({
                 )}
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed border-slate-200 py-12 flex flex-col items-center justify-center gap-2">
-                <FileText size={18} className="text-[#455cab]/20" />
-                <p className="text-sm font-light text-[#171f38]/40">
+              <div className="rounded-xl border border-dashed border-slate-200 dark:border-[var(--border)] py-12 flex flex-col items-center justify-center gap-2">
+                <FileText size={18} className="text-[#455cab]/20 dark:text-vitti-light/20" />
+                <p className="text-sm font-light text-[#171f38]/40 dark:text-[var(--text-muted)]">
                   Nenhuma nota fiscal disponível no momento
                 </p>
               </div>
@@ -270,27 +270,27 @@ export default async function FinanceiroPage({
           </div>
 
           {/* Divisor */}
-          <div className="border-t border-slate-200/60" />
+          <div className="border-t border-slate-200/60 dark:border-[var(--border)]" />
 
           {/* ── Pagamentos e Boletos ─────────────────────────────────── */}
           <div className="space-y-5">
-            <p className="text-[9px] text-[#455cab]/50 font-light tracking-[0.15em] uppercase">
+            <p className="text-[9px] text-[#455cab]/50 dark:text-vitti-light/50 font-light tracking-[0.15em] uppercase">
               Pagamentos e Boletos
             </p>
 
             {/* A pagar */}
             <div>
-              <p className="text-[9px] text-[#171f38]/40 font-light tracking-[0.12em] uppercase mb-3">
+              <p className="text-[9px] text-[#171f38]/40 dark:text-[var(--text-muted)] font-light tracking-[0.12em] uppercase mb-3">
                 A pagar
               </p>
 
               {pendingPayments.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-200 py-10 flex flex-col items-center justify-center gap-2">
-                  <Barcode size={18} className="text-[#455cab]/20" />
-                  <p className="text-sm font-light text-[#171f38]/40">
+                <div className="rounded-xl border border-dashed border-slate-200 dark:border-[var(--border)] py-10 flex flex-col items-center justify-center gap-2">
+                  <Barcode size={18} className="text-[#455cab]/20 dark:text-vitti-light/20" />
+                  <p className="text-sm font-light text-[#171f38]/40 dark:text-[var(--text-muted)]">
                     Nenhum boleto a pagar
                   </p>
-                  <p className="text-[11px] text-[#171f38]/25 font-light">
+                  <p className="text-[11px] text-[#171f38]/25 dark:text-[var(--text-muted)]/60 font-light">
                     Novos boletos aparecerão aqui quando disponibilizados
                   </p>
                 </div>
@@ -302,39 +302,39 @@ export default async function FinanceiroPage({
                     return (
                       <div
                         key={p.id}
-                        className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-5 flex items-start gap-4"
+                        className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-5 flex items-start gap-4"
                       >
                         {/* Ícone */}
-                        <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
-                          <Barcode size={18} className="text-[#455cab]/70" />
+                        <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-[var(--surface-soft)] border border-slate-200/60 dark:border-[var(--border)] flex items-center justify-center shrink-0">
+                          <Barcode size={18} className="text-[#455cab]/70 dark:text-vitti-light/70" />
                         </div>
 
                         {/* Info */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-base font-light text-[#171f38] leading-snug">
+                            <p className="text-base font-light text-[#171f38] dark:text-[var(--text-primary)] leading-snug">
                               {p.title}
                             </p>
                             {isOverdue && (
-                              <span className="text-[9px] font-light px-1.5 py-0.5 rounded bg-red-50 text-red-500/70">
+                              <span className="text-[9px] font-light px-1.5 py-0.5 rounded bg-red-50 dark:bg-red-500/[0.12] text-red-500/70 dark:text-red-400">
                                 Vencido
                               </span>
                             )}
                           </div>
                           {p.description && (
-                            <p className="text-[11px] text-[#171f38]/45 font-light mt-0.5 line-clamp-1">
+                            <p className="text-[11px] text-[#171f38]/45 dark:text-[var(--text-muted)] font-light mt-0.5 line-clamp-1">
                               {p.description}
                             </p>
                           )}
                           <div className="flex items-center gap-3 mt-2 flex-wrap">
-                            <span className="text-sm font-light text-[#455cab] tabular-nums">
+                            <span className="text-sm font-light text-[#455cab] dark:text-vitti-light tabular-nums">
                               {fmtCurrency(p.amount, p.currency)}
                             </span>
-                            <span className={`text-[10px] font-light ${isOverdue ? "text-red-500/60" : "text-[#171f38]/35"}`}>
+                            <span className={`text-[10px] font-light ${isOverdue ? "text-red-500/60 dark:text-red-400/80" : "text-[#171f38]/35 dark:text-[var(--text-muted)]"}`}>
                               Venc. {fmtDate(p.dueDate)}
                             </span>
                             {p.referenceMonth && (
-                              <span className="text-[10px] text-[#171f38]/30 font-light">
+                              <span className="text-[10px] text-[#171f38]/30 dark:text-[var(--text-muted)]/60 font-light">
                                 · {fmtRefMonth(p.referenceMonth)}
                               </span>
                             )}
@@ -342,11 +342,11 @@ export default async function FinanceiroPage({
 
                           {/* Linha digitável */}
                           {p.digitableLine && (
-                            <div className="mt-3 p-2.5 rounded-lg bg-[#455cab]/[0.05] border border-[#455cab]/[0.10]">
-                              <p className="text-[8px] text-[#455cab]/50 font-light uppercase tracking-wider mb-1">
+                            <div className="mt-3 p-2.5 rounded-lg bg-[#455cab]/[0.05] dark:bg-[var(--surface-soft)] border border-[#455cab]/[0.10] dark:border-[var(--border)]">
+                              <p className="text-[8px] text-[#455cab]/50 dark:text-[var(--text-muted)] font-light uppercase tracking-wider mb-1">
                                 Linha digitável
                               </p>
-                              <p className="text-[11px] font-mono text-[#171f38]/65 break-all leading-relaxed select-all">
+                              <p className="text-[11px] font-mono text-[#171f38]/65 dark:text-[var(--text-secondary)] break-all leading-relaxed select-all">
                                 {p.digitableLine}
                               </p>
                             </div>
@@ -354,11 +354,11 @@ export default async function FinanceiroPage({
 
                           {/* PIX */}
                           {p.pixCode && (
-                            <div className="mt-2 p-2.5 rounded-lg bg-emerald-50 border border-emerald-100">
-                              <p className="text-[8px] text-emerald-600/60 font-light uppercase tracking-wider mb-1">
+                            <div className="mt-2 p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/[0.08] border border-emerald-100 dark:border-emerald-500/20">
+                              <p className="text-[8px] text-emerald-600/60 dark:text-emerald-400/70 font-light uppercase tracking-wider mb-1">
                                 Pix Copia e Cola
                               </p>
-                              <p className="text-[10px] font-mono text-emerald-700/70 break-all leading-relaxed select-all">
+                              <p className="text-[10px] font-mono text-emerald-700/70 dark:text-emerald-400 break-all leading-relaxed select-all">
                                 {p.pixCode.slice(0, 80)}{p.pixCode.length > 80 ? "..." : ""}
                               </p>
                             </div>

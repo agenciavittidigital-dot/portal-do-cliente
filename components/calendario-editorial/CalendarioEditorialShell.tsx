@@ -446,7 +446,7 @@ export function CalendarioEditorialShell({
               {isAdmin && <Badge label="Admin" variant="info" />}
             </div>
           </div>
-          <p className="text-sm text-vitti-blue/50 mt-1.5 font-light">
+          <p className="text-sm text-vitti-blue/50 dark:text-white mt-1.5 font-light">
             Planejamento e acompanhamento de conteúdos por cliente
           </p>
         </div>
@@ -721,14 +721,14 @@ export function CalendarioEditorialShell({
       </div>
 
       {/* Sub-tab bar */}
-      <div className="flex items-end gap-0 border-b border-black/[0.07]">
+      <div className="flex items-end gap-0 border-b border-black/[0.07] dark:border-[var(--border)]">
         <Link
           href={buildViewHref("/calendario-editorial/calendario")}
           className={cn(
             "flex items-center gap-1.5 px-4 py-2.5 text-xs font-light transition-all border-b-2 -mb-px",
             view === "calendario"
-              ? "border-vitti-blue/70 text-[#111111]/90"
-              : "border-transparent text-[#5F6368]/60 hover:text-[#111111]/70 hover:border-black/[0.12]"
+              ? "border-vitti-blue/70 text-[#111111]/90 dark:text-white/90"
+              : "border-transparent text-[#5F6368]/60 dark:text-white/60 hover:text-[#111111]/70 dark:hover:text-white/80 hover:border-black/[0.12] dark:hover:border-white/20"
           )}
         >
           <CalendarDays size={12} />
@@ -739,8 +739,8 @@ export function CalendarioEditorialShell({
           className={cn(
             "flex items-center gap-1.5 px-4 py-2.5 text-xs font-light transition-all border-b-2 -mb-px",
             view === "lista"
-              ? "border-vitti-blue/70 text-[#111111]/90"
-              : "border-transparent text-[#5F6368]/60 hover:text-[#111111]/70 hover:border-black/[0.12]"
+              ? "border-vitti-blue/70 text-[#111111]/90 dark:text-white/90"
+              : "border-transparent text-[#5F6368]/60 dark:text-white/60 hover:text-[#111111]/70 dark:hover:text-white/80 hover:border-black/[0.12] dark:hover:border-white/20"
           )}
         >
           <List size={12} />

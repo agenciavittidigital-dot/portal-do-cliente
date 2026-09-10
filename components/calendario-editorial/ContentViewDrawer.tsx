@@ -51,7 +51,7 @@ const FALLBACK_ST = { name: "Sem status", color: "#94A3B8" };
 
 function FL({ children }: { children: React.ReactNode }) {
   return (
-    <span className="block text-[9px] font-medium text-slate-400/80 uppercase tracking-wider mb-1">
+    <span className="block text-[9px] font-medium text-slate-400/80 dark:text-[var(--text-muted)] uppercase tracking-wider mb-1">
       {children}
     </span>
   );
@@ -65,7 +65,7 @@ function FV({
   className?: string;
 }) {
   return (
-    <div className={cn("text-sm font-light text-vitti-fg leading-relaxed", className)}>
+    <div className={cn("text-sm font-light text-vitti-fg dark:text-[var(--text-primary)] leading-relaxed", className)}>
       {children}
     </div>
   );
@@ -299,24 +299,24 @@ export function ContentViewDrawer({
       <div
         className={cn(
           "fixed top-0 right-0 h-full z-50 w-full max-w-[480px]",
-          "bg-white shadow-[-20px_0_60px_rgba(0,0,0,0.1)]",
+          "bg-white dark:bg-[var(--surface-elevated)] shadow-[-20px_0_60px_rgba(0,0,0,0.1)] dark:shadow-[-20px_0_60px_rgba(0,0,0,0.50)]",
           "transition-transform duration-300 ease-out flex flex-col"
         )}
         style={{ transform: open ? "translateX(0)" : "translateX(100%)" }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-black/[0.06] shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-black/[0.06] dark:border-[var(--border)] shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-[var(--surface-soft)] border border-slate-200/60 dark:border-[var(--border)] flex items-center justify-center shrink-0">
               <CalendarDays size={12} className="text-vitti-light/60" />
             </div>
-            <p className="text-sm font-light text-vitti-blue tracking-wide">
+            <p className="text-sm font-light text-vitti-blue dark:text-vitti-light tracking-wide">
               Detalhes do conteúdo
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all"
+            className="p-1.5 rounded-lg text-slate-400 dark:text-[var(--text-muted)] hover:bg-slate-100 dark:hover:bg-[var(--hover)] hover:text-slate-600 dark:hover:text-[var(--text-secondary)] transition-all"
           >
             <X size={15} />
           </button>
@@ -347,7 +347,7 @@ export function ContentViewDrawer({
                     {item.platforms.map((p) => (
                       <span
                         key={p}
-                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-light border border-black/[0.1] text-vitti-fg-muted/70 bg-black/[0.02]"
+                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-light border border-black/[0.1] dark:border-[var(--border)] text-vitti-fg-muted/70 dark:text-[var(--text-muted)] bg-black/[0.02] dark:bg-white/[0.04]"
                       >
                         {getPlatformLabel(p)}
                       </span>
@@ -434,7 +434,7 @@ export function ContentViewDrawer({
                     href={item.videoUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-purple-500 hover:text-purple-600 transition-colors text-sm"
+                    className="inline-flex items-center gap-1.5 text-purple-500 dark:text-purple-400 hover:text-purple-600 dark:hover:text-purple-300 transition-colors text-sm"
                   >
                     <ExternalLink size={12} />
                     Abrir vídeo
@@ -448,7 +448,7 @@ export function ContentViewDrawer({
               <div>
                 <FL>Cards / artes</FL>
                 {loadingAttachments ? (
-                  <div className="flex items-center gap-2 text-xs text-vitti-fg-muted/50 py-1">
+                  <div className="flex items-center gap-2 text-xs text-vitti-fg-muted/50 dark:text-[var(--text-muted)] py-1">
                     <Loader2 size={11} className="animate-spin" />
                     Carregando cards...
                   </div>
@@ -457,7 +457,7 @@ export function ContentViewDrawer({
                     Não foi possível carregar os cards.
                   </p>
                 ) : attachments.length === 0 ? (
-                  <p className="text-xs font-light text-vitti-fg-muted/40 py-1">
+                  <p className="text-xs font-light text-vitti-fg-muted/40 dark:text-[var(--text-muted)] py-1">
                     Nenhum card encontrado.
                   </p>
                 ) : (
@@ -465,10 +465,10 @@ export function ContentViewDrawer({
                     {attachments.map((att, idx) => (
                       <div
                         key={att.id}
-                        className="flex items-center gap-2.5 p-2.5 rounded-lg border border-black/[0.07] bg-slate-50/60"
+                        className="flex items-center gap-2.5 p-2.5 rounded-lg border border-black/[0.07] dark:border-[var(--border)] bg-slate-50/60 dark:bg-[var(--surface-soft)]"
                       >
-                        <Paperclip size={11} className="text-vitti-fg-muted/40 shrink-0" />
-                        <span className="text-xs font-light text-vitti-fg truncate flex-1">
+                        <Paperclip size={11} className="text-vitti-fg-muted/40 dark:text-[var(--text-muted)] shrink-0" />
+                        <span className="text-xs font-light text-vitti-fg dark:text-[var(--text-primary)] truncate flex-1">
                           {att.fileName}
                         </span>
                         {att.url && (
@@ -478,7 +478,7 @@ export function ContentViewDrawer({
                               setArtModalIndex(idx);
                               setArtModalOpen(true);
                             }}
-                            className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-md border border-black/[0.08] text-[10px] font-light text-vitti-fg-muted hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all"
+                            className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-md border border-black/[0.08] dark:border-[var(--border)] text-[10px] font-light text-vitti-fg-muted dark:text-[var(--text-muted)] hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all"
                           >
                             <Eye size={9} />
                             Ver
@@ -492,20 +492,20 @@ export function ContentViewDrawer({
             )}
 
             {/* Divider */}
-            <div className="border-t border-black/[0.06]" />
+            <div className="border-t border-black/[0.06] dark:border-[var(--border)]" />
 
             {/* Considerações */}
             <div>
               <FL>Considerações</FL>
               {loadingComments ? (
-                <div className="flex items-center gap-2 text-xs text-vitti-fg-muted/50 py-2">
+                <div className="flex items-center gap-2 text-xs text-vitti-fg-muted/50 dark:text-[var(--text-muted)] py-2">
                   <Loader2 size={11} className="animate-spin" />
                   Carregando...
                 </div>
               ) : (
                 <>
                   {comments.length === 0 ? (
-                    <p className="text-xs font-light text-vitti-fg/40 mb-3">
+                    <p className="text-xs font-light text-vitti-fg/40 dark:text-[var(--text-muted)] mb-3">
                       Sem considerações ainda.
                     </p>
                   ) : (
@@ -513,12 +513,12 @@ export function ContentViewDrawer({
                       {comments.map((c) => (
                         <div
                           key={c.id}
-                          className="px-3 py-2.5 rounded-lg bg-slate-50 border border-black/[0.06]"
+                          className="px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-[var(--surface-soft)] border border-black/[0.06] dark:border-[var(--border)]"
                         >
-                          <div className="text-xs font-light text-vitti-fg leading-relaxed">
+                          <div className="text-xs font-light text-vitti-fg dark:text-[var(--text-primary)] leading-relaxed">
                             {parseEditorialRichText(c.message)}
                           </div>
-                          <p className="text-[9px] font-light text-vitti-fg/40 mt-1">
+                          <p className="text-[9px] font-light text-vitti-fg/40 dark:text-[var(--text-muted)] mt-1">
                             {c.authorName} · {formatCommentDate(c.createdAt)}
                           </p>
                         </div>
@@ -552,7 +552,7 @@ export function ContentViewDrawer({
                         type="button"
                         onClick={handleAddComment}
                         disabled={submitting || !newComment.trim() || selectedProfileIds.length === 0}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-vitti-blue/[0.07] border border-vitti-blue/[0.15] text-[10px] font-light text-vitti-blue hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-vitti-blue/[0.07] dark:bg-vitti-light/[0.08] border border-vitti-blue/[0.15] dark:border-vitti-light/[0.20] text-[10px] font-light text-vitti-blue dark:text-white hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {submitting ? (
                           <Loader2 size={9} className="animate-spin" />
@@ -569,7 +569,7 @@ export function ContentViewDrawer({
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center">
-            <p className="text-sm text-vitti-fg-muted/40 font-light">
+            <p className="text-sm text-vitti-fg-muted/40 dark:text-[var(--text-muted)] font-light">
               Nenhum item selecionado.
             </p>
           </div>

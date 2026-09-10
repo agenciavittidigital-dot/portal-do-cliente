@@ -104,11 +104,11 @@ export function NfHistorySection({ invoices, downloadUrls }: Props) {
       {/* Botão de toggle */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-1.5 text-[11px] font-light text-[#455cab]/70 hover:text-[#455cab] transition-colors"
+        className="flex items-center gap-1.5 text-[11px] font-light text-[#455cab]/70 dark:text-vitti-light/70 hover:text-[#455cab] dark:hover:text-vitti-light transition-colors"
       >
         {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
         {expanded ? "Ocultar histórico" : "Ver histórico de NFs"}
-        <span className="text-[10px] text-[#171f38]/30 font-light ml-0.5">
+        <span className="text-[10px] text-[#171f38]/30 dark:text-[var(--text-muted)]/50 font-light ml-0.5">
           ({invoices.length} {invoices.length === 1 ? "nota" : "notas"})
         </span>
       </button>
@@ -116,15 +116,15 @@ export function NfHistorySection({ invoices, downloadUrls }: Props) {
       {/* Histórico expandido */}
       {expanded && (
         <div className="mt-3">
-          <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-hidden">
+          <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] overflow-hidden">
 
             {/* Cabeçalho */}
-            <div className="px-4 py-3.5 border-b border-slate-200/60 flex items-center justify-between gap-3 flex-wrap">
+            <div className="px-4 py-3.5 border-b border-slate-200/60 dark:border-[var(--border)] flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-2">
-                <h4 className="text-[11px] font-light text-[#455cab] tracking-wide">
+                <h4 className="text-[11px] font-light text-[#455cab] dark:text-vitti-light tracking-wide">
                   Histórico de Notas Fiscais
                 </h4>
-                <span className="text-[9px] text-[#171f38]/35 font-light">
+                <span className="text-[9px] text-[#171f38]/35 dark:text-[var(--text-muted)] font-light">
                   {filtered.length} {filtered.length === 1 ? "nota" : "notas"}
                 </span>
               </div>
@@ -132,7 +132,7 @@ export function NfHistorySection({ invoices, downloadUrls }: Props) {
                 <select
                   value={filterVal}
                   onChange={(e) => handleFilterChange(e.target.value)}
-                  className="text-[10px] font-light text-vitti-blue/70 bg-white/70 border border-slate-200/60 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-vitti-blue/40 transition-colors cursor-pointer"
+                  className="text-[10px] font-light text-vitti-blue/70 dark:text-vitti-light/70 bg-white/70 dark:bg-[var(--surface-soft)] border border-slate-200/60 dark:border-[var(--border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-vitti-blue/40 dark:focus:border-vitti-light/40 transition-colors cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
                 >
                   <option value="">Todos os meses</option>
                   {filterOptions.map(([key, label]) => (
@@ -145,8 +145,8 @@ export function NfHistorySection({ invoices, downloadUrls }: Props) {
             {/* Linhas */}
             {pageRows.length === 0 ? (
               <div className="py-10 flex flex-col items-center justify-center gap-2">
-                <FileText size={16} className="text-[#455cab]/20" />
-                <p className="text-[11px] font-light text-[#171f38]/40">
+                <FileText size={16} className="text-[#455cab]/20 dark:text-vitti-light/20" />
+                <p className="text-[11px] font-light text-[#171f38]/40 dark:text-[var(--text-muted)]">
                   Nenhuma nota neste período
                 </p>
               </div>
@@ -155,22 +155,22 @@ export function NfHistorySection({ invoices, downloadUrls }: Props) {
                 <div
                   key={inv.id}
                   className={cn(
-                    "flex items-center gap-4 px-4 py-3.5 hover:bg-slate-50/80 transition-colors",
-                    i < pageRows.length - 1 && "border-b border-slate-200/60"
+                    "flex items-center gap-4 px-4 py-3.5 hover:bg-slate-50/80 dark:hover:bg-[var(--hover)] transition-colors",
+                    i < pageRows.length - 1 && "border-b border-slate-200/60 dark:border-[var(--border)]"
                   )}
                 >
-                  <FileText size={13} className="text-[#455cab]/40 shrink-0" />
+                  <FileText size={13} className="text-[#455cab]/40 dark:text-vitti-light/40 shrink-0" />
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-light text-[#171f38] truncate">{inv.title}</p>
+                    <p className="text-[13px] font-light text-[#171f38] dark:text-[var(--text-primary)] truncate">{inv.title}</p>
                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                       {inv.referenceMonth && (
-                        <span className="text-[10px] text-[#171f38]/50 font-light">
+                        <span className="text-[10px] text-[#171f38]/50 dark:text-[var(--text-muted)] font-light">
                           {fmtRefMonth(inv.referenceMonth)}
                         </span>
                       )}
                       {inv.invoiceNumber && (
-                        <span className="text-[10px] text-[#171f38]/35 font-light">
+                        <span className="text-[10px] text-[#171f38]/35 dark:text-[var(--text-muted)] font-light">
                           · NF {inv.invoiceNumber}
                         </span>
                       )}
@@ -179,15 +179,15 @@ export function NfHistorySection({ invoices, downloadUrls }: Props) {
 
                   <div className="flex items-center gap-3 shrink-0">
                     {inv.amount != null && (
-                      <span className="text-[11px] font-light text-[#455cab] tabular-nums hidden sm:block">
+                      <span className="text-[11px] font-light text-[#455cab] dark:text-vitti-light tabular-nums hidden sm:block">
                         {fmtCurrency(inv.amount)}
                       </span>
                     )}
-                    <span className="text-[10px] text-[#171f38]/35 font-light hidden sm:block">
+                    <span className="text-[10px] text-[#171f38]/35 dark:text-[var(--text-muted)] font-light hidden sm:block">
                       {fmtDate(inv.issuedAt ?? inv.createdAt)}
                     </span>
                     {inv.fileSize != null && (
-                      <span className="text-[9px] text-[#171f38]/25 font-light hidden md:block">
+                      <span className="text-[9px] text-[#171f38]/25 dark:text-[var(--text-muted)]/60 font-light hidden md:block">
                         {fmtFileSize(inv.fileSize)}
                       </span>
                     )}
@@ -196,13 +196,13 @@ export function NfHistorySection({ invoices, downloadUrls }: Props) {
                         href={downloadUrls[inv.id]!}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-[10px] font-light text-[#455cab]/60 hover:border-[#455cab]/40 hover:text-[#455cab] transition-all"
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-[var(--border)] text-[10px] font-light text-[#455cab]/60 dark:text-[var(--text-secondary)] hover:border-[#455cab]/40 dark:hover:border-vitti-light/40 hover:text-[#455cab] dark:hover:text-vitti-light transition-all"
                       >
                         <Download size={10} />
                         Baixar
                       </a>
                     ) : (
-                      <span className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200/40 text-[10px] font-light text-[#171f38]/20 select-none">
+                      <span className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200/40 dark:border-[var(--border)]/50 text-[10px] font-light text-[#171f38]/20 dark:text-[var(--text-muted)]/40 select-none">
                         <Download size={10} />
                         Baixar
                       </span>
@@ -216,20 +216,20 @@ export function NfHistorySection({ invoices, downloadUrls }: Props) {
           {/* Paginação */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-3 px-1">
-              <span className="text-[10px] text-[#171f38]/40 font-light">
+              <span className="text-[10px] text-[#171f38]/40 dark:text-[var(--text-muted)] font-light">
                 Página {safePage} de {totalPages}
               </span>
               <div className="flex items-center gap-2">
                 {safePage > 1 ? (
                   <button
                     onClick={() => setPage(safePage - 1)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-light text-[#455cab]/60 hover:text-[#455cab] hover:border-[#455cab]/40 transition-all"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[var(--border)] text-[10px] font-light text-[#455cab]/60 dark:text-[var(--text-secondary)] hover:text-[#455cab] dark:hover:text-vitti-light hover:border-[#455cab]/40 dark:hover:border-vitti-light/40 transition-all"
                   >
                     <ChevronLeft size={11} />
                     Anterior
                   </button>
                 ) : (
-                  <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/40 text-[10px] font-light text-[#171f38]/20 select-none">
+                  <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/40 dark:border-[var(--border)]/50 text-[10px] font-light text-[#171f38]/20 dark:text-[var(--text-muted)]/40 select-none">
                     <ChevronLeft size={11} />
                     Anterior
                   </span>
@@ -237,13 +237,13 @@ export function NfHistorySection({ invoices, downloadUrls }: Props) {
                 {safePage < totalPages ? (
                   <button
                     onClick={() => setPage(safePage + 1)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-light text-[#455cab]/60 hover:text-[#455cab] hover:border-[#455cab]/40 transition-all"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[var(--border)] text-[10px] font-light text-[#455cab]/60 dark:text-[var(--text-secondary)] hover:text-[#455cab] dark:hover:text-vitti-light hover:border-[#455cab]/40 dark:hover:border-vitti-light/40 transition-all"
                   >
                     Próxima
                     <ChevronRight size={11} />
                   </button>
                 ) : (
-                  <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/40 text-[10px] font-light text-[#171f38]/20 select-none">
+                  <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/40 dark:border-[var(--border)]/50 text-[10px] font-light text-[#171f38]/20 dark:text-[var(--text-muted)]/40 select-none">
                     Próxima
                     <ChevronRight size={11} />
                   </span>

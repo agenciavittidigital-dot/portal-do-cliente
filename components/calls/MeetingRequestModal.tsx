@@ -94,8 +94,8 @@ export function MeetingRequestModal() {
             "px-4 py-3 rounded-xl border shadow-xl backdrop-blur-xl",
             "text-sm font-light animate-in fade-in slide-in-from-bottom-2 duration-300",
             toast.type === "success"
-              ? "bg-white/95 border-green-200 text-green-800"
-              : "bg-white/95 border-red-200 text-red-800"
+              ? "bg-white/95 dark:bg-[var(--surface-elevated)] border-green-200 dark:border-green-500/30 text-green-800 dark:text-green-400"
+              : "bg-white/95 dark:bg-[var(--surface-elevated)] border-red-200 dark:border-red-500/30 text-red-800 dark:text-red-400"
           )}
         >
           {toast.type === "success" ? (
@@ -136,14 +136,14 @@ export function MeetingRequestModal() {
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
 
           {/* Painel */}
-          <div className="relative w-full max-w-md rounded-2xl border border-white/80 bg-white/92 backdrop-blur-xl shadow-[0_24px_60px_rgb(0,0,0,0.18)] p-6">
+          <div className="relative w-full max-w-md rounded-2xl border border-white/80 dark:border-[var(--border)] bg-white/92 dark:bg-[var(--surface-elevated)] backdrop-blur-xl shadow-[0_24px_60px_rgb(0,0,0,0.18)] dark:shadow-[0_24px_60px_rgba(0,0,0,0.50)] p-6">
             {/* Header */}
             <div className="flex items-start justify-between mb-5">
               <div>
-                <h3 className="text-sm font-semibold text-vitti-fg">
+                <h3 className="text-sm font-semibold text-vitti-fg dark:text-[var(--text-primary)]">
                   Solicitar reunião com a Vitti
                 </h3>
-                <p className="text-[11px] text-vitti-fg-muted font-light mt-0.5">
+                <p className="text-[11px] text-vitti-fg-muted dark:text-[var(--text-muted)] font-light mt-0.5">
                   Preencha os campos abaixo. Nossa equipe entrará em contato para confirmar.
                 </p>
               </div>
@@ -151,7 +151,7 @@ export function MeetingRequestModal() {
                 onClick={handleClose}
                 disabled={loading}
                 aria-label="Fechar modal"
-                className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors text-vitti-fg-muted hover:text-vitti-fg disabled:opacity-40"
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-[var(--hover)] transition-colors text-vitti-fg-muted dark:text-[var(--text-muted)] hover:text-vitti-fg dark:hover:text-[var(--text-secondary)] disabled:opacity-40"
               >
                 <X size={14} />
               </button>
@@ -160,10 +160,10 @@ export function MeetingRequestModal() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Turno */}
               <div>
-                <label className="block text-[10px] font-semibold text-vitti-fg-muted uppercase tracking-widest mb-2">
+                <label className="block text-[10px] font-semibold text-vitti-fg-muted dark:text-[var(--text-muted)] uppercase tracking-widest mb-2">
                   Turno preferido
                 </label>
-                <div className="flex gap-2 p-1 rounded-xl bg-slate-100/80 border border-slate-200/60">
+                <div className="flex gap-2 p-1 rounded-xl bg-slate-100/80 dark:bg-[var(--surface-soft)] border border-slate-200/60 dark:border-[var(--border)]">
                   {(["morning", "afternoon"] as const).map((s) => (
                     <button
                       key={s}
@@ -172,8 +172,8 @@ export function MeetingRequestModal() {
                       className={cn(
                         "flex-1 py-2 rounded-lg text-xs font-light transition-all duration-150",
                         shift === s
-                          ? "bg-white text-vitti-blue shadow-sm border border-slate-200/80 font-medium"
-                          : "text-vitti-fg-muted hover:text-vitti-fg"
+                          ? "bg-white dark:bg-[var(--surface-elevated)] text-vitti-blue dark:text-vitti-light shadow-sm border border-slate-200/80 dark:border-[var(--border)] font-medium"
+                          : "text-vitti-fg-muted dark:text-[var(--text-muted)] hover:text-vitti-fg dark:hover:text-[var(--text-secondary)]"
                       )}
                     >
                       {s === "morning" ? "Manhã" : "Tarde"}
@@ -186,7 +186,7 @@ export function MeetingRequestModal() {
               <div>
                 <label
                   htmlFor="meeting-reason"
-                  className="block text-[10px] font-semibold text-vitti-fg-muted uppercase tracking-widest mb-2"
+                  className="block text-[10px] font-semibold text-vitti-fg-muted dark:text-[var(--text-muted)] uppercase tracking-widest mb-2"
                 >
                   Motivo
                 </label>
@@ -200,9 +200,9 @@ export function MeetingRequestModal() {
                   required
                   disabled={loading}
                   className={cn(
-                    "w-full rounded-xl border border-slate-200 bg-white/70 px-3.5 py-2.5",
-                    "text-sm font-light text-vitti-fg placeholder:text-vitti-fg-muted/40",
-                    "focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 focus:border-vitti-blue/50",
+                    "w-full rounded-xl border border-slate-200 dark:border-[var(--border)] bg-white/70 dark:bg-[var(--surface-soft)] px-3.5 py-2.5",
+                    "text-sm font-light text-vitti-fg dark:text-[var(--text-primary)] placeholder:text-vitti-fg-muted/40 dark:placeholder:text-[var(--text-muted)]/50",
+                    "focus:outline-none focus:ring-1 focus:ring-vitti-blue/30 dark:focus:ring-vitti-light/20 focus:border-vitti-blue/50 dark:focus:border-vitti-light/40",
                     "resize-none transition-all disabled:opacity-50"
                   )}
                 />
@@ -214,7 +214,7 @@ export function MeetingRequestModal() {
                   type="button"
                   onClick={handleClose}
                   disabled={loading}
-                  className="flex-1 py-2 rounded-lg border border-slate-200 text-xs font-light text-vitti-fg-muted hover:border-slate-300 hover:text-vitti-fg transition-all disabled:opacity-40"
+                  className="flex-1 py-2 rounded-lg border border-slate-200 dark:border-[var(--border)] text-xs font-light text-vitti-fg-muted dark:text-[var(--text-muted)] hover:border-slate-300 dark:hover:border-[var(--border-strong)] hover:text-vitti-fg dark:hover:text-[var(--text-secondary)] transition-all disabled:opacity-40"
                 >
                   Cancelar
                 </button>

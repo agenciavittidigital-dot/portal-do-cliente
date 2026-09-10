@@ -185,7 +185,7 @@ export function SuggestionInlineHighlight({
 
   if (!displayText) {
     return (
-      <span className="text-vitti-fg-muted/40 italic text-xs font-light">
+      <span className="text-vitti-fg-muted/40 dark:text-[var(--text-muted)] italic text-xs font-light">
         {field === "description" ? "Sem descrição" : "Sem legenda"}
       </span>
     );
@@ -195,7 +195,7 @@ export function SuggestionInlineHighlight({
 
   return (
     <div ref={containerRef} className="relative" onMouseUp={handleMouseUp}>
-      <span className="whitespace-pre-wrap text-sm font-light text-vitti-fg leading-relaxed select-text">
+      <span className="whitespace-pre-wrap text-sm font-light text-vitti-fg dark:text-white/90 leading-relaxed select-text">
         {segments.map((seg, i) => {
           if (seg.type === "text") {
             if (richSegs) {

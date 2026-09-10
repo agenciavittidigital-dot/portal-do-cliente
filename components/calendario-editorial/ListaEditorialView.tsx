@@ -126,14 +126,14 @@ function clip(text: string | null | undefined, len = 52): string {
 
 function FL({ children }: { children: React.ReactNode }) {
   return (
-    <span className="block text-[9px] font-medium text-vitti-fg-muted/50 uppercase tracking-wider mb-1">
+    <span className="block text-[9px] font-medium text-vitti-fg-muted/50 dark:text-[var(--text-muted)]/60 uppercase tracking-wider mb-1">
       {children}
     </span>
   );
 }
 function FV({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-xs font-light text-vitti-fg leading-relaxed">
+    <div className="text-xs font-light text-vitti-fg dark:text-[var(--text-primary)] leading-relaxed">
       {children}
     </div>
   );
@@ -196,10 +196,10 @@ export function ListaEditorialView({
   const [modalAttachments, setModalAttachments] = useState<ModalAttachment[]>([]);
   const [modalIndex, setModalIndex] = useState(0);
 
-  // Suggestion state — fetches only for the currently expanded item, only for client users
+  // Suggestion state — fetches for the currently expanded item (admin reads; client reads and suggests)
   const { suggestions, submit: submitSuggestion } = useEditorialSuggestions(
     expandedId,
-    !isAdmin && expandedId !== null,
+    expandedId !== null,
   );
   const [suggestionModalOpen, setSuggestionModalOpen] = useState(false);
   const [pendingField, setPendingField] = useState<"description" | "caption" | null>(null);
@@ -380,12 +380,12 @@ export function ListaEditorialView({
 
   if (items.length === 0) {
     return (
-      <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-14 flex flex-col items-center gap-3 text-center">
-        <Inbox size={26} className="text-vitti-blue/15" />
-        <p className="text-sm font-light text-vitti-blue/50">
+      <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-14 flex flex-col items-center gap-3 text-center">
+        <Inbox size={26} className="text-vitti-blue/15 dark:text-vitti-light/15" />
+        <p className="text-sm font-light text-vitti-blue/50 dark:text-vitti-light/50">
           Nenhum conteúdo cadastrado ainda.
         </p>
-        <p className="text-xs text-vitti-blue/35 font-light max-w-[260px] leading-relaxed">
+        <p className="text-xs text-vitti-blue/35 dark:text-vitti-light/35 font-light max-w-[260px] leading-relaxed">
           Crie o primeiro conteúdo editorial para que ele apareça aqui.
         </p>
       </div>
@@ -394,19 +394,19 @@ export function ListaEditorialView({
 
   return (
     <>
-      <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-hidden">
+      <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] overflow-hidden">
         <div className="overflow-x-auto">
           <div className="min-w-[1300px]">
 
             {/* ── Header ─────────────────────────────────────────────── */}
             <div
-              className="grid items-center px-4 py-2.5 border-b border-black/[0.06] bg-black/[0.02]"
+              className="grid items-center px-4 py-2.5 border-b border-black/[0.06] dark:border-[var(--border)] bg-black/[0.02] dark:bg-white/[0.02]"
               style={{ gridTemplateColumns: GRID }}
             >
               {HEADERS.map((h, i) => (
                 <span
                   key={i}
-                  className="text-[9px] font-medium text-vitti-fg-muted/50 tracking-wider uppercase pr-2 truncate"
+                  className="text-[9px] font-medium text-vitti-fg-muted/50 dark:text-[var(--text-muted)]/60 tracking-wider uppercase pr-2 truncate"
                 >
                   {h}
                 </span>
@@ -414,7 +414,7 @@ export function ListaEditorialView({
             </div>
 
             {/* ── Rows ───────────────────────────────────────────────── */}
-            <div className="divide-y divide-black/[0.04]">
+            <div className="divide-y divide-black/[0.04] dark:divide-[var(--border)]">
               {items.map((item) => {
                 const isExpanded = expandedId === item.id;
                 const cachedAttachments = attachmentsCache[item.id];
@@ -438,8 +438,8 @@ export function ListaEditorialView({
                       className={cn(
                         "grid items-center w-full text-left px-4 py-3 cursor-pointer select-none transition-colors",
                         isExpanded
-                          ? "bg-black/[0.012]"
-                          : "hover:bg-black/[0.018]"
+                          ? "bg-black/[0.012] dark:bg-white/[0.03]"
+                          : "hover:bg-black/[0.018] dark:hover:bg-[var(--hover)]"
                       )}
                       style={{ gridTemplateColumns: GRID }}
                     >
@@ -455,14 +455,14 @@ export function ListaEditorialView({
                       {/* 2. Plataforma */}
                       <div className="pr-1">
                         {item.platforms.length === 0 ? (
-                          <span className="text-[10px] font-light text-vitti-fg/40">—</span>
+                          <span className="text-[10px] font-light text-vitti-fg/40 dark:text-[var(--text-primary)]/40">—</span>
                         ) : (
                           <div className="flex items-center gap-1">
-                            <span className="text-[9px] font-light text-vitti-fg truncate">
+                            <span className="text-[9px] font-light text-vitti-fg dark:text-[var(--text-primary)] truncate">
                               {getPlatformLabel(item.platforms[0])}
                             </span>
                             {item.platforms.length > 1 && (
-                              <span className="text-[9px] font-light text-vitti-fg-muted/50">
+                              <span className="text-[9px] font-light text-vitti-fg-muted/50 dark:text-[var(--text-muted)]/60">
                                 +{item.platforms.length - 1}
                               </span>
                             )}
@@ -472,42 +472,42 @@ export function ListaEditorialView({
 
                       {/* 2. Cliente — admin only */}
                       {isAdmin && (
-                        <span className="text-[10px] font-light text-vitti-fg truncate pr-2">
+                        <span className="text-[10px] font-light text-vitti-fg dark:text-[var(--text-primary)] truncate pr-2">
                           {item.clientName}
                         </span>
                       )}
 
                       {/* 3. Responsável — admin only */}
                       {isAdmin && (
-                        <span className="text-[10px] font-light text-vitti-fg truncate pr-2">
+                        <span className="text-[10px] font-light text-vitti-fg dark:text-[var(--text-primary)] truncate pr-2">
                           {item.responsibleName ?? "—"}
                         </span>
                       )}
 
                       {/* 4. Título */}
-                      <span className="text-[10px] font-light text-vitti-fg truncate pr-3">
+                      <span className="text-[10px] font-light text-vitti-fg dark:text-[var(--text-primary)] truncate pr-3">
                         {item.title}
                       </span>
 
                       {/* 5. Descrição */}
-                      <span className="text-[10px] font-light text-vitti-fg truncate pr-2">
+                      <span className="text-[10px] font-light text-vitti-fg dark:text-[var(--text-primary)] truncate pr-2">
                         {clip(item.description)}
                       </span>
 
                       {/* 6. Legenda */}
-                      <span className="text-[10px] font-light text-vitti-fg truncate pr-2">
+                      <span className="text-[10px] font-light text-vitti-fg dark:text-[var(--text-primary)] truncate pr-2">
                         {clip(item.caption)}
                       </span>
 
                       {/* 7. Data de entrega — admin only */}
                       {isAdmin && (
-                        <span className="text-[10px] font-light text-vitti-fg pr-2">
+                        <span className="text-[10px] font-light text-vitti-fg dark:text-[var(--text-primary)] pr-2">
                           {formatDate(item.deliveryAt)}
                         </span>
                       )}
 
                       {/* 8. Data postagem */}
-                      <span className="text-[10px] font-light text-vitti-fg pr-2">
+                      <span className="text-[10px] font-light text-vitti-fg dark:text-[var(--text-primary)] pr-2">
                         {formatDateTime(item.scheduledAt)}
                       </span>
 
@@ -515,9 +515,9 @@ export function ListaEditorialView({
                       <div className="pr-1 flex flex-col gap-0.5 items-start">
                         {/* Video badge */}
                         {hasVideo && (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-50 border border-purple-200/60">
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-500/[0.10] border border-purple-200/60 dark:border-purple-400/30">
                             <Link2 size={8} className="text-purple-400" />
-                            <span className="text-[8px] font-medium text-purple-500">
+                            <span className="text-[8px] font-medium text-purple-500 dark:text-purple-400">
                               Vídeo
                             </span>
                           </span>
@@ -545,7 +545,7 @@ export function ListaEditorialView({
                             </span>
                           </button>
                         ) : !hasVideo ? (
-                          <span className="text-[10px] font-light text-vitti-fg/40">
+                          <span className="text-[10px] font-light text-vitti-fg/40 dark:text-[var(--text-primary)]/40">
                             Sem arquivo
                           </span>
                         ) : null}
@@ -555,11 +555,11 @@ export function ListaEditorialView({
                       {(() => {
                         const count = localCommentCounts[item.id] ?? item.commentCount;
                         return count > 0 ? (
-                          <span className="text-[10px] font-light text-vitti-fg pr-2 truncate">
+                          <span className="text-[10px] font-light text-vitti-fg dark:text-[var(--text-primary)] pr-2 truncate">
                             {count === 1 ? "1 consideração" : `${count} considerações`}
                           </span>
                         ) : (
-                          <span className="text-[10px] font-light text-vitti-fg/40 pr-2">
+                          <span className="text-[10px] font-light text-vitti-fg/40 dark:text-[var(--text-primary)]/40 pr-2">
                             Sem considerações
                           </span>
                         );
@@ -577,16 +577,16 @@ export function ListaEditorialView({
                       {/* Chevron */}
                       <div className="flex items-center justify-center">
                         {isExpanded ? (
-                          <ChevronUp size={12} className="text-vitti-fg-muted/40" />
+                          <ChevronUp size={12} className="text-vitti-fg-muted/40 dark:text-[var(--text-muted)]/50" />
                         ) : (
-                          <ChevronDown size={12} className="text-vitti-fg-muted/25" />
+                          <ChevronDown size={12} className="text-vitti-fg-muted/25 dark:text-[var(--text-muted)]/30" />
                         )}
                       </div>
                     </div>
 
                     {/* ── Expanded detail panel ─────────────────────── */}
                     {isExpanded && (
-                      <div className="border-t border-black/[0.05] bg-[#f9f9fb] px-6 py-5">
+                      <div className="border-t border-black/[0.05] dark:border-[var(--border)] bg-[#f9f9fb] dark:bg-[var(--surface-soft)] px-6 py-5">
                         <div className="grid grid-cols-3 gap-x-6 gap-y-4">
 
                           {/* 1. Categoria */}
@@ -609,7 +609,7 @@ export function ListaEditorialView({
                                   {item.platforms.map((p) => (
                                     <span
                                       key={p}
-                                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-light border border-black/[0.1] text-vitti-fg-muted/70 bg-black/[0.02]"
+                                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-light border border-black/[0.1] dark:border-[var(--border)] text-vitti-fg-muted/70 dark:text-[var(--text-muted)] bg-black/[0.02] dark:bg-white/[0.04]"
                                     >
                                       {getPlatformLabel(p)}
                                     </span>
@@ -645,26 +645,14 @@ export function ListaEditorialView({
                           <div className="col-span-3">
                             <FL>Descrição</FL>
                             <FV>
-                              {isAdmin ? (
-                                (item.descriptionRich ?? item.description) ? (
-                                  <span className="whitespace-pre-wrap">
-                                    {parseEditorialRichText(item.descriptionRich ?? item.description ?? "")}
-                                  </span>
-                                ) : (
-                                  <span className="text-vitti-fg-muted/40 italic">
-                                    Sem descrição
-                                  </span>
-                                )
-                              ) : (
-                                <SuggestionInlineHighlight
-                                  text={item.description}
-                                  suggestions={suggestions}
-                                  field="description"
-                                  canSuggest
-                                  onSuggest={handleSuggestDesc}
-                                  richText={item.descriptionRich}
-                                />
-                              )}
+                              <SuggestionInlineHighlight
+                                text={item.description}
+                                suggestions={suggestions}
+                                field="description"
+                                canSuggest={!isAdmin}
+                                onSuggest={isAdmin ? undefined : handleSuggestDesc}
+                                richText={item.descriptionRich}
+                              />
                             </FV>
                           </div>
 
@@ -672,26 +660,14 @@ export function ListaEditorialView({
                           <div className="col-span-3">
                             <FL>Legenda</FL>
                             <FV>
-                              {isAdmin ? (
-                                (item.captionRich ?? item.caption) ? (
-                                  <span className="whitespace-pre-wrap">
-                                    {parseEditorialRichText(item.captionRich ?? item.caption ?? "")}
-                                  </span>
-                                ) : (
-                                  <span className="text-vitti-fg-muted/40 italic">
-                                    Sem legenda
-                                  </span>
-                                )
-                              ) : (
-                                <SuggestionInlineHighlight
-                                  text={item.caption}
-                                  suggestions={suggestions}
-                                  field="caption"
-                                  canSuggest
-                                  onSuggest={handleSuggestCap}
-                                  richText={item.captionRich}
-                                />
-                              )}
+                              <SuggestionInlineHighlight
+                                text={item.caption}
+                                suggestions={suggestions}
+                                field="caption"
+                                canSuggest={!isAdmin}
+                                onSuggest={isAdmin ? undefined : handleSuggestCap}
+                                richText={item.captionRich}
+                              />
                             </FV>
                           </div>
 
@@ -719,7 +695,7 @@ export function ListaEditorialView({
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   onClick={(e) => e.stopPropagation()}
-                                  className="inline-flex items-center gap-1.5 text-purple-500 hover:text-purple-600 transition-colors"
+                                  className="inline-flex items-center gap-1.5 text-purple-500 dark:text-purple-400 hover:text-purple-600 dark:hover:text-purple-300 transition-colors"
                                 >
                                   <ExternalLink size={11} />
                                   <span>Abrir vídeo</span>
@@ -737,14 +713,14 @@ export function ListaEditorialView({
                               <FV>
                                 <div className="flex items-center gap-3 mt-0.5">
                                   {isLoadingThis ? (
-                                    <span className="inline-flex items-center gap-1.5 text-vitti-fg-muted/40">
+                                    <span className="inline-flex items-center gap-1.5 text-vitti-fg-muted/40 dark:text-[var(--text-muted)]">
                                       <Loader2 size={11} className="animate-spin" />
                                       <span className="text-[11px] italic">Carregando...</span>
                                     </span>
                                   ) : (
                                     <>
-                                      <span className="inline-flex items-center gap-1.5 text-[11px] font-light text-vitti-fg-muted/60">
-                                        <Paperclip size={11} className="text-vitti-fg-muted/40" />
+                                      <span className="inline-flex items-center gap-1.5 text-[11px] font-light text-vitti-fg-muted/60 dark:text-[var(--text-muted)]">
+                                        <Paperclip size={11} className="text-vitti-fg-muted/40 dark:text-[var(--text-muted)]/60" />
                                         {item.attachmentCount === 1
                                           ? "1 card anexado"
                                           : `${item.attachmentCount} cards anexados`}
@@ -753,7 +729,7 @@ export function ListaEditorialView({
                                         <button
                                           type="button"
                                           onClick={() => openArtModal(item.id)}
-                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-black/[0.1] text-[11px] font-light text-vitti-fg-muted hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all"
+                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-black/[0.1] dark:border-[var(--border)] text-[11px] font-light text-vitti-fg-muted dark:text-[var(--text-muted)] hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all"
                                         >
                                           <Eye size={11} />
                                           Ver arte
@@ -771,13 +747,13 @@ export function ListaEditorialView({
                             <FL>Considerações</FL>
                             {loadingComments.has(item.id) ? (
                               <div className="flex items-center gap-1.5 py-1">
-                                <Loader2 size={10} className="animate-spin text-vitti-fg/30" />
-                                <span className="text-[10px] font-light text-vitti-fg/40">Carregando...</span>
+                                <Loader2 size={10} className="animate-spin text-vitti-fg/30 dark:text-[var(--text-muted)]" />
+                                <span className="text-[10px] font-light text-vitti-fg/40 dark:text-[var(--text-muted)]">Carregando...</span>
                               </div>
                             ) : (
                               <>
                                 {(commentsCache[item.id] ?? []).length === 0 ? (
-                                  <p className="text-[11px] font-light text-vitti-fg/40 mb-2">
+                                  <p className="text-[11px] font-light text-vitti-fg/40 dark:text-[var(--text-muted)] mb-2">
                                     Sem considerações
                                   </p>
                                 ) : (
@@ -785,12 +761,12 @@ export function ListaEditorialView({
                                     {(commentsCache[item.id] ?? []).map((c) => (
                                       <div
                                         key={c.id}
-                                        className="px-2.5 py-2 rounded-lg bg-white border border-black/[0.06]"
+                                        className="px-2.5 py-2 rounded-lg bg-white dark:bg-[var(--surface-elevated)] border border-black/[0.06] dark:border-[var(--border)]"
                                       >
-                                        <div className="text-[11px] font-light text-vitti-fg leading-relaxed">
+                                        <div className="text-[11px] font-light text-vitti-fg dark:text-[var(--text-primary)] leading-relaxed">
                                           {parseEditorialRichText(c.message)}
                                         </div>
-                                        <p className="text-[9px] font-light text-vitti-fg/40 mt-1">
+                                        <p className="text-[9px] font-light text-vitti-fg/40 dark:text-[var(--text-muted)] mt-1">
                                           {c.authorName} · {formatCommentDate(c.createdAt)}
                                         </p>
                                       </div>
@@ -841,7 +817,7 @@ export function ListaEditorialView({
                                         !(newCommentText[item.id] ?? "").trim() ||
                                         !(selectedProfileIds[item.id]?.length)
                                       }
-                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-vitti-blue/[0.07] border border-vitti-blue/[0.15] text-[10px] font-light text-vitti-blue hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-vitti-blue/[0.07] dark:bg-vitti-light/[0.08] border border-vitti-blue/[0.15] dark:border-vitti-light/[0.20] text-[10px] font-light text-vitti-blue dark:text-white hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
                                       {submittingComment.has(item.id) ? (
                                         <Loader2 size={9} className="animate-spin" />
@@ -870,10 +846,10 @@ export function ListaEditorialView({
 
                         {/* Editar — apenas admin */}
                         {isAdmin && (
-                          <div className="flex justify-end mt-4 pt-4 border-t border-black/[0.05]">
+                          <div className="flex justify-end mt-4 pt-4 border-t border-black/[0.05] dark:border-[var(--border)]">
                             <button
                               onClick={() => onSelectItem?.(item)}
-                              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-black/[0.1] text-[11px] font-light text-vitti-fg-muted hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all"
+                              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-black/[0.1] dark:border-[var(--border)] text-[11px] font-light text-vitti-fg-muted dark:text-[var(--text-muted)] hover:bg-vitti-blue hover:text-white hover:border-vitti-blue transition-all"
                             >
                               <Pencil size={11} />
                               Editar conteúdo

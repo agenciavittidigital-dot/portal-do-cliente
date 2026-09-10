@@ -89,22 +89,22 @@ export default async function CallsPage({
     <div className="space-y-6 max-w-4xl">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-semibold tracking-tight text-vitti-fg">Calls</h2>
-        <p className="text-sm text-vitti-fg-muted mt-0.5">
+        <h2 className="text-xl font-semibold tracking-tight text-vitti-fg dark:text-[var(--text-primary)]">Calls</h2>
+        <p className="text-sm text-vitti-fg-muted dark:text-[var(--text-muted)] mt-0.5">
           Reuniões, solicitações e gravações com a equipe Vitti
         </p>
       </div>
 
       {/* Admin sem clientId */}
       {isAdmin && !adminPreview && (
-        <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] px-5 py-6 flex flex-col items-center gap-3 text-center">
-          <Video size={24} className="text-vitti-blue/25" />
-          <p className="text-sm font-light text-vitti-blue/50">
+        <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] px-5 py-6 flex flex-col items-center gap-3 text-center">
+          <Video size={24} className="text-vitti-blue/25 dark:text-vitti-light/25" />
+          <p className="text-sm font-light text-vitti-blue/50 dark:text-vitti-light/50">
             Selecione um cliente no Admin para visualizar as calls.
           </p>
           <Link
             href="/admin/calls"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-vitti-blue/30 text-[11px] font-light text-vitti-blue/70 hover:border-vitti-blue/50 hover:text-vitti-blue transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-vitti-blue/30 dark:border-[var(--border)] text-[11px] font-light text-vitti-blue/70 dark:text-[var(--text-secondary)] hover:border-vitti-blue/50 dark:hover:border-vitti-light/30 hover:text-vitti-blue dark:hover:text-vitti-light transition-all"
           >
             <ArrowLeft size={11} />
             Ir para Admin — Calls
@@ -114,13 +114,13 @@ export default async function CallsPage({
 
       {/* Banner admin preview */}
       {isAdmin && adminPreview && (
-        <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-vitti-blue/20 bg-vitti-blue/5">
-          <span className="text-[10px] font-light text-vitti-blue/60">
+        <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-vitti-blue/20 dark:border-vitti-light/15 bg-vitti-blue/5 dark:bg-[var(--accent-soft)]">
+          <span className="text-[10px] font-light text-vitti-blue/60 dark:text-vitti-light/60">
             Visualização do cliente — modo admin
           </span>
           <Link
             href="/admin/calls"
-            className="ml-auto inline-flex items-center gap-1 text-[10px] font-light text-vitti-blue/60 hover:text-vitti-blue transition-colors"
+            className="ml-auto inline-flex items-center gap-1 text-[10px] font-light text-vitti-blue/60 dark:text-[var(--text-muted)] hover:text-vitti-blue dark:hover:text-vitti-light transition-colors"
           >
             <ArrowLeft size={9} />
             Voltar ao Admin
@@ -135,16 +135,16 @@ export default async function CallsPage({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
             {/* Bloco 1: Solicitar reunião */}
-            <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-5 flex flex-col">
+            <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-5 flex flex-col">
               <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-[var(--surface-soft)] border border-slate-200/60 dark:border-[var(--border)] flex items-center justify-center shrink-0">
                   <Send size={13} className="text-vitti-light/60" />
                 </div>
-                <p className="text-sm font-semibold text-vitti-fg">
+                <p className="text-sm font-semibold text-vitti-fg dark:text-[var(--text-primary)]">
                   Solicitar reunião com a Vitti
                 </p>
               </div>
-              <p className="text-[11px] text-vitti-fg-muted font-light leading-relaxed">
+              <p className="text-[11px] text-vitti-fg-muted dark:text-[var(--text-muted)] font-light leading-relaxed">
                 Envie uma solicitação para alinhar estratégias, dúvidas ou próximos passos
                 com nosso time.
               </p>
@@ -152,7 +152,7 @@ export default async function CallsPage({
               {!isAdmin ? (
                 <MeetingRequestModal />
               ) : (
-                <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-[11px] font-light text-vitti-fg-muted/40 cursor-default self-start">
+                <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[var(--border)] text-[11px] font-light text-vitti-fg-muted/40 dark:text-[var(--text-muted)]/40 cursor-default self-start">
                   <Send size={11} />
                   Disponível apenas para clientes
                 </div>
@@ -160,12 +160,12 @@ export default async function CallsPage({
             </div>
 
             {/* Bloco 2: Reunião agendada */}
-            <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] p-5 flex flex-col">
+            <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] p-5 flex flex-col">
               <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-[var(--surface-soft)] border border-slate-200/60 dark:border-[var(--border)] flex items-center justify-center shrink-0">
                   <CalendarClock size={13} className="text-vitti-light/60" />
                 </div>
-                <p className="text-sm font-semibold text-vitti-fg">
+                <p className="text-sm font-semibold text-vitti-fg dark:text-[var(--text-primary)]">
                   Reunião agendada
                 </p>
               </div>
@@ -173,10 +173,10 @@ export default async function CallsPage({
               {scheduledCall ? (
                 <div className="space-y-3 flex-1">
                   <div>
-                    <p className="text-sm font-light text-vitti-blue leading-snug">
+                    <p className="text-sm font-light text-vitti-blue dark:text-vitti-light leading-snug">
                       {scheduledCall.title}
                     </p>
-                    <p className="text-[10px] text-vitti-fg-muted mt-0.5">
+                    <p className="text-[10px] text-vitti-fg-muted dark:text-[var(--text-muted)] mt-0.5">
                       {TYPE_LABELS[scheduledCall.callType] ?? scheduledCall.callType}
                     </p>
                   </div>
@@ -185,12 +185,12 @@ export default async function CallsPage({
                     const { date, time } = formatScheduledAt(scheduledCall.scheduledAt);
                     return (
                       <div className="flex items-center gap-4">
-                        <span className="inline-flex items-center gap-1.5 text-[11px] text-vitti-fg-muted font-light">
-                          <CalendarDays size={11} className="text-vitti-fg-muted/60" />
+                        <span className="inline-flex items-center gap-1.5 text-[11px] text-vitti-fg-muted dark:text-[var(--text-muted)] font-light">
+                          <CalendarDays size={11} className="text-vitti-fg-muted/60 dark:text-[var(--text-muted)]/60" />
                           {date}
                         </span>
-                        <span className="inline-flex items-center gap-1.5 text-[11px] text-vitti-fg-muted font-light">
-                          <Clock size={11} className="text-vitti-fg-muted/60" />
+                        <span className="inline-flex items-center gap-1.5 text-[11px] text-vitti-fg-muted dark:text-[var(--text-muted)] font-light">
+                          <Clock size={11} className="text-vitti-fg-muted/60 dark:text-[var(--text-muted)]/60" />
                           {time}
                         </span>
                       </div>
@@ -211,11 +211,11 @@ export default async function CallsPage({
                 </div>
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center py-5 text-center gap-2">
-                  <CalendarClock size={22} className="text-vitti-blue/15" />
-                  <p className="text-[11px] text-vitti-blue/50 font-light">
+                  <CalendarClock size={22} className="text-vitti-blue/15 dark:text-vitti-light/15" />
+                  <p className="text-[11px] text-vitti-blue/50 dark:text-vitti-light/50 font-light">
                     Nenhuma reunião agendada no momento.
                   </p>
-                  <p className="text-[10px] text-vitti-blue/35 font-light leading-relaxed max-w-[200px]">
+                  <p className="text-[10px] text-vitti-blue/35 dark:text-vitti-light/35 font-light leading-relaxed max-w-[200px]">
                     Quando uma nova reunião for confirmada pela equipe Vitti, ela aparecerá aqui.
                   </p>
                 </div>

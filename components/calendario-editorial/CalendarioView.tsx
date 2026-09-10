@@ -71,17 +71,17 @@ export function CalendarioView({
       <div className="flex items-center gap-2">
         <button
           onClick={prevMonth}
-          className="p-1.5 rounded-lg hover:bg-black/[0.04] transition-colors text-vitti-fg-muted hover:text-vitti-blue"
+          className="p-1.5 rounded-lg hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors text-vitti-fg-muted dark:text-[var(--text-muted)] hover:text-vitti-blue dark:hover:text-vitti-light"
           title="Mês anterior"
         >
           <ChevronLeft size={15} />
         </button>
-        <span className="text-sm font-light text-vitti-blue min-w-[150px] text-center tracking-wide">
+        <span className="text-sm font-light text-vitti-blue dark:text-vitti-light min-w-[150px] text-center tracking-wide">
           {MONTHS[month]} {year}
         </span>
         <button
           onClick={nextMonth}
-          className="p-1.5 rounded-lg hover:bg-black/[0.04] transition-colors text-vitti-fg-muted hover:text-vitti-blue"
+          className="p-1.5 rounded-lg hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors text-vitti-fg-muted dark:text-[var(--text-muted)] hover:text-vitti-blue dark:hover:text-vitti-light"
           title="Próximo mês"
         >
           <ChevronRight size={15} />
@@ -89,7 +89,7 @@ export function CalendarioView({
         {!isCurrentMonth && (
           <button
             onClick={goToday}
-            className="ml-1 px-2.5 py-1 rounded-lg border border-black/[0.08] text-[10px] font-light text-vitti-fg-muted hover:border-vitti-blue/30 hover:text-vitti-blue transition-all"
+            className="ml-1 px-2.5 py-1 rounded-lg border border-black/[0.08] dark:border-[var(--border)] text-[10px] font-light text-vitti-fg-muted dark:text-[var(--text-muted)] hover:border-vitti-blue/30 dark:hover:border-vitti-light/30 hover:text-vitti-blue dark:hover:text-vitti-light transition-all"
           >
             Hoje
           </button>
@@ -97,13 +97,13 @@ export function CalendarioView({
       </div>
 
       {/* Calendar grid */}
-      <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-hidden">
+      <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] overflow-hidden">
         {/* Weekday headers */}
-        <div className="grid grid-cols-7 border-b border-black/[0.06] bg-black/[0.015]">
+        <div className="grid grid-cols-7 border-b border-black/[0.06] dark:border-[var(--border)] bg-black/[0.015] dark:bg-white/[0.02]">
           {WEEKDAYS.map((day) => (
             <div
               key={day}
-              className="py-2.5 text-center text-[10px] font-medium text-vitti-fg-muted/50 tracking-widest uppercase"
+              className="py-2.5 text-center text-[10px] font-medium text-vitti-fg-muted/50 dark:text-[var(--text-muted)]/60 tracking-widest uppercase"
             >
               {day}
             </div>
@@ -118,8 +118,8 @@ export function CalendarioView({
                 <div
                   key={`pad-${idx}`}
                   className={cn(
-                    "min-h-[108px] border-r border-b border-black/[0.04]",
-                    "bg-black/[0.01]",
+                    "min-h-[108px] border-r border-b border-black/[0.04] dark:border-[var(--border)]/50",
+                    "bg-black/[0.01] dark:bg-white/[0.01]",
                     idx % 7 === 6 && "border-r-0"
                   )}
                 />
@@ -138,9 +138,11 @@ export function CalendarioView({
               <div
                 key={dateStr}
                 className={cn(
-                  "min-h-[108px] p-1.5 flex flex-col gap-1 border-r border-b border-black/[0.04] group transition-colors",
+                  "min-h-[108px] p-1.5 flex flex-col gap-1 border-r border-b border-black/[0.04] dark:border-[var(--border)]/50 group transition-colors",
                   colIdx === 6 && "border-r-0",
-                  isToday ? "bg-vitti-blue/[0.025]" : "hover:bg-black/[0.012]"
+                  isToday
+                    ? "bg-vitti-blue/[0.025] dark:bg-vitti-light/[0.06]"
+                    : "hover:bg-black/[0.012] dark:hover:bg-white/[0.03]"
                 )}
               >
                 {/* Day number row */}
@@ -150,7 +152,7 @@ export function CalendarioView({
                       "text-[11px] font-light w-5 h-5 flex items-center justify-center rounded-full leading-none",
                       isToday
                         ? "bg-vitti-blue text-white font-medium text-[10px]"
-                        : "text-vitti-fg-muted/60"
+                        : "text-vitti-fg-muted/60 dark:text-[var(--text-muted)]"
                     )}
                   >
                     {day}
@@ -158,7 +160,7 @@ export function CalendarioView({
                   {onAddItem && (
                     <button
                       onClick={() => onAddItem(dateStr)}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-vitti-blue/10 transition-all text-vitti-blue/40 hover:text-vitti-blue"
+                      className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-vitti-blue/10 dark:hover:bg-vitti-light/10 transition-all text-vitti-blue/40 dark:text-vitti-light/40 hover:text-vitti-blue dark:hover:text-vitti-light"
                       title="Adicionar conteúdo"
                     >
                       <Plus size={11} />
@@ -198,7 +200,7 @@ export function CalendarioView({
                 })}
 
                 {dayItems.length > 3 && (
-                  <span className="text-[9px] text-vitti-fg-muted/45 pl-0.5 font-light">
+                  <span className="text-[9px] text-vitti-fg-muted/45 dark:text-[var(--text-muted)]/60 pl-0.5 font-light">
                     +{dayItems.length - 3} mais
                   </span>
                 )}

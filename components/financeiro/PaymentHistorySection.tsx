@@ -104,24 +104,24 @@ export function PaymentHistorySection({ payments, downloadUrls }: Props) {
     <div className="mt-4">
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="flex items-center gap-1.5 text-[10px] font-light text-[#455cab]/50 hover:text-[#455cab]/80 transition-colors mb-3"
+        className="flex items-center gap-1.5 text-[10px] font-light text-[#455cab]/50 dark:text-vitti-light/50 hover:text-[#455cab]/80 dark:hover:text-vitti-light/80 transition-colors mb-3"
       >
         {expanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
         {expanded ? "Ocultar histórico de pagamentos" : "Ver histórico de pagamentos"}
-        <span className="text-[9px] text-[#171f38]/30 font-light ml-0.5">
+        <span className="text-[9px] text-[#171f38]/30 dark:text-[var(--text-muted)]/50 font-light ml-0.5">
           ({payments.length} {payments.length === 1 ? "pagamento" : "pagamentos"})
         </span>
       </button>
 
       {expanded && (
-    <div className="rounded-2xl border border-white bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-hidden">
+    <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] overflow-hidden">
       {/* Cabeçalho */}
-      <div className="px-4 py-3.5 border-b border-slate-200/60 flex items-center justify-between gap-3 flex-wrap">
+      <div className="px-4 py-3.5 border-b border-slate-200/60 dark:border-[var(--border)] flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <h4 className="text-[11px] font-light text-[#455cab] tracking-wide">
+          <h4 className="text-[11px] font-light text-[#455cab] dark:text-vitti-light tracking-wide">
             Histórico de Pagamentos
           </h4>
-          <span className="text-[9px] text-[#171f38]/35 font-light">
+          <span className="text-[9px] text-[#171f38]/35 dark:text-[var(--text-muted)] font-light">
             {filtered.length} {filtered.length === 1 ? "registro" : "registros"}
           </span>
         </div>
@@ -129,7 +129,7 @@ export function PaymentHistorySection({ payments, downloadUrls }: Props) {
           <select
             value={filterVal}
             onChange={(e) => handleFilter(e.target.value)}
-            className="text-[10px] font-light text-vitti-blue/70 bg-white/70 border border-slate-200/60 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-vitti-blue/40 transition-colors cursor-pointer"
+            className="text-[10px] font-light text-vitti-blue/70 dark:text-vitti-light/70 bg-white/70 dark:bg-[var(--surface-soft)] border border-slate-200/60 dark:border-[var(--border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-vitti-blue/40 dark:focus:border-vitti-light/40 transition-colors cursor-pointer [color-scheme:light] dark:[color-scheme:dark]"
           >
             <option value="">Todos os meses</option>
             {filterOptions.map(([key, label]) => (
@@ -142,8 +142,8 @@ export function PaymentHistorySection({ payments, downloadUrls }: Props) {
       {/* Linhas */}
       {pageRows.length === 0 ? (
         <div className="py-10 flex flex-col items-center justify-center gap-2">
-          <CreditCard size={16} className="text-[#455cab]/20" />
-          <p className="text-[11px] font-light text-[#171f38]/40">
+          <CreditCard size={16} className="text-[#455cab]/20 dark:text-vitti-light/20" />
+          <p className="text-[11px] font-light text-[#171f38]/40 dark:text-[var(--text-muted)]">
             {filterVal ? "Nenhum registro neste período" : "Nenhum pagamento registrado"}
           </p>
         </div>
@@ -154,17 +154,17 @@ export function PaymentHistorySection({ payments, downloadUrls }: Props) {
             <div
               key={p.id}
               className={cn(
-                "flex items-center gap-4 px-4 py-3.5 hover:bg-slate-50/80 transition-colors",
-                i < pageRows.length - 1 && "border-b border-slate-200/60"
+                "flex items-center gap-4 px-4 py-3.5 hover:bg-slate-50/80 dark:hover:bg-[var(--hover)] transition-colors",
+                i < pageRows.length - 1 && "border-b border-slate-200/60 dark:border-[var(--border)]"
               )}
             >
-              <CreditCard size={13} className="text-[#455cab]/40 shrink-0" />
+              <CreditCard size={13} className="text-[#455cab]/40 dark:text-vitti-light/40 shrink-0" />
 
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-light text-[#171f38] truncate">{p.title}</p>
+                <p className="text-[13px] font-light text-[#171f38] dark:text-[var(--text-primary)] truncate">{p.title}</p>
                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                   {p.referenceMonth && (
-                    <span className="text-[10px] text-[#171f38]/50 font-light">
+                    <span className="text-[10px] text-[#171f38]/50 dark:text-[var(--text-muted)] font-light">
                       {fmtRefMonth(p.referenceMonth)}
                     </span>
                   )}
@@ -172,8 +172,8 @@ export function PaymentHistorySection({ payments, downloadUrls }: Props) {
                     className={cn(
                       "text-[9px] font-light px-1.5 py-0.5 rounded",
                       p.status === "paid"
-                        ? "bg-emerald-50 text-emerald-600/70"
-                        : "bg-[#171f38]/[0.05] text-[#171f38]/45"
+                        ? "bg-emerald-50 dark:bg-emerald-500/[0.12] text-emerald-600/70 dark:text-emerald-400"
+                        : "bg-[#171f38]/[0.05] dark:bg-white/[0.07] text-[#171f38]/45 dark:text-[var(--text-muted)]"
                     )}
                   >
                     {STATUS_LABEL[p.status] ?? p.status}
@@ -183,15 +183,15 @@ export function PaymentHistorySection({ payments, downloadUrls }: Props) {
 
               <div className="flex items-center gap-3 shrink-0">
                 <div className="text-right hidden sm:block">
-                  <p className="text-[11px] font-light text-[#455cab] tabular-nums">
+                  <p className="text-[11px] font-light text-[#455cab] dark:text-vitti-light tabular-nums">
                     {fmtCurrency(p.amount, p.currency)}
                   </p>
                   {p.paidAt ? (
-                    <p className="text-[9px] text-[#171f38]/35 font-light">
+                    <p className="text-[9px] text-[#171f38]/35 dark:text-[var(--text-muted)] font-light">
                       Pago em {fmtDate(p.paidAt)}
                     </p>
                   ) : (
-                    <p className="text-[9px] text-[#171f38]/35 font-light">
+                    <p className="text-[9px] text-[#171f38]/35 dark:text-[var(--text-muted)] font-light">
                       Venc. {fmtDate(p.dueDate)}
                     </p>
                   )}
@@ -201,13 +201,13 @@ export function PaymentHistorySection({ payments, downloadUrls }: Props) {
                     href={receiptUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-[10px] font-light text-[#455cab]/60 hover:border-[#455cab]/40 hover:text-[#455cab] transition-all"
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-[var(--border)] text-[10px] font-light text-[#455cab]/60 dark:text-[var(--text-secondary)] hover:border-[#455cab]/40 dark:hover:border-vitti-light/40 hover:text-[#455cab] dark:hover:text-vitti-light transition-all"
                   >
                     <Download size={10} />
                     Comprovante
                   </a>
                 ) : (
-                  <span className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200/40 text-[10px] font-light text-[#171f38]/20 select-none">
+                  <span className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200/40 dark:border-[var(--border)]/50 text-[10px] font-light text-[#171f38]/20 dark:text-[var(--text-muted)]/40 select-none">
                     <Download size={10} />
                     Comprovante
                   </span>
@@ -220,21 +220,21 @@ export function PaymentHistorySection({ payments, downloadUrls }: Props) {
 
       {/* Paginação */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200/60">
-          <span className="text-[10px] text-[#171f38]/40 font-light">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200/60 dark:border-[var(--border)]">
+          <span className="text-[10px] text-[#171f38]/40 dark:text-[var(--text-muted)] font-light">
             Página {safePage} de {totalPages}
           </span>
           <div className="flex items-center gap-2">
             {safePage > 1 ? (
               <button
                 onClick={() => setPage(safePage - 1)}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-light text-[#455cab]/60 hover:text-[#455cab] hover:border-[#455cab]/40 transition-all"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[var(--border)] text-[10px] font-light text-[#455cab]/60 dark:text-[var(--text-secondary)] hover:text-[#455cab] dark:hover:text-vitti-light hover:border-[#455cab]/40 dark:hover:border-vitti-light/40 transition-all"
               >
                 <ChevronLeft size={11} />
                 Anterior
               </button>
             ) : (
-              <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/40 text-[10px] font-light text-[#171f38]/20 select-none">
+              <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/40 dark:border-[var(--border)]/50 text-[10px] font-light text-[#171f38]/20 dark:text-[var(--text-muted)]/40 select-none">
                 <ChevronLeft size={11} />
                 Anterior
               </span>
@@ -242,13 +242,13 @@ export function PaymentHistorySection({ payments, downloadUrls }: Props) {
             {safePage < totalPages ? (
               <button
                 onClick={() => setPage(safePage + 1)}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-light text-[#455cab]/60 hover:text-[#455cab] hover:border-[#455cab]/40 transition-all"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-[var(--border)] text-[10px] font-light text-[#455cab]/60 dark:text-[var(--text-secondary)] hover:text-[#455cab] dark:hover:text-vitti-light hover:border-[#455cab]/40 dark:hover:border-vitti-light/40 transition-all"
               >
                 Próxima
                 <ChevronRight size={11} />
               </button>
             ) : (
-              <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/40 text-[10px] font-light text-[#171f38]/20 select-none">
+              <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200/40 dark:border-[var(--border)]/50 text-[10px] font-light text-[#171f38]/20 dark:text-[var(--text-muted)]/40 select-none">
                 Próxima
                 <ChevronRight size={11} />
               </span>
