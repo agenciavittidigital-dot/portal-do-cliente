@@ -12,6 +12,7 @@ interface CommentFieldProps {
   rows?: number;
   className?: string;
   variant?: "dark" | "light";
+  minHeight?: number | string;
 }
 
 export default function CommentField({
@@ -23,6 +24,7 @@ export default function CommentField({
   rows = 3,
   className = "",
   variant = "dark",
+  minHeight,
 }: CommentFieldProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isLight = variant === "light";
@@ -60,6 +62,7 @@ export default function CommentField({
         placeholder={placeholder}
         rows={rows}
         className={textareaClass}
+        style={minHeight !== undefined ? { minHeight } : undefined}
       />
     </div>
   );

@@ -5,6 +5,8 @@ import {
   LEAD_ACTION_TYPES,
   MESSAGE_ACTION_TYPES,
   PURCHASE_ACTION_TYPES,
+  ADD_TO_CART_ACTION_TYPES,
+  INITIATE_CHECKOUT_ACTION_TYPES,
 } from "./normalizers";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -59,6 +61,8 @@ interface AggregatedRecord {
   messages_started: number;
   purchases: number;
   purchase_value: number;
+  add_to_cart: number;
+  initiate_checkout: number;
   engagements: number;
   video_views_25: number;
   video_views_75: number;
@@ -245,6 +249,14 @@ export async function syncWindsorMappedAccounts(
       safeNum(raw.action_values_offsite_conversion_fb_pixel_purchase) ||
       safeNum(raw.purchase_value) ||
       extractFromActions(raw.action_values, PURCHASE_ACTION_TYPES);
+    const rawAddToCart =
+      raw.actions_add_to_cart !== null && raw.actions_add_to_cart !== undefined
+        ? safeNum(raw.actions_add_to_cart)
+        : extractFromActions(raw.actions, ADD_TO_CART_ACTION_TYPES);
+    const rawInitiateCheckout =
+      raw.actions_initiate_checkout !== null && raw.actions_initiate_checkout !== undefined
+        ? safeNum(raw.actions_initiate_checkout)
+        : extractFromActions(raw.actions, INITIATE_CHECKOUT_ACTION_TYPES);
 
     const existing = aggregated.get(key);
     if (existing) {
@@ -257,6 +269,8 @@ export async function syncWindsorMappedAccounts(
       existing.messages_started += rawMessages;
       existing.purchases += rawPurchases;
       existing.purchase_value += rawPurchaseValue;
+      existing.add_to_cart += rawAddToCart;
+      existing.initiate_checkout += rawInitiateCheckout;
       existing.engagements += safeNum(raw.engagements);
       existing.video_views_25 += safeNum(raw.video_views_25);
       existing.video_views_75 += safeNum(raw.video_views_75);
@@ -285,6 +299,8 @@ export async function syncWindsorMappedAccounts(
         messages_started: rawMessages,
         purchases: rawPurchases,
         purchase_value: rawPurchaseValue,
+        add_to_cart: rawAddToCart,
+        initiate_checkout: rawInitiateCheckout,
         engagements: safeNum(raw.engagements),
         video_views_25: safeNum(raw.video_views_25),
         video_views_75: safeNum(raw.video_views_75),
@@ -390,6 +406,8 @@ export async function syncWindsorMappedAccounts(
       messages_started: rec.messages_started,
       purchases: rec.purchases,
       purchase_value: rec.purchase_value,
+      add_to_cart: rec.add_to_cart,
+      initiate_checkout: rec.initiate_checkout,
       roas,
       engagements: rec.engagements,
       video_views_25: rec.video_views_25,
@@ -605,6 +623,14 @@ export async function syncWindsorForPeriod(options: PeriodSyncOptions): Promise<
       safeNum(raw.action_values_offsite_conversion_fb_pixel_purchase) ||
       safeNum(raw.purchase_value) ||
       extractFromActions(raw.action_values, PURCHASE_ACTION_TYPES);
+    const rawAddToCart =
+      raw.actions_add_to_cart !== null && raw.actions_add_to_cart !== undefined
+        ? safeNum(raw.actions_add_to_cart)
+        : extractFromActions(raw.actions, ADD_TO_CART_ACTION_TYPES);
+    const rawInitiateCheckout =
+      raw.actions_initiate_checkout !== null && raw.actions_initiate_checkout !== undefined
+        ? safeNum(raw.actions_initiate_checkout)
+        : extractFromActions(raw.actions, INITIATE_CHECKOUT_ACTION_TYPES);
 
     const existing = aggregated.get(key);
     if (existing) {
@@ -617,6 +643,8 @@ export async function syncWindsorForPeriod(options: PeriodSyncOptions): Promise<
       existing.messages_started += rawMessages;
       existing.purchases += rawPurchases;
       existing.purchase_value += rawPurchaseValue;
+      existing.add_to_cart += rawAddToCart;
+      existing.initiate_checkout += rawInitiateCheckout;
       existing.engagements += safeNum(raw.engagements);
       existing.video_views_25 += safeNum(raw.video_views_25);
       existing.video_views_75 += safeNum(raw.video_views_75);
@@ -645,6 +673,8 @@ export async function syncWindsorForPeriod(options: PeriodSyncOptions): Promise<
         messages_started: rawMessages,
         purchases: rawPurchases,
         purchase_value: rawPurchaseValue,
+        add_to_cart: rawAddToCart,
+        initiate_checkout: rawInitiateCheckout,
         engagements: safeNum(raw.engagements),
         video_views_25: safeNum(raw.video_views_25),
         video_views_75: safeNum(raw.video_views_75),
@@ -741,6 +771,8 @@ export async function syncWindsorForPeriod(options: PeriodSyncOptions): Promise<
       messages_started: rec.messages_started,
       purchases: rec.purchases,
       purchase_value: rec.purchase_value,
+      add_to_cart: rec.add_to_cart,
+      initiate_checkout: rec.initiate_checkout,
       roas,
       engagements: rec.engagements,
       video_views_25: rec.video_views_25,

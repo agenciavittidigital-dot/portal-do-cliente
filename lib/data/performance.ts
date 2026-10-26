@@ -59,7 +59,7 @@ export async function loadPerformanceData(
     const { data: rawRows, error } = await admin
       .from("performance_daily")
       .select(
-        "date, spend, impressions, reach, clicks, ctr, cpc, cpm, messages_started, leads, purchases, purchase_value, roas, engagements, video_views_25, video_views_75, frequency, landing_page_views"
+        "date, spend, impressions, reach, clicks, ctr, cpc, cpm, messages_started, leads, purchases, purchase_value, add_to_cart, initiate_checkout, roas, engagements, video_views_25, video_views_75, frequency, landing_page_views"
       )
       .eq("client_id", clientId)
       .eq("channel", channel)
@@ -101,6 +101,26 @@ export async function loadPerformanceData(
     const totalPurchases = s("purchases");
     const totalPurchaseValue = s("purchase_value");
     const totalLandingPageViews = s("landing_page_views");
+
+    // add_to_cart e initiate_checkout são nullable: null = ainda não sincronizado, 0 = sincronizado sem evento.
+    // Só expõe o total se pelo menos um registro do período já foi sincronizado (não-null).
+    const addToCartRows = (rawRows ?? []).map((r) => (r as Record<string, unknown>).add_to_cart);
+    const hasSyncedAddToCart = addToCartRows.some((v) => v !== null && v !== undefined);
+    const totalAddToCart = hasSyncedAddToCart
+      ? addToCartRows.reduce<number>(
+          (acc, v) => acc + (v !== null && v !== undefined ? Number(v) : 0),
+          0
+        )
+      : null;
+
+    const initiateCheckoutRows = (rawRows ?? []).map((r) => (r as Record<string, unknown>).initiate_checkout);
+    const hasSyncedInitiateCheckout = initiateCheckoutRows.some((v) => v !== null && v !== undefined);
+    const totalInitiateCheckout = hasSyncedInitiateCheckout
+      ? initiateCheckoutRows.reduce<number>(
+          (acc, v) => acc + (v !== null && v !== undefined ? Number(v) : 0),
+          0
+        )
+      : null;
 
     // ROAS: média ponderada por spend dos valores armazenados pela Windsor.
     // Quando purchase_value = 0 mas Windsor retornou roas escalar, usa o valor Windsor.
@@ -152,6 +172,8 @@ export async function loadPerformanceData(
       video_views_25: s("video_views_25"),
       video_views_75: s("video_views_75"),
       landing_page_views: totalLandingPageViews > 0 ? totalLandingPageViews : null,
+      add_to_cart: totalAddToCart,
+      initiate_checkout: totalInitiateCheckout,
     };
 
     // Agrega múltiplas linhas por data (uma por campanha após Windsor sync)
@@ -174,6 +196,11 @@ export async function loadPerformanceData(
       const video_views_25 = Number(r.video_views_25) || 0;
       const video_views_75 = Number(r.video_views_75) || 0;
       const landing_page_views = Number(r.landing_page_views) || 0;
+      // add_to_cart e initiate_checkout: preservar null (não sincronizado) vs 0 (sincronizado sem evento)
+      const rawAtc = r.add_to_cart;
+      const add_to_cart_val: number | null = rawAtc !== null && rawAtc !== undefined ? Number(rawAtc) : null;
+      const rawIc = r.initiate_checkout;
+      const initiate_checkout_val: number | null = rawIc !== null && rawIc !== undefined ? Number(rawIc) : null;
 
       const existing = byDate.get(date);
       if (existing) {
@@ -189,6 +216,13 @@ export async function loadPerformanceData(
         existing.video_views_25 += video_views_25;
         existing.video_views_75 += video_views_75;
         existing.landing_page_views += landing_page_views;
+        // Para nullable: se qualquer row do dia tem valor, acumular; null significa não sincronizado
+        if (add_to_cart_val !== null) {
+          existing.add_to_cart = (existing.add_to_cart ?? 0) + add_to_cart_val;
+        }
+        if (initiate_checkout_val !== null) {
+          existing.initiate_checkout = (existing.initiate_checkout ?? 0) + initiate_checkout_val;
+        }
         // Recalcula derivadas com os totais acumulados do dia
         existing.ctr = existing.impressions > 0 ? (existing.clicks / existing.impressions) * 100 : null;
         existing.cpc = existing.clicks > 0 ? existing.spend / existing.clicks : null;
@@ -206,6 +240,8 @@ export async function loadPerformanceData(
           leads,
           purchases,
           purchase_value,
+          add_to_cart: add_to_cart_val,
+          initiate_checkout: initiate_checkout_val,
           engagements,
           video_views_25,
           video_views_75,
@@ -240,6 +276,8 @@ export async function loadPerformanceData(
           leads: 0,
           purchases: manPurchases,
           purchase_value: manValue,
+          add_to_cart: null,
+          initiate_checkout: null,
           engagements: 0,
           video_views_25: 0,
           video_views_75: 0,

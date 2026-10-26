@@ -39,6 +39,8 @@ export interface WindsorRawRecord {
   actions_onsite_conversion_messaging_conversation_started_7d?: number | string | null;
   actions_offsite_conversion_fb_pixel_purchase?: number | string | null;
   action_values_offsite_conversion_fb_pixel_purchase?: number | string | null;
+  actions_add_to_cart?: number | string | null;
+  actions_initiate_checkout?: number | string | null;
   // Campos de conversão estruturados (fallback — Meta Ads arrays brutos)
   actions?: Array<Record<string, unknown>> | null;
   action_values?: Array<Record<string, unknown>> | null;
@@ -77,6 +79,8 @@ export interface WindsorNormalizedRecord {
   leads: number;
   purchases: number;
   purchase_value: number;
+  add_to_cart: number;
+  initiate_checkout: number;
   roas: number;
   engagements: number;
   video_views_25: number;

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Pencil } from "lucide-react";
 import type { SuggestionRow } from "@/lib/hooks/useEditorialSuggestions";
-import { parseRichIntoCanonSegments, renderRichRange } from "@/lib/editorial-rich-text";
+import { parseRichIntoCanonSegments, renderRichRange, renderRichRangeWithNewlines } from "@/lib/editorial-rich-text";
 
 interface Props {
   text: string | null;
@@ -200,7 +200,7 @@ export function SuggestionInlineHighlight({
           if (seg.type === "text") {
             if (richSegs) {
               const end = seg.canonicalStart + seg.content.length;
-              const nodes = renderRichRange(richSegs, seg.canonicalStart, end, `rich-${i}`);
+              const nodes = renderRichRangeWithNewlines(richSegs, seg.canonicalStart, end, `rich-${i}`);
               return <span key={i}>{nodes}</span>;
             }
             return (

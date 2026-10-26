@@ -54,6 +54,8 @@ export const WINDSOR_SYNC_FIELDS = [
   "actions_onsite_conversion_messaging_conversation_started_7d",
   "actions_offsite_conversion_fb_pixel_purchase",
   "action_values_offsite_conversion_fb_pixel_purchase",
+  "actions_add_to_cart",
+  "actions_initiate_checkout",
   // Arrays brutos (fallback — Windsor pode retornar via actions em vez de campos achatados)
   "actions",
   "action_values",

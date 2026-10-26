@@ -9,14 +9,25 @@ import { WindsorGoogleAdsPanel } from "@/components/admin/WindsorGoogleAdsPanel"
 import { WindsorRegionalSyncPanel } from "@/components/admin/WindsorRegionalSyncPanel";
 import { WindsorDemographicSyncPanel } from "@/components/admin/WindsorDemographicSyncPanel";
 import { WindsorFullSyncPanel } from "@/components/admin/WindsorFullSyncPanel";
+import { MetaDirectIntegrationPanel } from "@/components/admin/MetaDirectIntegrationPanel";
 import { getWindsorStatus } from "@/lib/integrations/windsor/client";
 import { loadActiveClients } from "@/lib/data/dashboards";
+import { listMetaIntegrations } from "@/lib/data/meta-integrations";
 import Link from "next/link";
 import { ChevronLeft, Target } from "lucide-react";
 
 export default async function IntegracoesPage() {
   const windsorStatus = getWindsorStatus();
   const { clients } = await loadActiveClients();
+
+  // Carrega integrações Meta Direct — server-side, sem tokens
+  let metaIntegrations: Awaited<ReturnType<typeof listMetaIntegrations>> = [];
+  try {
+    metaIntegrations = await listMetaIntegrations();
+  } catch {
+    // Silencia erro pré-migration — a tabela ainda não tem os campos novos
+    metaIntegrations = [];
+  }
 
   return (
     <div className="space-y-8 max-w-5xl">
@@ -48,6 +59,19 @@ export default async function IntegracoesPage() {
           demográficos, regional e keywords. Para diagnóstico ou sincronizações pontuais, use os
           painéis individuais abaixo.
         </p>
+      </section>
+
+      {/* ── Meta Ads Direct ──────────────────────────────────────── */}
+      <section>
+        <p className="text-[9px] text-vitti-blue/40 tracking-[0.2em] uppercase font-light mb-3">
+          Meta Ads — Integração Direta
+        </p>
+        <div className="space-y-3">
+          <MetaDirectIntegrationPanel
+            clients={clients}
+            initialIntegrations={metaIntegrations}
+          />
+        </div>
       </section>
 
       {/* ── Meta Ads / Windsor ───────────────────────────────────── */}

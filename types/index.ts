@@ -125,6 +125,8 @@ export interface PerformanceRow {
   leads: number;
   purchases: number;
   purchase_value: number;
+  add_to_cart: number | null;
+  initiate_checkout: number | null;
   engagements: number;
   video_views_25: number;
   video_views_75: number;

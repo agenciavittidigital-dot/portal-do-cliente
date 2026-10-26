@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   ChevronDown,
   ChevronUp,
@@ -26,6 +26,80 @@ import { NotificationRecipientsSelect } from "./NotificationRecipientsSelect";
 import { useEditorialSuggestions } from "@/lib/hooks/useEditorialSuggestions";
 import { SuggestionInlineHighlight } from "./SuggestionInlineHighlight";
 import { SuggestionModal } from "./SuggestionModal";
+
+// Proxy scrollbar that sticks horizontally inside the expanded panel and stays
+// in sync with the real overflow-x-auto container in both directions.
+function SyncScrollbar({
+  scrollContainer,
+}: {
+  scrollContainer: React.RefObject<HTMLDivElement | null>;
+}) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const proxyRef   = useRef<HTMLDivElement>(null);
+  const innerRef   = useRef<HTMLDivElement>(null);
+  const syncing    = useRef(false);
+
+  useEffect(() => {
+    const container = scrollContainer.current;
+    const wrapper   = wrapperRef.current;
+    const proxy     = proxyRef.current;
+    const inner     = innerRef.current;
+    if (!container || !wrapper || !proxy || !inner) return;
+
+    function syncWidths() {
+      wrapper!.style.width = `${container!.clientWidth}px`;
+      inner!.style.width   = `${container!.scrollWidth}px`;
+    }
+
+    function onProxyScroll() {
+      if (syncing.current) return;
+      syncing.current = true;
+      container!.scrollLeft = proxy!.scrollLeft;
+      syncing.current = false;
+    }
+
+    function onContainerScroll() {
+      if (syncing.current) return;
+      syncing.current = true;
+      proxy!.scrollLeft = container!.scrollLeft;
+      syncing.current = false;
+    }
+
+    const ro = new ResizeObserver(() => {
+      syncWidths();
+      proxy!.scrollLeft = container!.scrollLeft;
+    });
+    ro.observe(container);
+
+    proxy.addEventListener("scroll", onProxyScroll);
+    container.addEventListener("scroll", onContainerScroll);
+
+    syncWidths();
+    proxy.scrollLeft = container.scrollLeft;
+
+    return () => {
+      ro.disconnect();
+      proxy.removeEventListener("scroll", onProxyScroll);
+      container.removeEventListener("scroll", onContainerScroll);
+    };
+  }, [scrollContainer]);
+
+  return (
+    <div
+      ref={wrapperRef}
+      style={{ position: "sticky", left: 0 }}
+      className="px-0"
+    >
+      <div
+        ref={proxyRef}
+        style={{ overflowX: "scroll", overflowY: "hidden", height: 14 }}
+        className="opacity-70 hover:opacity-100 transition-opacity"
+      >
+        <div ref={innerRef} style={{ height: 1 }} />
+      </div>
+    </div>
+  );
+}
 
 export interface ListaContentItem {
   id: string;
@@ -175,6 +249,8 @@ export function ListaEditorialView({
 }: ListaEditorialViewProps) {
   const GRID = isAdmin ? GRID_ADMIN : GRID_CLIENT;
   const HEADERS = isAdmin ? HEADERS_ADMIN : HEADERS_CLIENT;
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [attachmentsCache, setAttachmentsCache] = useState<
@@ -395,7 +471,7 @@ export function ListaEditorialView({
   return (
     <>
       <div className="rounded-2xl border border-white dark:border-[var(--border)] bg-white/60 dark:bg-[var(--glass)] backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.25)] overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" ref={scrollContainerRef}>
           <div className="min-w-[1300px]">
 
             {/* ── Header ─────────────────────────────────────────────── */}
@@ -586,7 +662,8 @@ export function ListaEditorialView({
 
                     {/* ── Expanded detail panel ─────────────────────── */}
                     {isExpanded && (
-                      <div className="border-t border-black/[0.05] dark:border-[var(--border)] bg-[#f9f9fb] dark:bg-[var(--surface-soft)] px-6 py-5">
+                      <div className="border-t border-black/[0.05] dark:border-[var(--border)] bg-[#f9f9fb] dark:bg-[var(--surface-soft)]">
+                        <div className="px-6 py-5">
                         <div className="grid grid-cols-3 gap-x-6 gap-y-4">
 
                           {/* 1. Categoria */}
@@ -856,6 +933,8 @@ export function ListaEditorialView({
                             </button>
                           </div>
                         )}
+                        </div>{/* end px-6 py-5 */}
+                        <SyncScrollbar scrollContainer={scrollContainerRef} />
                       </div>
                     )}
                   </div>

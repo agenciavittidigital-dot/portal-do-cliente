@@ -37,6 +37,16 @@ export const PURCHASE_ACTION_TYPES = [
   "website_purchase",
 ];
 
+export const ADD_TO_CART_ACTION_TYPES = [
+  "add_to_cart",
+  "offsite_conversion.fb_pixel_add_to_cart",
+];
+
+export const INITIATE_CHECKOUT_ACTION_TYPES = [
+  "initiate_checkout",
+  "offsite_conversion.fb_pixel_initiate_checkout",
+];
+
 /**
  * Extrai o valor de um tipo de ação a partir de um array actions/action_values.
  * Usa prioridade: retorna o primeiro tipo da lista que tiver valor > 0.
@@ -84,6 +94,16 @@ export function normalizeWindsorRecord(raw: WindsorRawRecord): WindsorNormalized
     safeNum(raw.purchase_value) ||
     extractFromActions(raw.action_values, PURCHASE_ACTION_TYPES);
 
+  const add_to_cart =
+    raw.actions_add_to_cart !== null && raw.actions_add_to_cart !== undefined
+      ? safeNum(raw.actions_add_to_cart)
+      : extractFromActions(raw.actions, ADD_TO_CART_ACTION_TYPES);
+
+  const initiate_checkout =
+    raw.actions_initiate_checkout !== null && raw.actions_initiate_checkout !== undefined
+      ? safeNum(raw.actions_initiate_checkout)
+      : extractFromActions(raw.actions, INITIATE_CHECKOUT_ACTION_TYPES);
+
   const spend = safeNum(raw.spend);
   // ROAS recalculado de purchase_value/spend quando há purchase_value; fallback para scalar Windsor
   const roas = purchase_value > 0 && spend > 0
@@ -112,6 +132,8 @@ export function normalizeWindsorRecord(raw: WindsorRawRecord): WindsorNormalized
     leads,
     purchases,
     purchase_value,
+    add_to_cart,
+    initiate_checkout,
     roas,
     engagements: safeNum(raw.engagements),
     video_views_25: safeNum(raw.video_views_25),

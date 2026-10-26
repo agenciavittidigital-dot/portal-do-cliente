@@ -415,6 +415,37 @@ export function renderRichRange(
   });
 }
 
+// ── renderRichRangeWithNewlines ────────────────────────────────────────────────
+// Like renderRichRange but emits <br /> for newline segments so paragraph
+// structure is preserved when rich content is rendered inline.
+
+export function renderRichRangeWithNewlines(
+  segments: CanonSegment[],
+  rangeStart: number,
+  rangeEnd:   number,
+  keyPrefix:  string,
+): React.ReactNode[] {
+  const inRange = segments.filter(
+    (s) => s.canonEnd > rangeStart && s.canonStart < rangeEnd,
+  );
+
+  return inRange.flatMap((seg, i): React.ReactNode[] => {
+    if (seg.isNewline) {
+      return [React.createElement("br", { key: `${keyPrefix}-br-${i}` })];
+    }
+    const clampStart = Math.max(seg.canonStart, rangeStart);
+    const clampEnd   = Math.min(seg.canonEnd,   rangeEnd);
+    const content    = seg.content.slice(clampStart - seg.canonStart, clampEnd - seg.canonStart);
+    return [
+      React.createElement("span", {
+        key:                    `${keyPrefix}-${i}`,
+        "data-canonical-start": String(clampStart),
+        style:                  styleToCSS(seg.style),
+      }, content),
+    ];
+  });
+}
+
 // ── applyCanonChangeToRich ─────────────────────────────────────────────────────
 // Applies canonical substitution [S, E) → proposedText to rich markup.
 // Returns updated rich string, or null (caller should set _rich column to null).

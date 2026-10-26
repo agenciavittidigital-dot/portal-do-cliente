@@ -544,8 +544,9 @@ export function ContentDrawer({
                 value={form.descriptionRich}
                 onChange={(v) => set("descriptionRich", v)}
                 placeholder="Briefing ou contexto do conteúdo..."
-                rows={3}
+                rows={5}
                 variant="light"
+                minHeight={140}
               />
             </div>
 
@@ -556,8 +557,9 @@ export function ContentDrawer({
                 value={form.captionRich}
                 onChange={(v) => set("captionRich", v)}
                 placeholder="Texto para publicação na rede social..."
-                rows={3}
+                rows={5}
                 variant="light"
+                minHeight={180}
               />
             </div>
 
