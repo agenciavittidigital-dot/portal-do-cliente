@@ -33,6 +33,25 @@ function slugify(str: string): string {
     .slice(0, 60);
 }
 
+// O endpoint Windsor /all retorna dados de TODOS os canais conectados.
+// Este filtro exclui canais conhecidamente não-Meta para evitar que dados
+// de Google Ads, TikTok, etc. sejam gravados como meta_ads quando
+// account_name coincide com uma integração meta_ads configurada.
+function isNonMetaDatasource(datasource: unknown): boolean {
+  if (typeof datasource !== "string" || !datasource) return false;
+  const lower = datasource.toLowerCase();
+  return (
+    lower.includes("google") ||
+    lower.includes("adwords") ||
+    lower === "gads" ||
+    lower === "ga" ||
+    lower.includes("tiktok") ||
+    lower.includes("linkedin") ||
+    lower.includes("bing") ||
+    lower.includes("microsoft_ads")
+  );
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Integration {
@@ -187,6 +206,9 @@ export async function syncWindsorMappedAccounts(
   for (const raw of response.data) {
     const accountName = String(raw.account_name ?? "").trim();
     if (!accountName) continue;
+
+    // Pula registros de canais não-Meta (ex: Google Ads retornado pelo /all endpoint)
+    if (isNonMetaDatasource(raw.datasource)) continue;
 
     // account_id-first: remove prefixo act_ caso presente, lookup no índice por ID
     const rawId = String(raw.account_id ?? "").trim().replace(/^act_/, "");
@@ -568,6 +590,9 @@ export async function syncWindsorForPeriod(options: PeriodSyncOptions): Promise<
   for (const raw of response.data) {
     const accountName = String(raw.account_name ?? "").trim();
     if (!accountName) continue;
+
+    // Pula registros de canais não-Meta (ex: Google Ads retornado pelo /all endpoint)
+    if (isNonMetaDatasource(raw.datasource)) continue;
 
     // account_id-first: remove prefixo act_ caso presente, lookup no índice por ID
     const rawId = String(raw.account_id ?? "").trim().replace(/^act_/, "");
